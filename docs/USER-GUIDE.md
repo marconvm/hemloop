@@ -1,8 +1,8 @@
-# ProofFrame User Guide
+# Hemloop User Guide
 
 For the person running a campaign. The technical companion is [TECH-GUIDE.md](./TECH-GUIDE.md).
 
-## What ProofFrame is
+## What Hemloop is
 
 Two surfaces of one loop.
 

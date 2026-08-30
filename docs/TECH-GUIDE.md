@@ -1,4 +1,4 @@
-# ProofFrame Technical Guide
+# Hemloop Technical Guide
 
 For developers. Product rationale lives in [PRD.md](./PRD.md); end-user flow in [USER-GUIDE.md](./USER-GUIDE.md).
 

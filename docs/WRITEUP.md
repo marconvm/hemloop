@@ -8,7 +8,7 @@ Paid media solved a version of the first problem years ago: hash the sensitive d
 
 ## What it does
 
-ProofFrame is a two-sided loop where the agent is the join.
+Hemloop is a two-sided loop where the agent is the join.
 
 **The Closet** is the shopper's private surface. Their agent uses six WebMCP tools to read the wardrobe, find gaps and check fit against a real Shopify catalog. The one outbound tool, report_demand_gap, can only emit a demand signal hashed locally before it leaves: a one-way hash, a category, a size, optionally a product handle. It returns the exact payload sent, so the shopper can verify nothing personal is inside. The wardrobe is structurally unable to cross.
 

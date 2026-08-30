@@ -1,4 +1,4 @@
-# ProofFrame
+# Hemloop
 
 **A two-sided, agent-native commerce loop: shoppers keep their data, merchants finally see demand, and every promise the workflow produces is provably true.**
 

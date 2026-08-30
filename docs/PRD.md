@@ -1,8 +1,8 @@
-# ProofFrame, Product Requirements Document
+# Hemloop, Product Requirements Document
 
 | | |
 |---|---|
-| Product | ProofFrame, a two-sided agent-native commerce loop: private closet, hashed demand, truth-locked campaign production |
+| Product | Hemloop, a two-sided agent-native commerce loop: private closet, hashed demand, truth-locked campaign production |
 | Context | OpenAI WebMCP Challenge, submission deadline 2026-09-03 13:00 PT |
 | Status | Draft for build, v2 (v1 was merchant-side only) |
 | Date | 2026-08-30 |
@@ -15,7 +15,7 @@ Three structural problems, two sides of the counter:
 2. **Shoppers will not upload their wardrobe.** Rightly. A decade of wardrobe apps died asking for that data, and a shopper's agent should not need to hand it over to be useful.
 3. **Agent-produced marketing is a compliance risk.** Creative tools are hostile to agents (canvases and timelines cannot be operated by guessing at pixels), and an agent asked to "make it punchy" will write 50% when the offer is 25%. In regulated retail promotion that is a legal problem, not a style problem.
 
-ProofFrame closes the loop across all three. The shopper's closet stays on the shopper's page; what crosses to the merchant is a demand signal **hashed locally before it leaves**, the same client-side-hashing pattern Google Ads uses for enhanced conversions: the sender knows the exact data, the receiver gets only what is needed to match and act. The merchant answers demand through a truth-locked workflow whose agent tools are claim-validated before they apply. A promo video is one output of that workflow, deliberately not the whole product: an agent video editor alone is a crowded category, the closed loop is not.
+Hemloop closes the loop across all three. The shopper's closet stays on the shopper's page; what crosses to the merchant is a demand signal **hashed locally before it leaves**, the same client-side-hashing pattern Google Ads uses for enhanced conversions: the sender knows the exact data, the receiver gets only what is needed to match and act. The merchant answers demand through a truth-locked workflow whose agent tools are claim-validated before they apply. A promo video is one output of that workflow, deliberately not the whole product: an agent video editor alone is a crowded category, the closed loop is not.
 
 ## 2. Key considerations
 
@@ -39,7 +39,7 @@ Argued before the solution, so the solution reads as a conclusion.
 
 ## 3. Solution and phases
 
-A single-page studio with three panels: campaign truth (human control), live 9:16 composition preview with timeline, and a proof trail logging every agent action, acceptance and rejection. The page registers 9 WebMCP tools. Export emits a standalone, deterministic HyperFrames-format HTML composition renderable to video.
+Three routes on one origin. `/` is the landing page (the pitch, agent setup, tool contract). `/closet` is the shopper surface: private wardrobe, gaps and sizes, a signal log, 6 WebMCP tools. `/studio` is the merchant surface: campaign truth (human control), live 9:16 composition preview with timeline, a Live Demand panel fed by the signal bridge, and a proof trail logging every agent action, acceptance and rejection; it registers 9 WebMCP tools. Export emits a standalone, deterministic HyperFrames-format HTML composition renderable to video.
 
 | Phase | Client-visible outcome | Gate | Date |
 |---|---|---|---|
