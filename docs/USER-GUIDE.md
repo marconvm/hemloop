@@ -4,6 +4,14 @@ For the person running a campaign. The technical companion is [TECH-GUIDE.md](./
 
 ## What ProofFrame is
 
+Two surfaces of one loop.
+
+**As a shopper** (`/closet`): your wardrobe lives on your page and never leaves it. Your agent reads it to shop for you — find gaps, check fit against a real store catalog — and when something you want is missing, it sends the merchant an anonymous demand signal, hashed on your side before it goes (the way ad platforms hash conversion data client-side). The signal log shows you the complete payload of everything ever sent: a hash, a category, a size. Nothing else exists to leak.
+
+**As a merchant** (`/`): hashed demand arrives in the studio's Live Demand panel — the closest thing to seeing inside customers' closets without seeing inside customers' closets. You answer it with a campaign: lock the truth, let your agent produce, and nothing non-compliant can come out. The promo video below is one output of that workflow.
+
+### The studio in one paragraph
+
 A promo-video studio that you and an AI agent edit together. You control the facts (prices, offer, promo code, dates, disclaimer). The agent does the production work (scenes, copy, pacing) through structured tools, and it is physically unable to publish a claim that contradicts your facts.
 
 ## The three panels
@@ -21,9 +29,17 @@ A promo-video studio that you and an AI agent edit together. You control the fac
 
 The badge in the studio header tells you the state: "9 WebMCP tools live" when connected, "preview mode" when the page is running as a plain editor.
 
-### Things to say to the agent
+### Things to say to the agent, on the closet page
+
+- "What's in my wardrobe, and what am I missing?"
+- "Check the fit of northlight-hoodie against what I own."
+- "I want that hoodie in medium. Let the store know, anonymously."
+- "Show me exactly what you sent them." (the tool returns the full payload)
+
+### Things to say to the agent, in the studio
 
 - "Read the campaign and tell me what the locked offer is."
+- "There's a demand signal for a hoodie in M. Build the campaign around that product."
 - "Import the product northlight-hoodie and rebuild the storyboard around it."
 - "Add an energetic opening scene, keep it under 4 seconds."
 - "Tighten the copy on the offer scene, keep the price and code exact."

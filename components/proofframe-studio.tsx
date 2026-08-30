@@ -7,11 +7,14 @@ import {
   LockKeyhole,
   Pause,
   Play,
+  Radio,
   ShieldCheck,
+  Shirt,
   Sparkles,
   UnlockKeyhole,
   WandSparkles,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +22,8 @@ import { Button } from '@/components/ui/button';
 import { exportComposition } from '@/lib/proofframe/exporter';
 import { seedCampaign } from '@/lib/proofframe/seed';
 import { makeCatalogImporter } from '@/lib/proofframe/shopify';
+import type { DemandSignal } from '@/lib/proofframe/closet';
+import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
 import type { CampaignState, Scene } from '@/lib/proofframe/types';
 import { validateCampaign } from '@/lib/proofframe/validator';
 import {
@@ -102,6 +107,19 @@ export function ProofFrameStudio() {
   const [playing, setPlaying] = useState(false);
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>('checking');
   const [registeredCount, setRegisteredCount] = useState(0);
+  const [signals, setSignals] = useState<DemandSignal[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setSignals(readSignals());
+    });
+    const unsubscribe = subscribeSignals(() => setSignals(readSignals()));
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   const pushActivity = useCallback((entry: Omit<Activity, 'id' | 'at'>) => {
     setActivity((current) => [
@@ -324,6 +342,31 @@ export function ProofFrameStudio() {
     });
   };
 
+  const applySignalToCampaign = (signal: DemandSignal) => {
+    if (campaignRef.current.factsLocked || !signal.handle) return;
+    try {
+      const facts = makeCatalogImporter(() => campaignRef.current.facts)(signal.handle);
+      commit((current) => ({
+        ...current,
+        facts,
+        brief: `Answer live demand: ${signal.category}${signal.size ? ` in ${signal.size}` : ''} (signal #${signal.signalId}). ${current.brief}`,
+      }));
+      pushActivity({
+        actor: 'MC',
+        title: `Campaign re-aimed at demand signal #${signal.signalId}`,
+        detail: `${facts.productName} pulled from the catalog. Lock the truth, then let the agent rebuild.`,
+        status: 'human',
+      });
+    } catch (error) {
+      pushActivity({
+        actor: 'PF',
+        title: 'Signal import failed',
+        detail: error instanceof Error ? error.message : String(error),
+        status: 'system',
+      });
+    }
+  };
+
   const downloadComposition = () => {
     if (violations.length > 0) return;
     const html = exportComposition(campaign);
@@ -367,6 +410,10 @@ export function ProofFrameStudio() {
         </div>
 
         <div className="header-actions">
+          <Link className="cross-link" href="/closet">
+            <Shirt data-icon="inline-start" aria-hidden="true" />
+            Shopper closet
+          </Link>
           <Badge variant="outline" className={`webmcp-badge status-${webMcpStatus}`}>
             <Sparkles data-icon="inline-start" />
             {statusLabel}
@@ -598,6 +645,46 @@ export function ProofFrameStudio() {
             <ShieldCheck data-icon="inline-start" />
             Try unsafe agent claim
           </Button>
+
+          <div className="demand-list" aria-live="polite">
+            <p className="eyebrow">
+              <Radio data-icon="inline-start" aria-hidden="true" /> Live demand · hashed, anonymous
+            </p>
+            {signals.length === 0 ? (
+              <p className="panel-intro">
+                No signals yet. Shopper agents report demand from the closet page; only hashed
+                aggregates arrive here.
+              </p>
+            ) : (
+              signals.slice(0, 4).map((signal) => (
+                <div className="demand-item" key={signal.signalId}>
+                  <strong>
+                    {signal.category}
+                    {signal.size ? ` · ${signal.size}` : ''}
+                    {signal.handle ? ` · ${signal.handle}` : ''}
+                  </strong>
+                  <small>
+                    {signal.kind} · shopper #{signal.shopperHash} · no identity, no wardrobe data
+                  </small>
+                  {signal.handle && (
+                    <button
+                      type="button"
+                      className="demand-use"
+                      disabled={campaign.factsLocked}
+                      title={
+                        campaign.factsLocked
+                          ? 'Unlock campaign truth first (human-only)'
+                          : 'Pull this product into the campaign facts'
+                      }
+                      onClick={() => applySignalToCampaign(signal)}
+                    >
+                      {campaign.factsLocked ? 'Unlock truth to use' : 'Build campaign from this'}
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
 
           <div className="activity-list" aria-live="polite">
             {activity.map((item) => (

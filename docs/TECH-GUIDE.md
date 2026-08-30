@@ -5,16 +5,22 @@ For developers. Product rationale lives in [PRD.md](./PRD.md); end-user flow in 
 ## Architecture
 
 ```
-app/page.tsx ─▶ components/proofframe-studio.tsx   (client component, owns state)
-                    │ callbacks (getState, addScene, …)
-                    ▼
-             lib/proofframe/webmcp.ts               (tool defs + registration)
-                    │ validates via                  │ registers on
-                    ▼                                ▼
-             lib/proofframe/validator.ts      navigator.modelContext
-             lib/proofframe/exporter.ts       (or document.modelContext)
-             lib/proofframe/shopify.ts + catalog.json
+MERCHANT (/)                                SHOPPER (/closet)
+app/page.tsx                                app/closet/page.tsx
+  └▶ components/proofframe-studio.tsx         └▶ components/closet-studio.tsx
+        │ callbacks                                 │ callbacks
+        ▼                                           ▼
+   lib/proofframe/webmcp.ts (9 tools)         lib/proofframe/webmcp-closet.ts (6 tools)
+        │ validates via                             │ pure logic in
+        ▼                                           ▼
+   validator.ts · exporter.ts                 closet.ts (gaps, fit, makeSignal+fnv1a)
+   shopify.ts + catalog.json ◀────────────────┘ (check_fit reads the same catalog)
+
+              lib/proofframe/signal-bridge.ts (localStorage + events)
+   studio demand panel ◀── hashed DemandSignal only ◀── report_demand_gap
 ```
+
+Both surfaces register tools on `navigator.modelContext` (fallback `document.modelContext`). The bridge carries only `DemandSignal` objects: hashed shopper id, category, size, optional handle.
 
 Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at module scope). The studio owns all state and passes callbacks in; the adapter owns no state at all. This is what makes the whole tool surface unit-testable without a browser.
 
@@ -28,6 +34,9 @@ Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at 
 | `lib/proofframe/webmcp.ts` | `buildTools(callbacks)` and `registerProofFrameTools(callbacks, mc?)`. Mutating tools validate before applying and return structured rejections |
 | `lib/proofframe/shopify.ts` | `makeCatalogImporter` maps snapshot products to campaign facts. Promo terms stay human-owned |
 | `lib/proofframe/catalog.json` | Committed snapshot of the playground store catalog |
+| `lib/proofframe/closet.ts` | Shopper domain: wardrobe seed, findGaps, sizesOwned, checkFit (keyword category match against the catalog), fnv1a and makeSignal. Pure |
+| `lib/proofframe/webmcp-closet.ts` | The 6 shopper tools. report_demand_gap is the single outbound tool and can only emit a makeSignal payload |
+| `lib/proofframe/signal-bridge.ts` | localStorage transport for signals: 'storage' event cross-tab, CustomEvent same-tab, try/catch everywhere, 50-entry cap. Production successor: a queue/API (Render), same payload contract |
 
 ## The WebMCP contract
 

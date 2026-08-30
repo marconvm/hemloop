@@ -1,29 +1,37 @@
-# Devpost Submission Text (draft)
+# Devpost Submission Text (draft v2, integrated loop)
 
 ## Inspiration
 
-I run promotions for apparel retail. Two facts collide there: promo videos are produced under deadline every week, and promotional claims are regulated copy where a wrong percentage or a dropped end date is a legal problem. Meanwhile the tools that make those videos, canvases and timelines, are exactly the interfaces AI agents cannot operate by guessing at pixels.
+I run e-commerce and paid media for apparel retail. Merchants live with a blind spot: they know what they sold, never what shoppers already own, miss, or want in which size. That data exists only in closets, offline, and every product that asked shoppers to upload it has died a privacy death. Meanwhile the other half of my job, promotional creative, is exactly where agents are both most useful and most dangerous: a wrong percentage in a promo is a legal problem.
+
+Paid media solved a version of the first problem years ago: hash the sensitive data on the client, send only the hash, match centrally. Google's enhanced conversions are built on it. WebMCP made me realise the same pattern could carry demand instead of conversions, with the shopper's own agent doing the sending.
 
 ## What it does
 
-ProofFrame is a promo-video studio that a human and an agent edit together. The page registers nine WebMCP tools. The human locks the campaign truth (prices, offer percentage, promo code, dates, disclaimer) in the UI; locking is intentionally not a tool. The agent storyboards, writes copy, reorders scenes, seeks the preview and imports product facts from a Shopify catalog, all against the same live state the human is editing by hand. Every mutating tool call is validated against the locked facts before it applies: non-compliant copy is rejected atomically with a machine-readable reason the agent can act on. Export produces a deterministic, self-contained motion composition (HyperFrames HTML, renderable to video) that refuses to exist while violations remain and carries the disclaimer in every frame as an element no tool can touch.
+ProofFrame is a two-sided loop where the agent is the join.
+
+**The Closet** is the shopper's private surface. Their agent uses six WebMCP tools to read the wardrobe, find gaps and check fit against a real Shopify catalog. The one outbound tool, report_demand_gap, can only emit a demand signal hashed locally before it leaves: a one-way hash, a category, a size, optionally a product handle. It returns the exact payload sent, so the shopper can verify nothing personal is inside. The wardrobe is structurally unable to cross.
+
+**The Studio** is the merchant's surface. Hashed demand arrives in a live panel: owned-inventory data merchants have never had, pre-anonymised at the source. The merchant answers it with a truth-locked workflow: lock the campaign facts (prices, offer, code, dates, disclaimer), then let their agent produce through nine WebMCP tools. Every mutation is claim-validated before it applies; "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason the agent self-corrects from. One output of the workflow is a deterministic motion composition (a promo video, renderable HTML) that refuses to export while any violation remains and carries the disclaimer in every frame as an element no tool can touch.
+
+An agent video editor alone would be one of a thousand on GitHub. The product is the loop: private data stays private, demand becomes visible, and the response is provably compliant.
 
 ## Why WebMCP fits
 
-The tools must operate on live page state inside the user's session: the composition being edited, the playhead, the lock. WebMCP is the only shape where that works with no backend, no credential grant and no sync layer, and where the human can watch every agent action land in the same UI they are using. It also makes the trust boundary enforceable: because agent access is a typed tool surface rather than simulated clicks, "agents cannot alter campaign truth" is a structural property of the page, not a hope.
+Both surfaces need tools operating on live page state in the user's own session: the wardrobe on one page, the composition on the other. WebMCP registers typed tools in the page itself, so there is no backend, no OAuth, no sync layer, and the human watches every agent action land in the UI they are using. It also makes both trust boundaries structural: locking truth is not a tool on either surface, the closet's only outbound tool cannot carry wardrobe data, and validation runs inside the tool layer where it cannot be skipped.
 
 ## How we built it
 
-TypeScript throughout. A pure, framework-free core library (claim validator, composition exporter, WebMCP registration adapter, catalog importer) with 19 unit tests, wrapped by a React studio that owns all state and passes callbacks into the adapter. Registration probes both navigator.modelContext and document.modelContext. Product data is a committed snapshot of a real Shopify development store (synthetic products), refreshable by one CLI command. The scaffold targets Cloudflare Workers for hosting; the demo runs in Chrome's WebMCP origin trial and in ChatGPT.
+TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, two WebMCP adapters) with 27 unit tests, wrapped by React surfaces that own all state and pass callbacks in. Registration probes both navigator.modelContext and document.modelContext. Product data is a committed snapshot of a real Shopify development store. The two surfaces are routes of one origin, so the signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. Scaffold targets Cloudflare Workers; exported compositions are single static HTML files published to Netlify as the campaign gallery; a production signal relay is the roadmap use for Render.
 
 ## Challenges
 
-Two worth naming. First, the trust asymmetry took design care: rejecting before applying (so a wrong frame never renders), returning violations the agent can self-correct from, and keeping the lock out of the tool surface entirely. Second, the demo store is password-protected, so tokenless client-side catalog fetches were impossible; we chose a committed snapshot of the real catalog over shipping any token to the client, keeping provenance without compromising the credential boundary.
+Making the privacy claim checkable rather than promised: the signal type, the hash, and the tool that returns its own payload exist so a judge can falsify the claim in one minute. And scoping honestly: an earlier two-origin version depended on unverified multi-tab tool behaviour, so we kept the story and moved both surfaces to one origin.
 
 ## What's next
 
-A live Storefront API importer (the interface already matches), per-merchant fact schemas (regional pricing, legal templates), and rendering the exported composition to MP4 server-side so the agent can hand back a finished file.
+A real signal relay with k-anonymity floors (min N shoppers per cell before a merchant sees it), live Storefront API import, per-merchant fact schemas, and server-side rendering of exported compositions to MP4.
 
 ## Built with
 
-TypeScript, React 19, WebMCP (navigator.modelContext), Shopify Admin/Storefront catalog data, GSAP, Cloudflare Workers scaffold, HyperFrames composition format.
+TypeScript, React 19, WebMCP (navigator.modelContext), Shopify catalog data, GSAP, Cloudflare Workers scaffold, Netlify (gallery), HyperFrames composition format.

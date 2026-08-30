@@ -1132,3 +1132,108 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Closet surface (shopper side) ---- */
+.closet-mark {
+  background: #b7f0ad;
+  color: #10240d;
+}
+.cross-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 999px;
+  font-size: 13px;
+  text-decoration: none;
+  color: inherit;
+}
+.cross-link:hover {
+  border-color: currentColor;
+}
+.garment-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.garment-card {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 12px;
+  font-size: 13px;
+}
+.garment-cat {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+}
+.garment-meta {
+  opacity: 0.75;
+}
+.gap-list {
+  display: grid;
+  gap: 8px;
+}
+.gap-card {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-left: 3px solid #ffd166;
+  background: color-mix(in srgb, #ffd166 8%, transparent);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.gap-card strong {
+  text-transform: capitalize;
+}
+.sizes-table {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+}
+.size-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px dashed color-mix(in srgb, currentColor 12%, transparent);
+}
+.closet-trail {
+  margin-top: 16px;
+}
+/* Merchant-side demand panel */
+.demand-list {
+  display: grid;
+  gap: 8px;
+}
+.demand-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-left: 3px solid #b7f0ad;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.demand-item small {
+  opacity: 0.65;
+}
+.demand-use {
+  justify-self: start;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.demand-use:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
