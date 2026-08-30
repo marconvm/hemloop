@@ -158,7 +158,7 @@ export function ClosetStudio() {
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
-          <Link className="cross-link" href="/">
+          <Link className="cross-link" href="/studio">
             <Store data-icon="inline-start" aria-hidden="true" />
             Merchant studio
           </Link>

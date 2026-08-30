@@ -8,7 +8,7 @@ Two surfaces of one loop.
 
 **As a shopper** (`/closet`): your wardrobe lives on your page and never leaves it. Your agent reads it to shop for you — find gaps, check fit against a real store catalog — and when something you want is missing, it sends the merchant an anonymous demand signal, hashed on your side before it goes (the way ad platforms hash conversion data client-side). The signal log shows you the complete payload of everything ever sent: a hash, a category, a size. Nothing else exists to leak.
 
-**As a merchant** (`/`): hashed demand arrives in the studio's Live Demand panel — the closest thing to seeing inside customers' closets without seeing inside customers' closets. You answer it with a campaign: lock the truth, let your agent produce, and nothing non-compliant can come out. The promo video below is one output of that workflow.
+**As a merchant** (`/studio`): hashed demand arrives in the studio's Live Demand panel — the closest thing to seeing inside customers' closets without seeing inside customers' closets. You answer it with a campaign: lock the truth, let your agent produce, and nothing non-compliant can come out. The promo video below is one output of that workflow.
 
 ### The studio in one paragraph
 

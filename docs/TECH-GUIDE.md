@@ -5,8 +5,8 @@ For developers. Product rationale lives in [PRD.md](./PRD.md); end-user flow in 
 ## Architecture
 
 ```
-MERCHANT (/)                                SHOPPER (/closet)
-app/page.tsx                                app/closet/page.tsx
+MERCHANT (/studio)                                SHOPPER (/closet)
+app/studio/page.tsx                                app/closet/page.tsx
   └▶ components/proofframe-studio.tsx         └▶ components/closet-studio.tsx
         │ callbacks                                 │ callbacks
         ▼                                           ▼
@@ -89,7 +89,7 @@ then map into the `Catalog` shape in `lib/proofframe/shopify.ts` (fields: handle
 ## Verification
 
 ```sh
-npx tsx --test tests/*.test.ts   # 19 unit tests
+npx tsx --test tests/*.test.ts   # 27 unit tests
 npx tsc --noEmit                 # typecheck
 npx oxlint                       # lint (vendored components/ui excluded)
 npm run dev                      # studio on localhost:3000/3001

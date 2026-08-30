@@ -5,7 +5,7 @@
 Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/). Two surfaces, one origin, and the agent is the join:
 
 1. **The Closet** (`/closet`) — the shopper's private surface. A wardrobe, sizes and gaps that never leave the page. The shopper's agent uses 6 WebMCP tools to shop against it: find gaps, check fit against a real Shopify catalog, and, when something is missing, send the merchant a **demand signal that is hashed locally before it leaves** — the same pattern Google Ads uses for enhanced conversions, where raw data is hashed on the client and only the hash travels. No identity, no wardrobe contents, ever.
-2. **The Studio** (`/`) — the merchant's surface. Hashed demand arrives in a live panel: the offline dark matter merchants have never had (what nearby shoppers own, miss, and want, in what size). The merchant answers it with a workflow: lock the campaign truth (prices, offer, code, dates, disclaimer), then let their agent build the response through 9 WebMCP tools. A promo video is one output of that workflow — the trust machinery around it is the product, not the video editor.
+2. **The Studio** (`/studio`) — the merchant's surface. Hashed demand arrives in a live panel: the offline dark matter merchants have never had (what nearby shoppers own, miss, and want, in what size). The merchant answers it with a workflow: lock the campaign truth (prices, offer, code, dates, disclaimer), then let their agent build the response through 9 WebMCP tools. A promo video is one output of that workflow — the trust machinery around it is the product, not the video editor.
 
 The win-win: the shopper gets an agent that knows their wardrobe without ever uploading it; the merchant gets demand data that used to be invisible, pre-anonymised at the source; and everything the merchant's agent produces in response is claim-validated **before it applies** — copy that says "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason. The exported composition refuses to exist while violations remain, and the disclaimer is baked into every frame as an element no tool can remove.
 
@@ -17,7 +17,7 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 
 ```sh
 npm install
-npm run dev                       # studio on /, closet on /closet
+npm run dev                       # landing on /, studio on /studio, closet on /closet
 npx tsx --test tests/*.test.ts    # 27 tests
 ```
 

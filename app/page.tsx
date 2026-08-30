@@ -1,5 +1,5 @@
-import { ProofFrameStudio } from '@/components/proofframe-studio';
+import { Landing } from '@/components/landing';
 
 export default function Home() {
-  return <ProofFrameStudio />;
+  return <Landing />;
 }

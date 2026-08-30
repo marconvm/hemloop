@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { BRAND } from '@/lib/proofframe/brand';
 import { exportComposition } from '@/lib/proofframe/exporter';
 import { seedCampaign } from '@/lib/proofframe/seed';
 import { makeCatalogImporter } from '@/lib/proofframe/shopify';
@@ -396,10 +397,10 @@ export function ProofFrameStudio() {
     <main className="studio-shell">
       <header className="studio-header">
         <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">PF</div>
+          <div className="brand-mark" aria-hidden="true">{BRAND.name.slice(0, 2).toUpperCase()}</div>
           <div>
             <p className="eyebrow">Agent-native campaign studio</p>
-            <h1>ProofFrame</h1>
+            <h1>{BRAND.name}</h1>
           </div>
         </div>
 

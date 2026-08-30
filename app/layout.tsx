@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 
+import { BRAND } from '@/lib/proofframe/brand';
+
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ProofFrame — Agent-native campaign studio',
-  description:
-    'Build motion campaigns with your browser agent while human-locked product facts keep every claim true.',
+  title: `${BRAND.name} — ${BRAND.tagline}`,
+  description: BRAND.sub,
 };
 
 export default function RootLayout({
