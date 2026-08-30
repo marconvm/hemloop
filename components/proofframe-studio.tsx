@@ -221,7 +221,11 @@ export function ProofFrameStudio() {
       if (!active) return;
       try {
         const result = registerProofFrameTools(callbacks);
-        setRegisteredCount(result.registered.length);
+        setRegisteredCount(
+          result.registered.length > 0
+            ? result.registered.length
+            : buildTools(callbacks).length,
+        );
         setWebMcpStatus(result.registered.length > 0 ? 'active' : 'preview');
       } catch (error) {
         console.error('WebMCP registration failed', error);
@@ -343,7 +347,7 @@ export function ProofFrameStudio() {
       ? 'WebMCP registration error'
       : webMcpStatus === 'checking'
         ? 'Checking WebMCP…'
-        : '8 tools · preview mode';
+        : `${registeredCount} tools · preview mode`;
 
   return (
     <main className="studio-shell">
