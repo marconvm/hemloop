@@ -1,0 +1,175 @@
+{
+  "source": "playground-6mz3jwlf.myshopify.com",
+  "kind": "storefront-snapshot",
+  "generatedAt": "2026-08-30",
+  "products": [
+    {
+      "handle": "northlight-hoodie",
+      "title": "Northlight Hoodie",
+      "description": "Heavyweight brushed fleece hoodie. Boxy fit, six colours. Synthetic demo product for the ProofFrame WebMCP Challenge entry.",
+      "currency": "CAD",
+      "price": 44.9,
+      "compareAtPrice": 59.9
+    },
+    {
+      "handle": "the-inventory-not-tracked-snowboard",
+      "title": "The Inventory Not Tracked Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 949.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "gift-card",
+      "title": "Gift Card",
+      "description": "This is a gift card for the store",
+      "currency": "USD",
+      "price": 10,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-minimal-snowboard",
+      "title": "The Minimal Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 885.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-complete-snowboard",
+      "title": "The Complete Snowboard",
+      "description": "This PREMIUM snowboard is so SUPERDUPER awesome!",
+      "currency": "USD",
+      "price": 699.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-hidden-snowboard",
+      "title": "The Hidden Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 749.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-collection-snowboard-hydrogen",
+      "title": "The Collection Snowboard: Hydrogen",
+      "description": "",
+      "currency": "USD",
+      "price": 600,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-videographer-snowboard",
+      "title": "The Videographer Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 885.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-compare-at-price-snowboard",
+      "title": "The Compare at Price Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 785.95,
+      "compareAtPrice": 885.95
+    },
+    {
+      "handle": "the-out-of-stock-snowboard",
+      "title": "The Out of Stock Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 885.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "selling-plans-ski-wax",
+      "title": "Selling Plans Ski Wax",
+      "description": "",
+      "currency": "USD",
+      "price": 24.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-multi-location-snowboard",
+      "title": "The Multi-location Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 729.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-3p-fulfilled-snowboard",
+      "title": "The 3p Fulfilled Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 2629.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-multi-managed-snowboard",
+      "title": "The Multi-managed Snowboard",
+      "description": "",
+      "currency": "USD",
+      "price": 629.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-collection-snowboard-oxygen",
+      "title": "The Collection Snowboard: Oxygen",
+      "description": "",
+      "currency": "USD",
+      "price": 1025,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "the-collection-snowboard-liquid",
+      "title": "The Collection Snowboard: Liquid",
+      "description": "",
+      "currency": "USD",
+      "price": 749.95,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "skater-jeans",
+      "title": "Skater Jeans",
+      "description": "",
+      "currency": "USD",
+      "price": 31.99,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "chloe-low-rise-baggy-jeans",
+      "title": "Chloe Low Rise Baggy Jeans",
+      "description": "",
+      "currency": "USD",
+      "price": 31.99,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "aero-1987-graphic-tee",
+      "title": "AERO 1987 Graphic Tee",
+      "description": "",
+      "currency": "USD",
+      "price": 15.99,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "toyota-supra-mk4-turbo-graphic-tee",
+      "title": "Toyota Supra MK4 Turbo Graphic Tee",
+      "description": "",
+      "currency": "USD",
+      "price": 15.99,
+      "compareAtPrice": null
+    },
+    {
+      "handle": "fleece-oversized-hoodie",
+      "title": "Fleece Oversized Hoodie",
+      "description": "",
+      "currency": "USD",
+      "price": 27.99,
+      "compareAtPrice": null
+    }
+  ]
+}
