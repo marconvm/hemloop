@@ -123,116 +123,152 @@ export function ProofFrameStudio() {
   }, []);
 
   const pushActivity = useCallback((entry: Omit<Activity, 'id' | 'at'>) => {
-    setActivity((current) => [
-      { ...entry, id: Date.now() + Math.random(), at: timeLabel() },
-      ...current,
-    ].slice(0, 6));
+    setActivity((current) =>
+      [
+        { ...entry, id: Date.now() + Math.random(), at: timeLabel() },
+        ...current,
+      ].slice(0, 6),
+    );
   }, []);
 
-  const commit = useCallback((transform: (current: CampaignState) => CampaignState) => {
-    const next = transform(campaignRef.current);
-    campaignRef.current = next;
-    setCampaign(next);
-  }, []);
+  const commit = useCallback(
+    (transform: (current: CampaignState) => CampaignState) => {
+      const next = transform(campaignRef.current);
+      campaignRef.current = next;
+      setCampaign(next);
+    },
+    [],
+  );
 
-  const agentSetBrief = useCallback((brief: string) => {
-    commit((current) => ({ ...current, brief }));
-    pushActivity({
-      actor: 'AI',
-      title: 'Updated the creative brief',
-      detail: brief,
-      status: 'agent',
-    });
-  }, [commit, pushActivity]);
+  const agentSetBrief = useCallback(
+    (brief: string) => {
+      commit((current) => ({ ...current, brief }));
+      pushActivity({
+        actor: 'AI',
+        title: 'Updated the creative brief',
+        detail: brief,
+        status: 'agent',
+      });
+    },
+    [commit, pushActivity],
+  );
 
-  const agentAddScene = useCallback((input: SceneInput) => {
-    const ids = new Set(campaignRef.current.scenes.map((scene) => scene.id));
-    let suffix = campaignRef.current.scenes.length + 1;
-    let id = `scene-${suffix}`;
-    while (ids.has(id)) id = `scene-${++suffix}`;
-    const scene: Scene = { id, ...input };
-    commit((current) => ({ ...current, scenes: [...current.scenes, scene] }));
-    setSelectedId(id);
-    pushActivity({
-      actor: 'AI',
-      title: `Added ${input.kind} scene`,
-      detail: input.heading,
-      status: 'agent',
-    });
-    return scene;
-  }, [commit, pushActivity]);
+  const agentAddScene = useCallback(
+    (input: SceneInput) => {
+      const ids = new Set(campaignRef.current.scenes.map((scene) => scene.id));
+      let suffix = campaignRef.current.scenes.length + 1;
+      let id = `scene-${suffix}`;
+      while (ids.has(id)) id = `scene-${++suffix}`;
+      const scene: Scene = { id, ...input };
+      commit((current) => ({ ...current, scenes: [...current.scenes, scene] }));
+      setSelectedId(id);
+      pushActivity({
+        actor: 'AI',
+        title: `Added ${input.kind} scene`,
+        detail: input.heading,
+        status: 'agent',
+      });
+      return scene;
+    },
+    [commit, pushActivity],
+  );
 
-  const agentUpdateScene = useCallback((id: string, patch: Partial<SceneInput>) => {
-    commit((current) => ({
-      ...current,
-      scenes: current.scenes.map((scene) =>
-        scene.id === id ? { ...scene, ...patch } : scene,
-      ),
-    }));
-    setSelectedId(id);
-    pushActivity({
-      actor: 'AI',
-      title: `Updated scene “${id}”`,
-      detail: 'The validated change is visible in the canvas.',
-      status: 'agent',
-    });
-  }, [commit, pushActivity]);
+  const agentUpdateScene = useCallback(
+    (id: string, patch: Partial<SceneInput>) => {
+      commit((current) => ({
+        ...current,
+        scenes: current.scenes.map((scene) =>
+          scene.id === id ? { ...scene, ...patch } : scene,
+        ),
+      }));
+      setSelectedId(id);
+      pushActivity({
+        actor: 'AI',
+        title: `Updated scene “${id}”`,
+        detail: 'The validated change is visible in the canvas.',
+        status: 'agent',
+      });
+    },
+    [commit, pushActivity],
+  );
 
-  const agentReorderScenes = useCallback((orderedIds: string[]) => {
-    commit((current) => ({
-      ...current,
-      scenes: orderedIds
-        .map((id) => current.scenes.find((scene) => scene.id === id))
-        .filter((scene): scene is Scene => Boolean(scene)),
-    }));
-    pushActivity({
-      actor: 'AI',
-      title: 'Reordered the storyboard',
-      detail: orderedIds.join(' → '),
-      status: 'agent',
-    });
-  }, [commit, pushActivity]);
+  const agentReorderScenes = useCallback(
+    (orderedIds: string[]) => {
+      commit((current) => ({
+        ...current,
+        scenes: orderedIds
+          .map((id) => current.scenes.find((scene) => scene.id === id))
+          .filter((scene): scene is Scene => Boolean(scene)),
+      }));
+      pushActivity({
+        actor: 'AI',
+        title: 'Reordered the storyboard',
+        detail: orderedIds.join(' → '),
+        status: 'agent',
+      });
+    },
+    [commit, pushActivity],
+  );
 
-  const agentSeekPreview = useCallback((tSec: number) => {
-    setPlayhead(tSec);
-    const scene = sceneAtTime(campaignRef.current.scenes, tSec);
-    if (scene) setSelectedId(scene.id);
-    pushActivity({
-      actor: 'AI',
-      title: `Seeked preview to ${tSec.toFixed(1)}s`,
-      detail: 'Deterministic seek: the same time returns the same scene.',
-      status: 'agent',
-    });
-  }, [pushActivity]);
+  const agentSeekPreview = useCallback(
+    (tSec: number) => {
+      setPlayhead(tSec);
+      const scene = sceneAtTime(campaignRef.current.scenes, tSec);
+      if (scene) setSelectedId(scene.id);
+      pushActivity({
+        actor: 'AI',
+        title: `Seeked preview to ${tSec.toFixed(1)}s`,
+        detail: 'Deterministic seek: the same time returns the same scene.',
+        status: 'agent',
+      });
+    },
+    [pushActivity],
+  );
 
-  const agentImportProduct = useCallback((handle: string) => {
-    if (campaignRef.current.factsLocked) {
-      throw new Error(
-        'Campaign truth is locked. Ask the human to unlock it before importing a product.',
+  const agentImportProduct = useCallback(
+    (handle: string) => {
+      if (campaignRef.current.factsLocked) {
+        throw new Error(
+          'Campaign truth is locked. Ask the human to unlock it before importing a product.',
+        );
+      }
+      const facts = makeCatalogImporter(() => campaignRef.current.facts)(
+        handle,
       );
-    }
-    const facts = makeCatalogImporter(() => campaignRef.current.facts)(handle);
-    commit((current) => ({ ...current, facts }));
-    pushActivity({
-      actor: 'AI',
-      title: `Imported “${facts.productName}” from the store snapshot`,
-      detail: facts.salePrice === null
-        ? `${facts.currency} ${facts.regularPrice.toFixed(2)}`
-        : `${facts.currency} ${facts.regularPrice.toFixed(2)} → ${facts.salePrice.toFixed(2)} (${facts.discountPercent}% off)`,
-      status: 'agent',
-    });
-    return facts;
-  }, [commit, pushActivity]);
+      commit((current) => ({ ...current, facts }));
+      pushActivity({
+        actor: 'AI',
+        title: `Imported “${facts.productName}” from the store snapshot`,
+        detail:
+          facts.salePrice === null
+            ? `${facts.currency} ${facts.regularPrice.toFixed(2)}`
+            : `${facts.currency} ${facts.regularPrice.toFixed(2)} → ${facts.salePrice.toFixed(2)} (${facts.discountPercent}% off)`,
+        status: 'agent',
+      });
+      return facts;
+    },
+    [commit, pushActivity],
+  );
 
-  const callbacks = useMemo<ProofFrameCallbacks>(() => ({
-    getState: () => campaignRef.current,
-    setBrief: agentSetBrief,
-    addScene: agentAddScene,
-    updateScene: agentUpdateScene,
-    reorderScenes: agentReorderScenes,
-    seekPreview: agentSeekPreview,
-    importProduct: agentImportProduct,
-  }), [agentAddScene, agentImportProduct, agentReorderScenes, agentSeekPreview, agentSetBrief, agentUpdateScene]);
+  const callbacks = useMemo<ProofFrameCallbacks>(
+    () => ({
+      getState: () => campaignRef.current,
+      setBrief: agentSetBrief,
+      addScene: agentAddScene,
+      updateScene: agentUpdateScene,
+      reorderScenes: agentReorderScenes,
+      seekPreview: agentSeekPreview,
+      importProduct: agentImportProduct,
+    }),
+    [
+      agentAddScene,
+      agentImportProduct,
+      agentReorderScenes,
+      agentSeekPreview,
+      agentSetBrief,
+      agentUpdateScene,
+    ],
+  );
 
   useEffect(() => {
     let active = true;
@@ -261,10 +297,12 @@ export function ProofFrameStudio() {
     [campaign.scenes],
   );
   const violations = useMemo(() => validateCampaign(campaign), [campaign]);
-  const activeScene = campaign.scenes.find((scene) => scene.id === selectedId)
-    ?? sceneAtTime(campaign.scenes, playhead)
-    ?? campaign.scenes[0];
-  const progress = totalDuration > 0 ? Math.min(playhead / totalDuration, 1) : 0;
+  const activeScene =
+    campaign.scenes.find((scene) => scene.id === selectedId) ??
+    sceneAtTime(campaign.scenes, playhead) ??
+    campaign.scenes[0];
+  const progress =
+    totalDuration > 0 ? Math.min(playhead / totalDuration, 1) : 0;
 
   useEffect(() => {
     if (!playing || totalDuration <= 0) return;
@@ -283,16 +321,19 @@ export function ProofFrameStudio() {
     return () => window.clearInterval(timer);
   }, [playing, totalDuration]);
 
-  const updateFact = useCallback(<K extends keyof CampaignState['facts']>(
-    key: K,
-    value: CampaignState['facts'][K],
-  ) => {
-    if (campaignRef.current.factsLocked) return;
-    commit((current) => ({
-      ...current,
-      facts: { ...current.facts, [key]: value },
-    }));
-  }, [commit]);
+  const updateFact = useCallback(
+    <K extends keyof CampaignState['facts']>(
+      key: K,
+      value: CampaignState['facts'][K],
+    ) => {
+      if (campaignRef.current.factsLocked) return;
+      commit((current) => ({
+        ...current,
+        facts: { ...current.facts, [key]: value },
+      }));
+    },
+    [commit],
+  );
 
   const toggleTruthLock = () => {
     const willLock = !campaign.factsLocked;
@@ -324,10 +365,14 @@ export function ProofFrameStudio() {
   };
 
   const runBlockedDemo = async () => {
-    const tool = buildTools(callbacks).find((candidate) => candidate.name === 'update_scene');
+    const tool = buildTools(callbacks).find(
+      (candidate) => candidate.name === 'update_scene',
+    );
     if (!tool) return;
     const response = await tool.execute({
-      id: campaign.scenes.find((scene) => scene.kind === 'offer')?.id ?? selectedId,
+      id:
+        campaign.scenes.find((scene) => scene.kind === 'offer')?.id ??
+        selectedId,
       heading: '50% off everything — guaranteed lowest price',
     });
     const payload = JSON.parse(response.content[0]?.text ?? '{}') as {
@@ -336,9 +381,12 @@ export function ProofFrameStudio() {
     };
     pushActivity({
       actor: 'PF',
-      title: payload.ok ? 'Safety demo unexpectedly passed' : 'Blocked an agent claim',
-      detail: payload.violations?.[0]?.message
-        ?? 'The proposed copy contradicted human-locked facts. Nothing changed.',
+      title: payload.ok
+        ? 'Safety demo unexpectedly passed'
+        : 'Blocked an agent claim',
+      detail:
+        payload.violations?.[0]?.message ??
+        'The proposed copy contradicted human-locked facts. Nothing changed.',
       status: payload.ok ? 'system' : 'blocked',
     });
   };
@@ -346,7 +394,9 @@ export function ProofFrameStudio() {
   const applySignalToCampaign = (signal: DemandSignal) => {
     if (campaignRef.current.factsLocked || !signal.handle) return;
     try {
-      const facts = makeCatalogImporter(() => campaignRef.current.facts)(signal.handle);
+      const facts = makeCatalogImporter(() => campaignRef.current.facts)(
+        signal.handle,
+      );
       commit((current) => ({
         ...current,
         facts,
@@ -380,24 +430,28 @@ export function ProofFrameStudio() {
     pushActivity({
       actor: 'MC',
       title: 'Exported a validated composition',
-      detail: 'Standalone HyperFrames HTML is ready for deterministic rendering.',
+      detail:
+        'Standalone HyperFrames HTML is ready for deterministic rendering.',
       status: 'human',
     });
   };
 
-  const statusLabel = webMcpStatus === 'active'
-    ? `${registeredCount} WebMCP tools live`
-    : webMcpStatus === 'error'
-      ? 'WebMCP registration error'
-      : webMcpStatus === 'checking'
-        ? 'Checking WebMCP…'
-        : `${registeredCount} tools · preview mode`;
+  const statusLabel =
+    webMcpStatus === 'active'
+      ? `${registeredCount} WebMCP tools live`
+      : webMcpStatus === 'error'
+        ? 'WebMCP registration error'
+        : webMcpStatus === 'checking'
+          ? 'Checking WebMCP…'
+          : `${registeredCount} tools · preview mode`;
 
   return (
     <main className="studio-shell">
       <header className="studio-header">
         <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">{BRAND.name.slice(0, 2).toUpperCase()}</div>
+          <div className="brand-mark" aria-hidden="true">
+            {BRAND.name.slice(0, 2).toUpperCase()}
+          </div>
           <div>
             <p className="eyebrow">Agent-native campaign studio</p>
             <h1>{BRAND.name}</h1>
@@ -415,18 +469,28 @@ export function ProofFrameStudio() {
             <Shirt data-icon="inline-start" aria-hidden="true" />
             Shopper closet
           </Link>
-          <Badge variant="outline" className={`webmcp-badge status-${webMcpStatus}`}>
+          <Badge
+            variant="outline"
+            className={`webmcp-badge status-${webMcpStatus}`}
+          >
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
-          <Button className="export-button" onClick={downloadComposition} disabled={violations.length > 0}>
+          <Button
+            className="export-button"
+            onClick={downloadComposition}
+            disabled={violations.length > 0}
+          >
             <Download data-icon="inline-start" />
             Export
           </Button>
         </div>
       </header>
 
-      <section className="studio-grid" aria-label="ProofFrame campaign workspace">
+      <section
+        className="studio-grid"
+        aria-label="ProofFrame campaign workspace"
+      >
         <aside className="truth-panel panel">
           <div className="panel-heading">
             <div>
@@ -437,7 +501,8 @@ export function ProofFrameStudio() {
           </div>
 
           <p className="panel-intro">
-            Source facts are controlled here, never through agent tools. Lock them before asking an agent to compose.
+            Source facts are controlled here, never through agent tools. Lock
+            them before asking an agent to compose.
           </p>
 
           <div className="truth-list">
@@ -446,9 +511,15 @@ export function ProofFrameStudio() {
               <input
                 value={campaign.facts.productName}
                 disabled={campaign.factsLocked}
-                onChange={(event) => updateFact('productName', event.target.value)}
+                onChange={(event) =>
+                  updateFact('productName', event.target.value)
+                }
               />
-              {campaign.factsLocked ? <LockKeyhole aria-label="Locked fact" /> : <UnlockKeyhole aria-label="Editable fact" />}
+              {campaign.factsLocked ? (
+                <LockKeyhole aria-label="Locked fact" />
+              ) : (
+                <UnlockKeyhole aria-label="Editable fact" />
+              )}
             </label>
             <label className="truth-row truth-pair">
               <span>Regular / sale price</span>
@@ -459,7 +530,9 @@ export function ProofFrameStudio() {
                   value={campaign.facts.regularPrice}
                   disabled={campaign.factsLocked}
                   aria-label="Regular price"
-                  onChange={(event) => updateFact('regularPrice', Number(event.target.value))}
+                  onChange={(event) =>
+                    updateFact('regularPrice', Number(event.target.value))
+                  }
                 />
                 <input
                   type="number"
@@ -467,10 +540,21 @@ export function ProofFrameStudio() {
                   value={campaign.facts.salePrice ?? ''}
                   disabled={campaign.factsLocked}
                   aria-label="Sale price"
-                  onChange={(event) => updateFact('salePrice', event.target.value === '' ? null : Number(event.target.value))}
+                  onChange={(event) =>
+                    updateFact(
+                      'salePrice',
+                      event.target.value === ''
+                        ? null
+                        : Number(event.target.value),
+                    )
+                  }
                 />
               </span>
-              {campaign.factsLocked ? <LockKeyhole aria-label="Locked fact" /> : <UnlockKeyhole aria-label="Editable fact" />}
+              {campaign.factsLocked ? (
+                <LockKeyhole aria-label="Locked fact" />
+              ) : (
+                <UnlockKeyhole aria-label="Editable fact" />
+              )}
             </label>
             <label className="truth-row truth-pair">
               <span>Discount / promo code</span>
@@ -480,16 +564,29 @@ export function ProofFrameStudio() {
                   value={campaign.facts.discountPercent ?? ''}
                   disabled={campaign.factsLocked}
                   aria-label="Discount percent"
-                  onChange={(event) => updateFact('discountPercent', event.target.value === '' ? null : Number(event.target.value))}
+                  onChange={(event) =>
+                    updateFact(
+                      'discountPercent',
+                      event.target.value === ''
+                        ? null
+                        : Number(event.target.value),
+                    )
+                  }
                 />
                 <input
                   value={campaign.facts.promoCode ?? ''}
                   disabled={campaign.factsLocked}
                   aria-label="Promo code"
-                  onChange={(event) => updateFact('promoCode', event.target.value || null)}
+                  onChange={(event) =>
+                    updateFact('promoCode', event.target.value || null)
+                  }
                 />
               </span>
-              {campaign.factsLocked ? <LockKeyhole aria-label="Locked fact" /> : <UnlockKeyhole aria-label="Editable fact" />}
+              {campaign.factsLocked ? (
+                <LockKeyhole aria-label="Locked fact" />
+              ) : (
+                <UnlockKeyhole aria-label="Editable fact" />
+              )}
             </label>
             <label className="truth-row">
               <span>End date</span>
@@ -499,7 +596,11 @@ export function ProofFrameStudio() {
                 disabled={campaign.factsLocked}
                 onChange={(event) => updateFact('endDate', event.target.value)}
               />
-              {campaign.factsLocked ? <LockKeyhole aria-label="Locked fact" /> : <UnlockKeyhole aria-label="Editable fact" />}
+              {campaign.factsLocked ? (
+                <LockKeyhole aria-label="Locked fact" />
+              ) : (
+                <UnlockKeyhole aria-label="Editable fact" />
+              )}
             </label>
           </div>
 
@@ -517,11 +618,21 @@ export function ProofFrameStudio() {
             <CheckCircle2 aria-label="Approved" />
           </div>
 
-          <Button variant={campaign.factsLocked ? 'outline' : 'default'} className="brief-button" onClick={toggleTruthLock}>
-            {campaign.factsLocked ? <UnlockKeyhole data-icon="inline-start" /> : <LockKeyhole data-icon="inline-start" />}
+          <Button
+            variant={campaign.factsLocked ? 'outline' : 'default'}
+            className="brief-button"
+            onClick={toggleTruthLock}
+          >
+            {campaign.factsLocked ? (
+              <UnlockKeyhole data-icon="inline-start" />
+            ) : (
+              <LockKeyhole data-icon="inline-start" />
+            )}
             {campaign.factsLocked ? 'Unlock as human' : 'Lock campaign truth'}
           </Button>
-          <p className="human-only-note">Human-only control · deliberately absent from WebMCP</p>
+          <p className="human-only-note">
+            Human-only control · deliberately absent from WebMCP
+          </p>
         </aside>
 
         <section className="canvas-panel panel" aria-label="Campaign preview">
@@ -531,7 +642,12 @@ export function ProofFrameStudio() {
               <h2>9:16 · {totalDuration.toFixed(1)} seconds</h2>
             </div>
             <div className="toolbar-controls">
-              <Button variant="ghost" size="icon" aria-label={playing ? 'Pause preview' : 'Play preview'} onClick={() => setPlaying((current) => !current)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={playing ? 'Pause preview' : 'Play preview'}
+                onClick={() => setPlaying((current) => !current)}
+              >
                 {playing ? <Pause /> : <Play />}
               </Button>
               <span>{playhead.toFixed(1).padStart(4, '0')}s</span>
@@ -542,27 +658,42 @@ export function ProofFrameStudio() {
             {activeScene ? (
               <div
                 className={`phone-preview dynamic-preview kind-${activeScene.kind}`}
-                style={{
-                  background: activeScene.style?.background ?? campaign.style.background,
-                  color: activeScene.style?.ink ?? campaign.style.ink,
-                  '--scene-accent': activeScene.style?.accent ?? campaign.style.accent,
-                } as React.CSSProperties}
+                style={
+                  {
+                    background:
+                      activeScene.style?.background ??
+                      campaign.style.background,
+                    color: activeScene.style?.ink ?? campaign.style.ink,
+                    '--scene-accent':
+                      activeScene.style?.accent ?? campaign.style.accent,
+                  } as React.CSSProperties
+                }
               >
                 <div className="preview-grain" aria-hidden="true" />
-                <p className="preview-kicker">{activeScene.kind} / {campaign.facts.productName}</p>
+                <p className="preview-kicker">
+                  {activeScene.kind} / {campaign.facts.productName}
+                </p>
                 <div className="preview-signal" aria-hidden="true">
                   <span />
                   <span />
                   <span />
                 </div>
                 <div className="dynamic-copy">
-                  <span>Scene {String(campaign.scenes.indexOf(activeScene) + 1).padStart(2, '0')}</span>
+                  <span>
+                    Scene{' '}
+                    {String(campaign.scenes.indexOf(activeScene) + 1).padStart(
+                      2,
+                      '0',
+                    )}
+                  </span>
                   <h3>{activeScene.heading}</h3>
                   <p>{activeScene.body}</p>
                 </div>
                 <div className="preview-price">
                   <strong>{campaign.facts.discountPercent}% off</strong>
-                  <span>{money(campaign.facts.salePrice, campaign.facts.currency)}</span>
+                  <span>
+                    {money(campaign.facts.salePrice, campaign.facts.currency)}
+                  </span>
                 </div>
                 <p className="preview-footnote">{campaign.facts.disclaimer}</p>
               </div>
@@ -588,14 +719,38 @@ export function ProofFrameStudio() {
               }}
             />
             <div className="timeline-rail">
-              <span className="timeline-progress" style={{ width: `${progress * 100}%` }} />
-              <span className="timeline-playhead" style={{ left: `${progress * 100}%` }} />
+              <span
+                className="timeline-progress"
+                style={{ width: `${progress * 100}%` }}
+              />
+              <span
+                className="timeline-playhead"
+                style={{ left: `${progress * 100}%` }}
+              />
             </div>
-            <div className="scene-grid" style={{ gridTemplateColumns: `repeat(${Math.max(campaign.scenes.length, 1)}, minmax(112px, 1fr))` }}>
+            <div
+              className="scene-grid"
+              style={{
+                gridTemplateColumns: `repeat(${Math.max(campaign.scenes.length, 1)}, minmax(112px, 1fr))`,
+              }}
+            >
               {campaign.scenes.map((scene, index) => (
-                <button className={`scene-card ${scene.id === activeScene?.id ? 'active' : ''}`} type="button" key={scene.id} onClick={() => selectScene(scene)}>
-                  <span className="scene-number">{String(index + 1).padStart(2, '0')}</span>
-                  <span className="scene-swatch" style={{ background: scene.style?.background ?? campaign.style.background }} />
+                <button
+                  className={`scene-card ${scene.id === activeScene?.id ? 'active' : ''}`}
+                  type="button"
+                  key={scene.id}
+                  onClick={() => selectScene(scene)}
+                >
+                  <span className="scene-number">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span
+                    className="scene-swatch"
+                    style={{
+                      background:
+                        scene.style?.background ?? campaign.style.background,
+                    }}
+                  />
                   <span>
                     <small>{scene.kind}</small>
                     <strong>{scene.heading}</strong>
@@ -607,15 +762,36 @@ export function ProofFrameStudio() {
               <div className="scene-inspector">
                 <label>
                   <span>Heading</span>
-                  <input value={activeScene.heading} onChange={(event) => updateSceneAsHuman({ heading: event.target.value })} />
+                  <input
+                    value={activeScene.heading}
+                    onChange={(event) =>
+                      updateSceneAsHuman({ heading: event.target.value })
+                    }
+                  />
                 </label>
                 <label>
                   <span>Body</span>
-                  <input value={activeScene.body} onChange={(event) => updateSceneAsHuman({ body: event.target.value })} />
+                  <input
+                    value={activeScene.body}
+                    onChange={(event) =>
+                      updateSceneAsHuman({ body: event.target.value })
+                    }
+                  />
                 </label>
                 <label className="duration-input">
                   <span>Seconds</span>
-                  <input type="number" min="0.5" max="30" step="0.5" value={activeScene.durationSec} onChange={(event) => updateSceneAsHuman({ durationSec: Number(event.target.value) })} />
+                  <input
+                    type="number"
+                    min="0.5"
+                    max="30"
+                    step="0.5"
+                    value={activeScene.durationSec}
+                    onChange={(event) =>
+                      updateSceneAsHuman({
+                        durationSec: Number(event.target.value),
+                      })
+                    }
+                  />
                 </label>
               </div>
             )}
@@ -631,30 +807,44 @@ export function ProofFrameStudio() {
             <WandSparkles aria-hidden="true" />
           </div>
 
-          <div className={`validation-card ${violations.length === 0 ? 'success-card' : 'error-card'}`}>
+          <div
+            className={`validation-card ${violations.length === 0 ? 'success-card' : 'error-card'}`}
+          >
             <div className="validation-icon">
               {violations.length === 0 ? <CheckCircle2 /> : <AlertTriangle />}
             </div>
             <div>
               <span>Current status</span>
-              <strong>{violations.length === 0 ? 'All claims trace to locked facts' : `${violations.length} claim issue${violations.length === 1 ? '' : 's'}`}</strong>
-              <p>{violations[0]?.message ?? `${campaign.scenes.length} scenes checked · safe to export`}</p>
+              <strong>
+                {violations.length === 0
+                  ? 'All claims trace to locked facts'
+                  : `${violations.length} claim issue${violations.length === 1 ? '' : 's'}`}
+              </strong>
+              <p>
+                {violations[0]?.message ??
+                  `${campaign.scenes.length} scenes checked · safe to export`}
+              </p>
             </div>
           </div>
 
-          <Button variant="outline" className="safety-demo" onClick={runBlockedDemo}>
+          <Button
+            variant="outline"
+            className="safety-demo"
+            onClick={runBlockedDemo}
+          >
             <ShieldCheck data-icon="inline-start" />
             Try unsafe agent claim
           </Button>
 
           <div className="demand-list" aria-live="polite">
             <p className="eyebrow">
-              <Radio data-icon="inline-start" aria-hidden="true" /> Live demand · hashed, anonymous
+              <Radio data-icon="inline-start" aria-hidden="true" /> Live demand
+              · zero-ID events
             </p>
             {signals.length === 0 ? (
               <p className="panel-intro">
-                No signals yet. Shopper agents report demand from the closet page; only hashed
-                aggregates arrive here.
+                No signals yet. Shopper agents can report a human-approved,
+                schema-limited demand event from the closet page.
               </p>
             ) : (
               signals.slice(0, 4).map((signal) => (
@@ -665,7 +855,8 @@ export function ProofFrameStudio() {
                     {signal.handle ? ` · ${signal.handle}` : ''}
                   </strong>
                   <small>
-                    {signal.kind} · shopper #{signal.shopperHash} · no identity, no wardrobe data
+                    {signal.kind} · event #{signal.signalId.slice(0, 8)} · no
+                    shopper ID or wardrobe rows
                   </small>
                   {signal.handle && (
                     <button
@@ -679,7 +870,9 @@ export function ProofFrameStudio() {
                       }
                       onClick={() => applySignalToCampaign(signal)}
                     >
-                      {campaign.factsLocked ? 'Unlock truth to use' : 'Build campaign from this'}
+                      {campaign.factsLocked
+                        ? 'Unlock truth to use'
+                        : 'Build campaign from this'}
                     </button>
                   )}
                 </div>
@@ -689,8 +882,13 @@ export function ProofFrameStudio() {
 
           <div className="activity-list" aria-live="polite">
             {activity.map((item) => (
-              <div className={`activity-item ${item.status === 'blocked' ? 'blocked-item' : ''}`} key={item.id}>
-                <span className={`activity-marker ${item.status}-marker`}>{item.actor}</span>
+              <div
+                className={`activity-item ${item.status === 'blocked' ? 'blocked-item' : ''}`}
+                key={item.id}
+              >
+                <span className={`activity-marker ${item.status}-marker`}>
+                  {item.actor}
+                </span>
                 <div>
                   <strong>{item.title}</strong>
                   <p>{item.detail}</p>
@@ -703,11 +901,15 @@ export function ProofFrameStudio() {
           <div className="tool-card">
             <div>
               <span className="tool-pulse" />
-              {webMcpStatus === 'active' ? 'WebMCP connected' : 'WebMCP contract ready'}
+              {webMcpStatus === 'active'
+                ? 'WebMCP connected'
+                : 'WebMCP contract ready'}
             </div>
             <code>navigator.modelContext</code>
             <p>
-              Ask a browser agent to read, draft, reorder, seek, validate, or export. Every accepted mutation appears here; rejected claims change nothing.
+              Ask a browser agent to read, draft, reorder, seek, validate, or
+              export. Every accepted mutation appears here; rejected claims
+              change nothing.
             </p>
           </div>
 

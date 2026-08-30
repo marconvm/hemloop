@@ -1,16 +1,11 @@
 'use client';
 
-import {
-  Radio,
-  Shirt,
-  ShieldCheck,
-  Sparkles,
-  Store,
-} from 'lucide-react';
+import { Radio, Shirt, ShieldCheck, Sparkles, Store } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { BRAND } from '@/lib/proofframe/brand';
 import {
   findGaps,
   seedWardrobe,
@@ -19,7 +14,11 @@ import {
   type Garment,
   type Wardrobe,
 } from '@/lib/proofframe/closet';
-import { appendSignal, readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
+import {
+  appendSignal,
+  readSignals,
+  subscribeSignals,
+} from '@/lib/proofframe/signal-bridge';
 import {
   buildClosetTools,
   registerClosetTools,
@@ -40,14 +39,23 @@ export function ClosetStudio() {
   const [wardrobe, setWardrobe] = useState<Wardrobe>(seedWardrobe);
   const wardrobeRef = useRef(wardrobe);
   const [trail, setTrail] = useState<Trail[]>([
-    { id: 1, actor: 'ME', title: 'Wardrobe seeded', detail: '8 garments, private to this page.' },
+    {
+      id: 1,
+      actor: 'ME',
+      title: 'Wardrobe seeded',
+      detail: '8 garments, private to this page.',
+    },
   ]);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>('checking');
   const [toolCount, setToolCount] = useState(0);
+  const [shareApproved, setShareApproved] = useState(false);
+  const shareApprovedRef = useRef(false);
 
   const pushTrail = useCallback((entry: Omit<Trail, 'id'>) => {
-    setTrail((current) => [{ ...entry, id: Date.now() + Math.random() }, ...current].slice(0, 6));
+    setTrail((current) =>
+      [{ ...entry, id: Date.now() + Math.random() }, ...current].slice(0, 6),
+    );
   }, []);
 
   const addGarment = useCallback(
@@ -77,20 +85,28 @@ export function ClosetStudio() {
       appendSignal(signal);
       pushTrail({
         actor: 'AI',
-        title: 'Sent an anonymous demand signal',
-        detail: `${signal.kind} · ${signal.category}${signal.size ? ` · ${signal.size}` : ''} · shopper #${signal.shopperHash}`,
+        title: 'Sent an approved zero-ID signal',
+        detail: `${signal.kind} · ${signal.category}${signal.size ? ` · ${signal.size}` : ''}`,
       });
     },
     [pushTrail],
   );
 
+  const consumeShareApproval = useCallback(() => {
+    if (!shareApprovedRef.current) return false;
+    shareApprovedRef.current = false;
+    setShareApproved(false);
+    return true;
+  }, []);
+
   const callbacks = useMemo<ClosetCallbacks>(
     () => ({
       getWardrobe: () => wardrobeRef.current,
       addGarment,
+      consumeShareApproval,
       emitSignal,
     }),
-    [addGarment, emitSignal],
+    [addGarment, consumeShareApproval, emitSignal],
   );
 
   useEffect(() => {
@@ -99,7 +115,9 @@ export function ClosetStudio() {
       if (!active) return;
       const result = registerClosetTools(callbacks);
       setToolCount(
-        result.registered.length > 0 ? result.registered.length : buildClosetTools(callbacks).length,
+        result.registered.length > 0
+          ? result.registered.length
+          : buildClosetTools(callbacks).length,
       );
       setWebMcpStatus(result.registered.length > 0 ? 'active' : 'preview');
     });
@@ -122,11 +140,6 @@ export function ClosetStudio() {
 
   const gaps = useMemo(() => findGaps(wardrobe), [wardrobe]);
   const sizes = useMemo(() => sizesOwned(wardrobe), [wardrobe]);
-  const mine = useMemo(() => {
-    const myHash = signals.length > 0 ? signals[0].shopperHash : null;
-    return myHash === null ? signals : signals.filter((s) => s.shopperHash === myHash);
-  }, [signals]);
-
   const statusLabel =
     webMcpStatus === 'active'
       ? `${toolCount} WebMCP tools live`
@@ -139,7 +152,7 @@ export function ClosetStudio() {
       <header className="studio-header">
         <div className="brand-lockup">
           <div className="brand-mark closet-mark" aria-hidden="true">
-            CP
+            {BRAND.name.slice(0, 2).toUpperCase()}
           </div>
           <div>
             <p className="eyebrow">Private shopper surface</p>
@@ -149,12 +162,15 @@ export function ClosetStudio() {
 
         <div className="campaign-title">
           <span className="status-dot" aria-hidden="true" />
-          Demo shopper · data never leaves this page
+          Demo shopper · outbound sharing is human-gated
           <Badge className="status-badge">Synthetic demo</Badge>
         </div>
 
         <div className="header-actions">
-          <Badge variant="outline" className={`webmcp-badge status-${webMcpStatus}`}>
+          <Badge
+            variant="outline"
+            className={`webmcp-badge status-${webMcpStatus}`}
+          >
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
@@ -165,7 +181,10 @@ export function ClosetStudio() {
         </div>
       </header>
 
-      <section className="studio-grid closet-grid" aria-label="Closet workspace">
+      <section
+        className="studio-grid closet-grid"
+        aria-label="Closet workspace"
+      >
         <aside className="panel">
           <div className="panel-heading">
             <div>
@@ -175,8 +194,8 @@ export function ClosetStudio() {
             <Shirt aria-hidden="true" />
           </div>
           <p className="panel-intro">
-            What you own. Agents on this page can read it to shop for you; no merchant ever sees this
-            list.
+            What you own. The agent can use these rows for this task;
+            Hemloop&apos;s merchant bridge has no field that can carry them.
           </p>
           <div className="garment-list">
             {wardrobe.garments.map((g) => (
@@ -201,7 +220,9 @@ export function ClosetStudio() {
           </div>
           <div className="gap-list">
             {gaps.length === 0 ? (
-              <p className="panel-intro">No gaps - the wardrobe covers every essential.</p>
+              <p className="panel-intro">
+                No gaps - the wardrobe covers every essential.
+              </p>
             ) : (
               gaps.map((gap) => (
                 <div className="gap-card" key={gap.category}>
@@ -214,7 +235,10 @@ export function ClosetStudio() {
           <div className="sizes-table">
             <p className="eyebrow">Sizes on file</p>
             {sizes.map((row) => (
-              <div className="size-row" key={`${row.brand}-${row.category}-${row.size}`}>
+              <div
+                className="size-row"
+                key={`${row.brand}-${row.category}-${row.size}`}
+              >
                 <span>{row.brand}</span>
                 <span>{row.category}</span>
                 <strong>{row.size}</strong>
@@ -232,25 +256,58 @@ export function ClosetStudio() {
             <Radio aria-hidden="true" />
           </div>
           <p className="panel-intro">
-            The only thing that ever reaches the merchant: hashed, anonymous demand. Each entry below
-            is the complete payload.
+            The bridge accepts only zero-ID demand events, and only after you
+            approve one share. Each entry below is the complete payload.
+          </p>
+          <button
+            type="button"
+            className={`share-approval ${shareApproved ? 'armed' : ''}`}
+            onClick={() => {
+              shareApprovedRef.current = !shareApprovedRef.current;
+              setShareApproved(shareApprovedRef.current);
+              pushTrail({
+                actor: 'ME',
+                title: shareApprovedRef.current
+                  ? 'Approved the next signal'
+                  : 'Cancelled share approval',
+                detail: shareApprovedRef.current
+                  ? 'One report_demand_gap call may now cross the bridge.'
+                  : 'Agent sharing is blocked again.',
+              });
+            }}
+          >
+            <ShieldCheck aria-hidden="true" />
+            {shareApproved ? 'Next signal approved' : 'Approve next signal'}
+          </button>
+          <p className="human-only-note">
+            One-shot human approval · no WebMCP tool can arm it
           </p>
           <div className="activity-list" aria-live="polite">
-            {mine.length === 0 ? (
+            {signals.length === 0 ? (
               <p className="panel-intro">
-                Nothing sent yet. Ask your agent to report a demand gap after a fit check.
+                Nothing sent yet. Ask your agent to report a demand gap after a
+                fit check.
               </p>
             ) : (
-              mine.map((s) => (
+              signals.map((s) => (
                 <div className="activity-item" key={s.signalId}>
-                  <span className="activity-marker agent-marker">{s.kind.toUpperCase()}</span>
+                  <span className="activity-marker agent-marker">
+                    {s.kind.toUpperCase()}
+                  </span>
                   <div>
                     <strong>
                       {s.category}
                       {s.size ? ` · ${s.size}` : ''}
                     </strong>
-                    <p>{s.handle ? `product: ${s.handle}` : 'no product attached'}</p>
-                    <small>shopper #{s.shopperHash} · nothing personal included</small>
+                    <p>
+                      {s.handle
+                        ? `product: ${s.handle}`
+                        : 'no product attached'}
+                    </p>
+                    <small>
+                      event #{s.signalId.slice(0, 8)} · no shopper ID or
+                      wardrobe rows
+                    </small>
                   </div>
                 </div>
               ))

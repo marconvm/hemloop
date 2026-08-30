@@ -6,9 +6,9 @@ For the person running a campaign. The technical companion is [TECH-GUIDE.md](./
 
 Two surfaces of one loop.
 
-**As a shopper** (`/closet`): your wardrobe lives on your page and never leaves it. Your agent reads it to shop for you — find gaps, check fit against a real store catalog — and when something you want is missing, it sends the merchant an anonymous demand signal, hashed on your side before it goes (the way ad platforms hash conversion data client-side). The signal log shows you the complete payload of everything ever sent: a hash, a category, a size. Nothing else exists to leak.
+**As a shopper** (`/closet`): your agent can read the wardrobe rows shown on the page to find gaps and check fit against a Shopify catalog snapshot. Hemloop's merchant-facing bridge has a deliberately narrower schema: no shopper ID, stable hash or wardrobe rows. When something is missing, press **Approve next signal**; one `report_demand_gap` call may then send category, size and optional product. The approval is consumed immediately, and the signal log shows the complete payload.
 
-**As a merchant** (`/studio`): hashed demand arrives in the studio's Live Demand panel — the closest thing to seeing inside customers' closets without seeing inside customers' closets. You answer it with a campaign: lock the truth, let your agent produce, and nothing non-compliant can come out. The promo video below is one output of that workflow.
+**As a merchant** (`/studio`): human-approved demand events arrive in the studio's Live Demand panel without a shopper identifier or wardrobe rows. You answer one with a campaign: lock the truth, let your agent produce, and rendered claims that contradict those locked facts are rejected before they apply. The promo video below is one output of that workflow.
 
 ### The studio in one paragraph
 
@@ -33,7 +33,7 @@ The badge in the studio header tells you the state: "9 WebMCP tools live" when c
 
 - "What's in my wardrobe, and what am I missing?"
 - "Check the fit of northlight-hoodie against what I own."
-- "I want that hoodie in medium. Let the store know, anonymously."
+- "I want that hoodie in medium. Tell me what you would send." Then press **Approve next signal** and ask the agent to send it.
 - "Show me exactly what you sent them." (the tool returns the full payload)
 
 ### Things to say to the agent, in the studio

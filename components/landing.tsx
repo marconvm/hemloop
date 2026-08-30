@@ -79,20 +79,21 @@ export function Landing() {
         <div className="loop-step" data-reveal>
           <span className="loop-index">01</span>
           <Shirt aria-hidden="true" />
-          <h2>A closet that never uploads</h2>
+          <h2>A closet with a narrow exit</h2>
           <p>
-            The shopper&apos;s wardrobe, sizes and gaps live on their own page. Their agent shops
-            with six WebMCP tools; no merchant ever sees the list.
+            The shopper&apos;s wardrobe, sizes and gaps live in their browser.
+            Their agent shops with six WebMCP tools; Hemloop&apos;s merchant
+            bridge has no field for wardrobe rows.
           </p>
         </div>
         <div className="loop-step" data-reveal>
           <span className="loop-index">02</span>
           <Radio aria-hidden="true" />
-          <h2>Demand, hashed at the source</h2>
+          <h2>Demand, minimized at the source</h2>
           <p>
-            Want something the store should know about? The one outbound tool sends a demand signal
-            hashed locally before it leaves, the way ad platforms hash conversions. A hash, a
-            category, a size. Nothing else exists to leak.
+            The shopper explicitly approves one outbound event: category, size
+            and optional product. No account ID, stable hash or wardrobe rows.
+            The agent cannot arm sharing by itself.
           </p>
         </div>
         <div className="loop-step" data-reveal>
@@ -100,21 +101,25 @@ export function Landing() {
           <Lock aria-hidden="true" />
           <h2>An answer that cannot lie</h2>
           <p>
-            Merchants see live demand they never had, and respond through a truth-locked workflow:
-            agent-built campaigns where every claim is validated against human-locked facts before
-            it applies. A promo video is one output; the trust machinery is the product.
+            Merchants see demand that purchase history often misses, then
+            respond through a truth-locked workflow: agent-built campaigns where
+            every claim is validated against human-locked facts before it
+            applies. A promo video is one output; the trust machinery is the
+            product.
           </p>
         </div>
       </section>
 
       <section className="landing-agent content" data-reveal>
         <h2>
-          <Sparkles data-icon="inline-start" aria-hidden="true" /> Bring your agent
+          <Sparkles data-icon="inline-start" aria-hidden="true" /> Bring your
+          agent
         </h2>
         <p>
-          Chrome 149+: enable <code>chrome://flags/#enable-webmcp-testing</code> and reload — or
-          open this site inside ChatGPT&apos;s browser. Each surface registers its tools
-          automatically; the header badge shows when they are live.
+          Chrome 149+: enable <code>chrome://flags/#enable-webmcp-testing</code>{' '}
+          and reload — or open this site inside ChatGPT&apos;s browser. Each
+          surface registers its tools automatically; the header badge shows when
+          they are live.
         </p>
         <div className="tool-columns">
           <div>
@@ -142,11 +147,12 @@ export function Landing() {
 
       <footer className="landing-footer content">
         <p>
-          Built on WebMCP with Shopify catalog data · Chrome · ChatGPT · Cloudflare · Netlify ·
-          Render
+          Built on WebMCP with Shopify catalog data · Chrome · ChatGPT ·
+          Cloudflare-ready
         </p>
         <p>
-          Synthetic demo — every brand, product and shopper is fictional. Open source under MIT.
+          Synthetic demo — every brand, product and shopper is fictional. Open
+          source under MIT.
         </p>
       </footer>
     </main>

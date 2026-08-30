@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import {
   checkFit,
   findGaps,
-  fnv1a,
   makeSignal,
   seedWardrobe,
   sizesOwned,
 } from '../lib/proofframe/closet';
-import { buildClosetTools, type ClosetCallbacks } from '../lib/proofframe/webmcp-closet';
+import {
+  buildClosetTools,
+  type ClosetCallbacks,
+} from '../lib/proofframe/webmcp-closet';
 import type { ToolContent } from '../lib/proofframe/webmcp';
 import type { DemandSignal, Garment } from '../lib/proofframe/closet';
 
@@ -19,21 +21,40 @@ function payload(result: ToolContent): Record<string, unknown> {
 function makeStore() {
   const wardrobe = seedWardrobe();
   const emitted: DemandSignal[] = [];
+  let shareApproved = false;
   const cb: ClosetCallbacks = {
     getWardrobe: () => wardrobe,
     addGarment: (input) => {
-      const garment: Garment = { id: `g${wardrobe.garments.length + 1}`, ...input };
+      const garment: Garment = {
+        id: `g${wardrobe.garments.length + 1}`,
+        ...input,
+      };
       wardrobe.garments.push(garment);
       return garment;
     },
+    consumeShareApproval: () => {
+      if (!shareApproved) return false;
+      shareApproved = false;
+      return true;
+    },
     emitSignal: (s) => emitted.push(s),
   };
-  return { wardrobe, cb, emitted };
+  return {
+    wardrobe,
+    cb,
+    emitted,
+    approve: () => {
+      shareApproved = true;
+    },
+  };
 }
 
 void test('seed wardrobe has a hoodie gap (the demo arc)', () => {
   const gaps = findGaps(seedWardrobe());
-  assert.ok(gaps.some((g) => g.category === 'hoodie'), 'hoodie must be a gap');
+  assert.ok(
+    gaps.some((g) => g.category === 'hoodie'),
+    'hoodie must be a gap',
+  );
 });
 
 void test('sizesOwned dedupes and filters by brand case-insensitively', () => {
@@ -55,24 +76,24 @@ void test('checkFit maps the northlight hoodie and recommends from owned sizes',
   assert.match(unknown.note, /Unknown product/);
 });
 
-void test('signals are hashed: no raw shopper id, deterministic hash', () => {
-  const wardrobe = seedWardrobe();
+void test('signals are zero-ID and use an event-scoped random id', () => {
   const signal = makeSignal(
-    wardrobe,
     { kind: 'gap', category: 'hoodie', size: 'M', handle: 'northlight-hoodie' },
     () => '2026-08-30T12:00:00.000Z',
+    () => 'event-001',
   );
   const json = JSON.stringify(signal);
-  assert.ok(!json.includes(wardrobe.shopperId), 'raw shopper id must never appear');
-  assert.equal(signal.shopperHash, fnv1a(wardrobe.shopperId));
+  assert.equal(signal.signalId, 'event-001');
   assert.equal(signal.category, 'hoodie');
-  // same inputs, same id (deterministic)
-  const again = makeSignal(
-    wardrobe,
-    { kind: 'gap', category: 'hoodie', size: 'M', handle: 'northlight-hoodie' },
-    () => '2026-08-30T12:00:00.000Z',
-  );
-  assert.equal(signal.signalId, again.signalId);
+  assert.ok(!json.includes('shopper'));
+  assert.deepEqual(Object.keys(signal).sort(), [
+    'at',
+    'category',
+    'handle',
+    'kind',
+    'signalId',
+    'size',
+  ]);
 });
 
 void test('closet tool surface: 6 tools, reads flagged readOnly', () => {
@@ -80,41 +101,100 @@ void test('closet tool surface: 6 tools, reads flagged readOnly', () => {
   const tools = buildClosetTools(cb);
   assert.deepEqual(
     tools.map((t) => t.name),
-    ['get_wardrobe', 'get_my_sizes', 'find_gaps', 'check_fit', 'add_garment', 'report_demand_gap'],
+    [
+      'get_wardrobe',
+      'get_my_sizes',
+      'find_gaps',
+      'check_fit',
+      'add_garment',
+      'report_demand_gap',
+    ],
   );
-  for (const name of ['get_wardrobe', 'get_my_sizes', 'find_gaps', 'check_fit']) {
-    assert.equal(tools.find((t) => t.name === name)?.annotations?.readOnlyHint, true, name);
+  for (const name of [
+    'get_wardrobe',
+    'get_my_sizes',
+    'find_gaps',
+    'check_fit',
+  ]) {
+    assert.equal(
+      tools.find((t) => t.name === name)?.annotations?.readOnlyHint,
+      true,
+      name,
+    );
   }
 });
 
-void test('get_wardrobe never exposes the raw shopper id', async () => {
+void test('get_wardrobe returns garment rows and no identity field', async () => {
   const { cb, wardrobe } = makeStore();
   const tool = buildClosetTools(cb).find((t) => t.name === 'get_wardrobe')!;
-  const text = (await tool.execute({})).content[0].text;
-  assert.ok(!text.includes(wardrobe.shopperId));
+  const result = payload(await tool.execute({}));
+  assert.deepEqual(result.garments, wardrobe.garments);
+  assert.equal('shopperId' in result, false);
 });
 
 void test('add_garment validates category and strings', async () => {
   const { cb, wardrobe } = makeStore();
   const tool = buildClosetTools(cb).find((t) => t.name === 'add_garment')!;
-  const bad = payload(await tool.execute({ category: 'car', brand: 'x', size: 'M', colour: 'red' }));
+  const bad = payload(
+    await tool.execute({
+      category: 'car',
+      brand: 'x',
+      size: 'M',
+      colour: 'red',
+    }),
+  );
   assert.equal(bad.ok, false);
   const before = wardrobe.garments.length;
   const good = payload(
-    await tool.execute({ category: 'hoodie', brand: 'Aurora Threads', size: 'M', colour: 'rust' }),
+    await tool.execute({
+      category: 'hoodie',
+      brand: 'Aurora Threads',
+      size: 'M',
+      colour: 'rust',
+    }),
   );
   assert.equal(good.ok, true);
   assert.equal(wardrobe.garments.length, before + 1);
 });
 
-void test('report_demand_gap emits exactly the hashed payload it returns', async () => {
-  const { cb, emitted, wardrobe } = makeStore();
-  const tool = buildClosetTools(cb).find((t) => t.name === 'report_demand_gap')!;
+void test('report_demand_gap requires human approval, consumes it, and returns exactly what it sends', async () => {
+  const { cb, emitted, approve } = makeStore();
+  const tool = buildClosetTools(cb).find(
+    (t) => t.name === 'report_demand_gap',
+  )!;
+  const rejected = payload(
+    await tool.execute({
+      kind: 'gap',
+      category: 'hoodie',
+      size: 'M',
+      handle: 'northlight-hoodie',
+    }),
+  );
+  assert.equal(rejected.ok, false);
+  assert.equal(rejected.error, 'human-approval-required');
+  assert.equal(emitted.length, 0);
+
+  approve();
   const result = payload(
-    await tool.execute({ kind: 'gap', category: 'hoodie', size: 'M', handle: 'northlight-hoodie' }),
+    await tool.execute({
+      kind: 'gap',
+      category: 'hoodie',
+      size: 'M',
+      handle: 'northlight-hoodie',
+    }),
   );
   assert.equal(result.ok, true);
   assert.equal(emitted.length, 1);
   assert.deepEqual(result.sent, emitted[0]);
-  assert.ok(!JSON.stringify(emitted[0]).includes(wardrobe.shopperId));
+
+  const second = payload(
+    await tool.execute({
+      kind: 'gap',
+      category: 'hoodie',
+      size: 'M',
+      handle: 'northlight-hoodie',
+    }),
+  );
+  assert.equal(second.error, 'human-approval-required');
+  assert.equal(emitted.length, 1);
 });

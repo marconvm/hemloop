@@ -13,14 +13,14 @@ app/studio/page.tsx                                app/closet/page.tsx
    lib/proofframe/webmcp.ts (9 tools)         lib/proofframe/webmcp-closet.ts (6 tools)
         │ validates via                             │ pure logic in
         ▼                                           ▼
-   validator.ts · exporter.ts                 closet.ts (gaps, fit, makeSignal+fnv1a)
+   validator.ts · exporter.ts                 closet.ts (gaps, fit, zero-ID makeSignal)
    shopify.ts + catalog.json ◀────────────────┘ (check_fit reads the same catalog)
 
               lib/proofframe/signal-bridge.ts (localStorage + events)
-   studio demand panel ◀── hashed DemandSignal only ◀── report_demand_gap
+   studio demand panel ◀── zero-ID DemandSignal only ◀── approved report_demand_gap
 ```
 
-Both surfaces register tools on `navigator.modelContext` (fallback `document.modelContext`). The bridge carries only `DemandSignal` objects: hashed shopper id, category, size, optional handle.
+Both surfaces register tools on `navigator.modelContext` (fallback `document.modelContext`). The bridge carries only `DemandSignal` objects: event id, kind, category, size, optional handle and time. There is no shopper identity field. `report_demand_gap` also requires and consumes a human-only one-shot approval.
 
 Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at module scope). The studio owns all state and passes callbacks in; the adapter owns no state at all. This is what makes the whole tool surface unit-testable without a browser.
 
@@ -34,9 +34,9 @@ Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at 
 | `lib/proofframe/webmcp.ts` | `buildTools(callbacks)` and `registerProofFrameTools(callbacks, mc?)`. Mutating tools validate before applying and return structured rejections |
 | `lib/proofframe/shopify.ts` | `makeCatalogImporter` maps snapshot products to campaign facts. Promo terms stay human-owned |
 | `lib/proofframe/catalog.json` | Committed snapshot of the playground store catalog |
-| `lib/proofframe/closet.ts` | Shopper domain: wardrobe seed, findGaps, sizesOwned, checkFit (keyword category match against the catalog), fnv1a and makeSignal. Pure |
-| `lib/proofframe/webmcp-closet.ts` | The 6 shopper tools. report_demand_gap is the single outbound tool and can only emit a makeSignal payload |
-| `lib/proofframe/signal-bridge.ts` | localStorage transport for signals: 'storage' event cross-tab, CustomEvent same-tab, try/catch everywhere, 50-entry cap. Production successor: a queue/API (Render), same payload contract |
+| `lib/proofframe/closet.ts` | Shopper domain: wardrobe seed, findGaps, sizesOwned, checkFit (keyword category match against the catalog), and zero-ID makeSignal. Pure |
+| `lib/proofframe/webmcp-closet.ts` | The 6 shopper tools. report_demand_gap is the only merchant-facing tool, requires human one-shot approval, and can only emit a makeSignal payload |
+| `lib/proofframe/signal-bridge.ts` | localStorage demo transport for signals: 'storage' event cross-tab, CustomEvent same-tab, try/catch everywhere, 50-entry cap. A production relay would keep the same minimized payload contract and add aggregation thresholds |
 
 ## The WebMCP contract
 
@@ -61,6 +61,7 @@ Guarantees the adapter enforces:
 - Validation runs **before** the state callback; a rejected call applies nothing (AC-1).
 - There is no lock/unlock tool (AC-2). `import_product` is registered only when the page passes an `importProduct` callback, and the studio's callback throws while facts are locked.
 - `get_campaign_state`, `validate_claims` and `export_composition` carry `readOnlyHint: true`.
+- On the closet surface, no tool can arm sharing. `report_demand_gap` rejects with `human-approval-required` until the human presses “Approve next signal”, then consumes that approval after one event.
 
 ## The export format
 

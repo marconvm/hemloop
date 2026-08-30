@@ -1,8 +1,7 @@
 // WebMCP tool surface for the shopper's closet page. Same adapter pattern as
 // the merchant studio (webmcp.ts): the page owns state and passes callbacks;
-// tools own nothing. Privacy rule enforced here: the only tool that can send
-// anything toward the merchant is report_demand_gap, and it can only send a
-// hashed DemandSignal built by makeSignal - never the wardrobe itself.
+// tools own nothing. Privacy rule enforced here: report_demand_gap can only
+// send a zero-ID DemandSignal after a human arms one share.
 import {
   checkFit,
   findGaps,
@@ -14,7 +13,12 @@ import {
   type GarmentCategory,
   type Wardrobe,
 } from './closet';
-import { getModelContext, type ModelContextLike, type ToolContent, type WebMcpTool } from './webmcp';
+import {
+  getModelContext,
+  type ModelContextLike,
+  type ToolContent,
+  type WebMcpTool,
+} from './webmcp';
 
 export interface GarmentInput {
   category: GarmentCategory;
@@ -26,6 +30,8 @@ export interface GarmentInput {
 export interface ClosetCallbacks {
   getWardrobe(): Wardrobe;
   addGarment(input: GarmentInput): Garment;
+  /** Human-only, one-shot approval. No WebMCP tool may set it. */
+  consumeShareApproval(): boolean;
   emitSignal(signal: DemandSignal): void;
 }
 
@@ -35,10 +41,10 @@ function ok(data: object = {}): ToolContent {
   };
 }
 
-function fail(message: string): ToolContent {
+function fail(message: string, error = 'invalid-input'): ToolContent {
   return {
     content: [
-      { type: 'text', text: JSON.stringify({ ok: false, error: 'invalid-input', message }) },
+      { type: 'text', text: JSON.stringify({ ok: false, error, message }) },
     ],
   };
 }
@@ -48,12 +54,11 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'get_wardrobe',
       description:
-        "Read the shopper's private wardrobe: garments with category, brand, size, colour. This data stays on this page - it is never shared with any merchant.",
+        "Read the shopper's wardrobe for this task: garments with category, brand, size and colour. Hemloop's merchant bridge never includes these rows.",
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () => {
         const wardrobe = cb.getWardrobe();
-        // shopperId stays private even from the agent transcript
         return ok({ garments: wardrobe.garments });
       },
     },
@@ -75,7 +80,8 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     },
     {
       name: 'find_gaps',
-      description: 'Wardrobe categories that are missing or thin, to shop against.',
+      description:
+        'Wardrobe categories that are missing or thin, to shop against.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () => ok({ gaps: findGaps(cb.getWardrobe()) }),
@@ -92,7 +98,10 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
       annotations: { readOnlyHint: true },
       execute: (args) =>
         ok({
-          fit: checkFit(cb.getWardrobe(), typeof args.handle === 'string' ? args.handle : ''),
+          fit: checkFit(
+            cb.getWardrobe(),
+            typeof args.handle === 'string' ? args.handle : '',
+          ),
         }),
     },
     {
@@ -111,11 +120,17 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
       execute: (args) => {
         const category = args.category as GarmentCategory;
         if (!GARMENT_CATEGORIES.includes(category)) {
-          return fail(`category must be one of: ${GARMENT_CATEGORIES.join(', ')}`);
+          return fail(
+            `category must be one of: ${GARMENT_CATEGORIES.join(', ')}`,
+          );
         }
         for (const key of ['brand', 'size', 'colour'] as const) {
           const value = args[key];
-          if (typeof value !== 'string' || value.length === 0 || value.length > 60) {
+          if (
+            typeof value !== 'string' ||
+            value.length === 0 ||
+            value.length > 60
+          ) {
             return fail(`${key} must be a non-empty string (max 60 chars).`);
           }
         }
@@ -131,7 +146,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'report_demand_gap',
       description:
-        'Send the merchant an ANONYMOUS demand signal (hashed shopper id, category, size, optional product handle). This is the only tool that shares anything with the merchant, and it can never include wardrobe contents or identity. Returns the exact payload sent so the shopper can verify.',
+        'Send one data-minimized demand signal after the human explicitly approves the next share in the UI. The schema contains no shopper id or wardrobe rows: only event id, kind, category, size, optional product handle and time. Returns the exact payload sent.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -145,11 +160,21 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
       execute: (args) => {
         const category = args.category as GarmentCategory;
         if (!GARMENT_CATEGORIES.includes(category)) {
-          return fail(`category must be one of: ${GARMENT_CATEGORIES.join(', ')}`);
+          return fail(
+            `category must be one of: ${GARMENT_CATEGORIES.join(', ')}`,
+          );
         }
         const kind =
-          args.kind === 'gap' || args.kind === 'fit' || args.kind === 'want' ? args.kind : 'want';
-        const signal = makeSignal(cb.getWardrobe(), {
+          args.kind === 'gap' || args.kind === 'fit' || args.kind === 'want'
+            ? args.kind
+            : 'want';
+        if (!cb.consumeShareApproval()) {
+          return fail(
+            'Human approval required. Ask the shopper to press “Approve next signal” in the closet UI, then retry.',
+            'human-approval-required',
+          );
+        }
+        const signal = makeSignal({
           kind,
           category,
           size: typeof args.size === 'string' ? args.size : undefined,

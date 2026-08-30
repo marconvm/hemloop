@@ -1,7 +1,7 @@
 // The demand-signal bridge between the closet page and the merchant studio.
 // Both routes are served from the same origin, so localStorage carries the
 // signals: cross-tab via the native 'storage' event, same-tab via a custom
-// event. Only hashed DemandSignal objects ever travel through here.
+// event. Only zero-ID DemandSignal objects travel through here.
 // ponytail: localStorage bridge; production would be a queue/API - the
 // payload contract (DemandSignal) is the part that matters.
 import type { DemandSignal } from './closet';

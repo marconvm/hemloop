@@ -1206,6 +1206,34 @@ select {
 .closet-trail {
   margin-top: 16px;
 }
+.share-approval {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 10px 12px;
+  border: 1px solid #556150;
+  border-radius: 999px;
+  background: transparent;
+  color: #d6dad3;
+  cursor: pointer;
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.share-approval svg {
+  width: 15px;
+  height: 15px;
+}
+.share-approval.armed {
+  border-color: #94b643;
+  background: color-mix(in srgb, var(--acid) 12%, transparent);
+  color: var(--acid);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acid) 8%, transparent);
+}
 /* Merchant-side demand panel */
 .demand-list {
   display: grid;

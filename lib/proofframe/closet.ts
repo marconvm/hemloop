@@ -1,7 +1,5 @@
-// Shopper-side domain: a private wardrobe, fit knowledge, and the hashed
-// demand signals that are the ONLY thing allowed to leave for the merchant.
-// The raw wardrobe never crosses the bridge; a signal carries a one-way
-// hash, a category and a size - nothing re-identifiable.
+// Shopper-side domain: a private wardrobe, fit knowledge, and data-minimized
+// demand signals. A signal carries no shopper identifier or wardrobe rows.
 import type { Catalog, CatalogProduct } from './shopify';
 import { demoCatalog } from './shopify';
 
@@ -22,7 +20,6 @@ export interface Garment {
 }
 
 export interface Wardrobe {
-  shopperId: string; // private; never leaves the closet page unhashed
   garments: Garment[];
 }
 
@@ -40,7 +37,6 @@ export interface FitNote {
 
 export interface DemandSignal {
   signalId: string;
-  shopperHash: string; // one-way hash of shopperId
   kind: 'gap' | 'fit' | 'want';
   category: GarmentCategory;
   size: string | null;
@@ -48,29 +44,65 @@ export interface DemandSignal {
   at: string; // ISO timestamp
 }
 
-/** 32-bit FNV-1a, hex. One-way enough for a demo privacy bridge.
- * ponytail: swap for SHA-256 via crypto.subtle if this ever leaves demo. */
-export function fnv1a(input: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
-}
-
 export function seedWardrobe(): Wardrobe {
   return {
-    shopperId: 'shopper-demo-001',
     garments: [
-      { id: 'g1', category: 'tee', brand: 'Aurora Threads', size: 'M', colour: 'bone' },
-      { id: 'g2', category: 'tee', brand: 'Aurora Threads', size: 'M', colour: 'moss' },
-      { id: 'g3', category: 'tee', brand: 'Field Supply', size: 'M', colour: 'black' },
-      { id: 'g4', category: 'denim', brand: 'Field Supply', size: '32x30', colour: 'indigo' },
-      { id: 'g5', category: 'denim', brand: 'Field Supply', size: '32x30', colour: 'washed' },
-      { id: 'g6', category: 'footwear', brand: 'Northgate', size: '10', colour: 'white' },
-      { id: 'g7', category: 'accessory', brand: 'Aurora Threads', size: 'OS', colour: 'olive' },
-      { id: 'g8', category: 'jacket', brand: 'Northgate', size: 'M', colour: 'navy' },
+      {
+        id: 'g1',
+        category: 'tee',
+        brand: 'Aurora Threads',
+        size: 'M',
+        colour: 'bone',
+      },
+      {
+        id: 'g2',
+        category: 'tee',
+        brand: 'Aurora Threads',
+        size: 'M',
+        colour: 'moss',
+      },
+      {
+        id: 'g3',
+        category: 'tee',
+        brand: 'Field Supply',
+        size: 'M',
+        colour: 'black',
+      },
+      {
+        id: 'g4',
+        category: 'denim',
+        brand: 'Field Supply',
+        size: '32x30',
+        colour: 'indigo',
+      },
+      {
+        id: 'g5',
+        category: 'denim',
+        brand: 'Field Supply',
+        size: '32x30',
+        colour: 'washed',
+      },
+      {
+        id: 'g6',
+        category: 'footwear',
+        brand: 'Northgate',
+        size: '10',
+        colour: 'white',
+      },
+      {
+        id: 'g7',
+        category: 'accessory',
+        brand: 'Aurora Threads',
+        size: 'OS',
+        colour: 'olive',
+      },
+      {
+        id: 'g8',
+        category: 'jacket',
+        brand: 'Northgate',
+        size: 'M',
+        colour: 'navy',
+      },
     ],
   };
 }
@@ -133,11 +165,21 @@ export function checkFit(
 ): FitNote {
   const product = catalog.products.find((p) => p.handle === handle);
   if (!product) {
-    return { handle, category: null, ownedSize: null, note: `Unknown product "${handle}".` };
+    return {
+      handle,
+      category: null,
+      ownedSize: null,
+      note: `Unknown product "${handle}".`,
+    };
   }
   const category = guessCategory(product);
   if (!category) {
-    return { handle, category: null, ownedSize: null, note: 'No fit history for this product type.' };
+    return {
+      handle,
+      category: null,
+      ownedSize: null,
+      note: 'No fit history for this product type.',
+    };
   }
   const owned = wardrobe.garments.find((g) => g.category === category);
   if (!owned) {
@@ -156,17 +198,21 @@ export function checkFit(
   };
 }
 
-/** Build the hashed signal that crosses the privacy bridge. Contains no raw
- * shopper id, no garment list, no personal data. */
+/** Build the zero-ID signal that crosses the privacy bridge. The random id is
+ * an event id, not a stable shopper id. Dependencies are injectable for tests. */
 export function makeSignal(
-  wardrobe: Wardrobe,
-  input: { kind: DemandSignal['kind']; category: GarmentCategory; size?: string; handle?: string },
+  input: {
+    kind: DemandSignal['kind'];
+    category: GarmentCategory;
+    size?: string;
+    handle?: string;
+  },
   now: () => string = () => new Date().toISOString(),
+  makeId: () => string = () => crypto.randomUUID(),
 ): DemandSignal {
   const at = now();
   return {
-    signalId: fnv1a(`${wardrobe.shopperId}|${input.kind}|${input.category}|${at}`),
-    shopperHash: fnv1a(wardrobe.shopperId),
+    signalId: makeId(),
     kind: input.kind,
     category: input.category,
     size: input.size ?? null,

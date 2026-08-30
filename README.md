@@ -2,12 +2,12 @@
 
 **A two-sided, agent-native commerce loop: shoppers keep their data, merchants finally see demand, and every promise the workflow produces is provably true.**
 
-Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/). Two surfaces, one origin, and the agent is the join:
+Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/). Two surfaces, one origin, with the agent orchestrating both sides of the workflow:
 
-1. **The Closet** (`/closet`) — the shopper's private surface. A wardrobe, sizes and gaps that never leave the page. The shopper's agent uses 6 WebMCP tools to shop against it: find gaps, check fit against a real Shopify catalog, and, when something is missing, send the merchant a **demand signal that is hashed locally before it leaves** — the same pattern Google Ads uses for enhanced conversions, where raw data is hashed on the client and only the hash travels. No identity, no wardrobe contents, ever.
-2. **The Studio** (`/studio`) — the merchant's surface. Hashed demand arrives in a live panel: the offline dark matter merchants have never had (what nearby shoppers own, miss, and want, in what size). The merchant answers it with a workflow: lock the campaign truth (prices, offer, code, dates, disclaimer), then let their agent build the response through 9 WebMCP tools. A promo video is one output of that workflow — the trust machinery around it is the product, not the video editor.
+1. **The Closet** (`/closet`) — the shopper surface. The agent uses 6 WebMCP tools to find wardrobe gaps and check fit against a Shopify catalog snapshot. When something is missing, `report_demand_gap` can send one **zero-ID, schema-limited demand event** — but only after the shopper arms a one-shot approval in the UI. The payload has category, size, optional product handle and event metadata; it has no account ID, stable hash or wardrobe rows.
+2. **The Studio** (`/studio`) — the merchant surface. Consented demand arrives in a live panel: intent that purchase history often misses. The merchant answers it with a workflow: lock the campaign truth (prices, offer, code, dates, disclaimer), then let their agent build the response through 9 WebMCP tools. A promo video is one output of that workflow — the trust machinery around it is the product, not the video editor.
 
-The win-win: the shopper gets an agent that knows their wardrobe without ever uploading it; the merchant gets demand data that used to be invisible, pre-anonymised at the source; and everything the merchant's agent produces in response is claim-validated **before it applies** — copy that says "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason. The exported composition refuses to exist while violations remain, and the disclaimer is baked into every frame as an element no tool can remove.
+The win-win: the shopper gets an agent that can reason over their wardrobe while Hemloop strictly limits its merchant-facing channel; the merchant gets an explicit demand event without a shopper identifier; and every rendered claim the merchant's agent proposes is validated **before it applies**. Copy that says "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason. The exported composition refuses to exist while violations remain, and the disclaimer is baked into every frame as an element no tool can remove.
 
 ## Why WebMCP
 
@@ -25,7 +25,7 @@ To connect an agent: enable `chrome://flags/#enable-webmcp-testing` in Chrome 14
 
 ## Tool surfaces
 
-**Closet (shopper, 6 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit` (all read-only), `add_garment`, and `report_demand_gap` — the single outbound tool, which can only emit a hashed `DemandSignal` and returns the exact payload sent so the shopper can verify nothing personal is inside.
+**Closet (shopper, 6 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit` (all read-only), `add_garment`, and `report_demand_gap` — the single merchant-facing tool. It rejects until the human arms one share, can emit only the zero-ID `DemandSignal` schema, consumes the approval, and returns the exact payload sent.
 
 **Studio (merchant, 9 tools):** `get_campaign_state`, `validate_claims`, `export_composition` (read-only), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`. Mutations validate against locked facts before applying. There is deliberately **no** lock/unlock tool on either surface: locking truth and releasing wardrobe facts are human-only acts.
 
@@ -34,6 +34,7 @@ To connect an agent: enable `chrome://flags/#enable-webmcp-testing` in Chrome 14
 - [Product Requirements (PRD)](docs/PRD.md) — the argument for every design decision
 - [User Guide](docs/USER-GUIDE.md) — shopper and merchant walkthroughs
 - [Tech Guide](docs/TECH-GUIDE.md) — architecture, tool contracts, signal bridge, export format
+- [Verification Record](docs/VERIFICATION.md) — green gates and the remaining real-browser checklist
 
 ## Challenge supporters used
 
@@ -41,8 +42,6 @@ To connect an agent: enable `chrome://flags/#enable-webmcp-testing` in Chrome 14
 - **Google Chrome** — WebMCP origin-trial surface for the live demo
 - **OpenAI / ChatGPT** — the agents driving both sides of the demo
 - **Cloudflare** — the app scaffold targets Cloudflare Workers (`wrangler`) for hosting
-- **Netlify** — publish target for exported compositions: a validated promo is a single static HTML file, deployed as the campaign gallery
-- **Render** — roadmap home for the production signal relay (the localStorage bridge's API successor)
 
 ## Provenance
 
