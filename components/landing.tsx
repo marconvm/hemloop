@@ -116,10 +116,11 @@ export function Landing() {
           agent
         </h2>
         <p>
-          Chrome 149+: enable <code>chrome://flags/#enable-webmcp-testing</code>{' '}
-          and reload — or open this site inside ChatGPT&apos;s browser. Each
-          surface registers its tools automatically; the header badge shows when
-          they are live.
+          In a challenge-supported Chrome build, enable{' '}
+          <code>chrome://flags/#enable-webmcp-testing</code> in the profile you
+          will use and press Relaunch — or open this site inside ChatGPT&apos;s
+          browser. Each surface registers its tools automatically; the header
+          badge shows when they are live.
         </p>
         <div className="tool-columns">
           <div>
@@ -148,7 +149,7 @@ export function Landing() {
       <footer className="landing-footer content">
         <p>
           Built on WebMCP with Shopify catalog data · Chrome · ChatGPT ·
-          Cloudflare-ready
+          deployed on Cloudflare Workers
         </p>
         <p>
           Synthetic demo — every brand, product and shopper is fictional. Open

@@ -98,6 +98,18 @@ npm run dev                      # studio on localhost:3000/3001
 
 Manual checks: the "Try unsafe agent claim" button exercises the full rejection path in-browser; the WebMCP badge shows "preview mode" without the browser flag and "9 WebMCP tools live" with it.
 
+## Cloudflare deployment
+
+The production app is deployed at `https://hemloop.marcoatwill.workers.dev`. Use the pinned Wrangler version and sanitize Vinext's generated config before deployment:
+
+```sh
+npm run build
+npm run prepare:worker
+npm run deploy:worker
+```
+
+At the time of the verified deployment, `dist/server/wrangler.json` could contain a generated `legacy_env` field that Wrangler 4.127 rejects. `scripts/prepare-worker-config.mjs` removes only that field and is safe to rerun. Do not edit or commit the generated `dist` output.
+
 ## Constraints and non-goals
 
 - Dev-store storefront endpoints are password-gated; do not ship Admin tokens client-side, ever.

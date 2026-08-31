@@ -914,7 +914,7 @@ export function ProofFrameStudio() {
           </div>
 
           <footer className="support-strip">
-            Shopify merchant use case · Chrome WebMCP · Cloudflare-ready
+            Shopify merchant use case · Chrome WebMCP · deployed on Cloudflare Workers
           </footer>
         </aside>
       </section>

@@ -4,6 +4,8 @@
 
 Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/). Two surfaces, one origin, with the agent orchestrating both sides of the workflow:
 
+**Live app:** [hemloop.marcoatwill.workers.dev](https://hemloop.marcoatwill.workers.dev)
+
 1. **The Closet** (`/closet`) — the shopper surface. The agent uses 6 WebMCP tools to find wardrobe gaps and check fit against a Shopify catalog snapshot. When something is missing, `report_demand_gap` can send one **zero-ID, schema-limited demand event** — but only after the shopper arms a one-shot approval in the UI. The payload has category, size, optional product handle and event metadata; it has no account ID, stable hash or wardrobe rows.
 2. **The Studio** (`/studio`) — the merchant surface. Consented demand arrives in a live panel: intent that purchase history often misses. The merchant answers it with a workflow: lock the campaign truth (prices, offer, code, dates, disclaimer), then let their agent build the response through 9 WebMCP tools. A promo video is one output of that workflow — the trust machinery around it is the product, not the video editor.
 
@@ -21,7 +23,7 @@ npm run dev                       # landing on /, studio on /studio, closet on /
 npx tsx --test tests/*.test.ts    # 27 tests
 ```
 
-To connect an agent: enable `chrome://flags/#enable-webmcp-testing` in Chrome 149+ and reload, or open the deployed URL in ChatGPT's browser. Each page's header badge switches from "preview mode" to "tools live".
+To connect an agent in a challenge-supported Chrome build: enable `chrome://flags/#enable-webmcp-testing` in the exact profile you will use, press **Relaunch**, then reopen the live URL. Or open the deployed URL in ChatGPT's browser where WebMCP is supported. Each page's header badge switches from "preview mode" to "tools live".
 
 ## Tool surfaces
 
@@ -39,9 +41,21 @@ To connect an agent: enable `chrome://flags/#enable-webmcp-testing` in Chrome 14
 ## Challenge supporters used
 
 - **Shopify** — campaign facts and fit checks run against a real (synthetic-data) Shopify development store catalog
-- **Google Chrome** — WebMCP origin-trial surface for the live demo
-- **OpenAI / ChatGPT** — the agents driving both sides of the demo
-- **Cloudflare** — the app scaffold targets Cloudflare Workers (`wrangler`) for hosting
+- **Google Chrome** — target WebMCP runtime; final production flag/relaunch verification is tracked in the verification record
+- **OpenAI / ChatGPT** — target agent surface for the two-sided demo; in-app pairing is the remaining P4 gate
+- **Cloudflare** — the live app is deployed on Cloudflare Workers at [hemloop.marcoatwill.workers.dev](https://hemloop.marcoatwill.workers.dev)
+
+## Cloudflare deployment
+
+The repository pins the Wrangler version used for the successful deployment. Vinext currently generates a `legacy_env` field that Wrangler 4.127 rejects, so prepare the generated config before deploying:
+
+```sh
+npm run build
+npm run prepare:worker
+npm run deploy:worker
+```
+
+`prepare:worker` only removes the unsupported generated field; it does not deploy or change Cloudflare state.
 
 ## Provenance
 

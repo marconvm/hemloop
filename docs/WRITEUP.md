@@ -22,7 +22,7 @@ Both surfaces need tools operating on live page state in the user's own session:
 
 ## How we built it
 
-TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, two WebMCP adapters) with unit tests, wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a committed snapshot of a Shopify development store containing synthetic products. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The app scaffold targets Cloudflare Workers.
+TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, two WebMCP adapters) with unit tests, wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a committed snapshot of a Shopify development store containing synthetic products. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The live app is deployed on Cloudflare Workers.
 
 ## Challenges
 
@@ -34,4 +34,4 @@ A real signal relay with k-anonymity floors (min N shoppers per cell before a me
 
 ## Built with
 
-TypeScript, React 19, WebMCP (`navigator.modelContext`), Shopify catalog data, GSAP, Cloudflare Workers scaffold, HyperFrames composition format.
+TypeScript, React 19, WebMCP (`navigator.modelContext`), Shopify catalog data, GSAP, Cloudflare Workers, HyperFrames composition format.
