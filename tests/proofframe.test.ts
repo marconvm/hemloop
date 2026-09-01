@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { seedCampaign } from '../lib/proofframe/seed';
-import { validateCampaign, validateText } from '../lib/proofframe/validator';
+import { validateCampaign, validateScene, validateText } from '../lib/proofframe/validator';
 import { exportComposition } from '../lib/proofframe/exporter';
 import {
   buildTools,
@@ -87,6 +87,22 @@ void test('validator accepts copy matching locked facts', () => {
     validateText('25% off — $59.90 now $44.90 with code AURORA25', facts),
     [],
   );
+});
+
+void test('validator catches evasion: no-$ price, codeless code, unicode digits', () => {
+  const { facts } = seedCampaign();
+  assert.equal(validateText('Just 19.99 today only', facts)[0]?.rule, 'price-mismatch');
+  assert.equal(validateText('Use SAVE90 at checkout', facts)[0]?.rule, 'code-mismatch');
+  assert.equal(validateText('Now ５０％ off', facts)[0]?.rule, 'discount-mismatch');
+});
+
+void test('validator rejects an invalid scene kind (XSS vector)', () => {
+  const { facts } = seedCampaign();
+  const bad = validateScene(
+    { id: 'x', kind: 'a"><script>' as never, heading: 'Layer up', body: 'ok', durationSec: 3 },
+    facts,
+  );
+  assert.ok(bad.some((v) => v.rule === 'scene-kind'));
 });
 
 // ---------- exporter ----------

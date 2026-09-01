@@ -1,10 +1,20 @@
 // Pure claim validator: no DOM, no network, no clock. The single source of
 // truth for "can this copy ship" — the WebMCP adapter and the UI both call it.
-import type { CampaignFacts, CampaignState, Scene, Violation } from './types';
+import type { CampaignFacts, CampaignState, Scene, SceneKind, Violation } from './types';
+
+export const SCENE_KINDS: SceneKind[] = ['hero', 'product', 'offer', 'cta'];
 
 const PERCENT_RE = /(\d{1,3})\s*%/g;
+// Prices: with a currency symbol, OR a bare decimal near a money word.
 const PRICE_RE = /\$\s?(\d+(?:\.\d{1,2})?)/g;
-const CODE_RE = /\bcode[:\s]+([A-Z0-9]{3,})/gi;
+const BARE_PRICE_RE = /(?<![\d.$])(\d+\.\d{2})(?![\d])/g;
+const CODE_KEYWORD_RE = /\bcode[:\s]+([A-Za-z0-9]{3,})/gi;
+
+// Normalize before matching so full-width / Arabic-Indic digits and stray
+// format chars cannot smuggle a claim past the ASCII regexes.
+function normalize(text: string): string {
+  return text.normalize('NFKC').replace(/[​-‍﻿]/g, '');
+}
 
 export const MAX_SCENE_SECONDS = 30;
 export const MAX_TOTAL_SECONDS = 60;
@@ -14,8 +24,9 @@ function near(a: number, b: number): boolean {
 }
 
 /** Validate one piece of copy against locked campaign facts. */
-export function validateText(text: string, facts: CampaignFacts): Violation[] {
+export function validateText(rawText: string, facts: CampaignFacts): Violation[] {
   const violations: Violation[] = [];
+  const text = normalize(rawText);
 
   for (const m of text.matchAll(PERCENT_RE)) {
     const pct = Number(m[1]);
@@ -38,8 +49,11 @@ export function validateText(text: string, facts: CampaignFacts): Violation[] {
   const allowedPrices = [facts.regularPrice, facts.salePrice].filter(
     (p): p is number => p !== null,
   );
-  for (const m of text.matchAll(PRICE_RE)) {
+  const seenPrice = new Set<string>();
+  for (const m of [...text.matchAll(PRICE_RE), ...text.matchAll(BARE_PRICE_RE)]) {
     const price = Number(m[1]);
+    if (seenPrice.has(m[1])) continue;
+    seenPrice.add(m[1]);
     if (!allowedPrices.some((p) => near(p, price))) {
       violations.push({
         rule: 'price-mismatch',
@@ -52,18 +66,27 @@ export function validateText(text: string, facts: CampaignFacts): Violation[] {
     }
   }
 
-  for (const m of text.matchAll(CODE_RE)) {
+  // Any ALL-CAPS/alnum token that looks like a promo code but is not the
+  // locked one, whether or not it follows the word "code".
+  const codeTokens = new Set<string>();
+  for (const m of text.matchAll(CODE_KEYWORD_RE)) codeTokens.add(m[1]);
+  if (facts.promoCode) {
+    for (const m of text.matchAll(/\b([A-Z][A-Z0-9]{3,})\b/g)) {
+      if (m[1] !== facts.promoCode.toUpperCase()) codeTokens.add(m[1]);
+    }
+  }
+  for (const token of codeTokens) {
     if (
       facts.promoCode === null ||
-      m[1].toUpperCase() !== facts.promoCode.toUpperCase()
+      token.toUpperCase() !== facts.promoCode.toUpperCase()
     ) {
       violations.push({
         rule: 'code-mismatch',
         message:
           facts.promoCode === null
-            ? `Copy mentions promo code "${m[1]}" but the campaign has no code.`
-            : `Copy mentions promo code "${m[1]}" but the locked code is ${facts.promoCode}.`,
-        found: m[1],
+            ? `Copy mentions promo code "${token}" but the campaign has no code.`
+            : `Copy mentions promo code "${token}" but the locked code is ${facts.promoCode}.`,
+        found: token,
         expected: facts.promoCode ?? 'no code',
       });
     }
@@ -97,6 +120,15 @@ export function validateScene(scene: Scene, facts: CampaignFacts): Violation[] {
       rule: 'scene-duration',
       sceneId: scene.id,
       message: `Scene duration must be between 0 and ${MAX_SCENE_SECONDS}s, got ${scene.durationSec}.`,
+    });
+  }
+  // kind is agent-controlled and reaches the exported HTML; enforce the enum
+  // at runtime (the JSON-schema enum is advisory and host-dependent).
+  if (!SCENE_KINDS.includes(scene.kind)) {
+    violations.push({
+      rule: 'scene-kind',
+      sceneId: scene.id,
+      message: `Scene kind must be one of: ${SCENE_KINDS.join(', ')}.`,
     });
   }
   return violations;

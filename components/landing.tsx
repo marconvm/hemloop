@@ -153,7 +153,9 @@ export function Landing() {
         </p>
         <p>
           Synthetic demo — every brand, product and shopper is fictional. Open
-          source under MIT.
+          source under MIT. ·{' '}
+          {/* eslint-disable-next-line next/no-html-link-for-pages -- /docs is a static asset, not a Next route */}
+          <a href="/docs/">Documentation</a>
         </p>
       </footer>
     </main>

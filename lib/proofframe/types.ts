@@ -53,6 +53,7 @@ export interface Violation {
     | 'banned-phrase'
     | 'missing-disclaimer'
     | 'scene-duration'
+    | 'scene-kind'
     | 'total-duration';
   message: string;
   sceneId?: string;

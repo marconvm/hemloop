@@ -62,7 +62,7 @@ export function exportComposition(state: CampaignState): string {
         scene,
         start,
         track,
-      }) => `      <section id="${scene.id}" class="clip scene scene-${scene.kind}"
+      }) => `      <section id="${scene.id}" class="clip scene scene-${escapeHtml(scene.kind)}"
         data-start="${start}" data-duration="${scene.durationSec}" data-track-index="${track}">
         <h1 id="${scene.id}-h">${escapeHtml(scene.heading)}</h1>
         <p id="${scene.id}-b" class="accent">${escapeHtml(scene.body)}</p>
