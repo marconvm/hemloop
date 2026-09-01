@@ -98,6 +98,12 @@ npm run dev                      # studio on localhost:3000/3001
 
 Manual checks: the "Try unsafe agent claim" button exercises the full rejection path in-browser; the WebMCP badge shows "preview mode" without the browser flag and "9 WebMCP tools live" with it.
 
+Verified runtime behaviour (Chrome 151, `chrome://flags/#enable-webmcp-testing`, live deployment):
+
+- Chrome 151 exposes **`document.modelContext` only**; `navigator.modelContext` is undefined. The adapters probe both, so registration works either way.
+- The testing API surface is `getTools()`, `executeTool(registeredTool, argsJsonString)`, `registerTool()`, `ontoolchange`. `executeTool` takes the RegisteredTool object from `getTools()` (not a name) and a JSON **string** of arguments; results return as serialized JSON content blocks.
+- Full loop proven end to end: `find_gaps` → `report_demand_gap` blocked with `human-approval-required` → human presses Approve → same call succeeds emitting the zero-ID event → immediate retry blocked again (one-shot consumed) → the event appears in the studio's Live Demand panel cross-page.
+
 ## Cloudflare deployment
 
 The production app is deployed at `https://hemloop.marcoatwill.workers.dev`. Use the pinned Wrangler version and sanitize Vinext's generated config before deployment:
