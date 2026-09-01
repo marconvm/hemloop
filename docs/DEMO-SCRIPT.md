@@ -7,7 +7,7 @@ Recording: ChatGPT (or Chrome + WebMCP flag) on the deployed URL. Two browser ta
 
 | t | Beat | On screen | Voiceover |
 |---|---|---|---|
-| 0:00–0:12 | Hook | Landing page, then cut to the closet | "This is Hemloop. A shopper's agent can expose a demand gap to a store without exposing a shopper identity or their wardrobe rows." |
+| 0:00–0:12 | Cold open (per judge guidance: no title, app already working) | `/closet` already open, live-tools badge visible, `find_gaps` call firing in the agent pane | "This is Hemloop. A shopper's agent can expose a demand gap to a store without exposing a shopper identity or their wardrobe rows." |
 | 0:12–0:35 | The shopper closet | `/closet`: wardrobe grid, agent calls `find_gaps` — gap card shows "no hoodie" | "The agent reasons over the wardrobe through WebMCP and finds the gap: no hoodie. The merchant-facing channel is a different, much narrower schema." |
 | 0:35–1:00 | Human-approved signal (first climax) | Agent tries `report_demand_gap` and gets `human-approval-required`; shopper presses **Approve next signal**; retry succeeds and the full payload is visible | "The agent cannot decide to share. Its first call is rejected until the shopper approves one event. The retry sends only category, size and product plus event metadata — no account ID, stable hash or wardrobe rows — and the approval is consumed." |
 | 1:00–1:20 | Demand lands | Cut to `/studio`: Live Demand shows "hoodie · M · northlight-hoodie · event #…". Human unlocks truth, clicks "Build campaign from this", locks truth again | "That minimized event reaches the merchant. They pull in the product snapshot and lock campaign truth: price, offer, code, dates and disclaimer. Like share approval, locking is a human button, deliberately not a tool." |
