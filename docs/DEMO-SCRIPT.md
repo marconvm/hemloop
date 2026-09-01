@@ -1,5 +1,8 @@
 # Demo Video Script v3 — one-take full loop (target 2:50, hard cap 3:00)
 
+> **Devpost judge-email guidance (Sep 1) — overrides earlier beats where they conflict:**
+> open with the PROJECT WORKING inside 10–15s (no landing/title intro — any landing flash moves to the outro); the agent using tools is the centerpiece; cut every wait, never type live (paste prompts); one strong example per feature; short clips + jump cuts; on-screen text over spoken filler; AI narration is explicitly allowed. Cold-open: start ON /closet with the live badge visible and the first `find_gaps` call already firing (VO-01 plays over it).
+
 Recording: ChatGPT (or Chrome + WebMCP flag) on the deployed URL. Two browser tabs: `/closet` and `/studio`, agent chat beside them. Voiceover throughout; captions for tool names. The proof trail / signal log stays visible at all times — it is the narrative device.
 
 | t | Beat | On screen | Voiceover |

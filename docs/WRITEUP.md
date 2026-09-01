@@ -6,6 +6,8 @@ I run e-commerce and paid media for apparel retail. Purchase history tells merch
 
 WebMCP made a different boundary possible: let the shopper's agent reason over page-local context, but give the merchant-facing action a smaller schema and a human-only release gate. If the merchant does not need an identity to answer a product gap, do not send even a hashed one.
 
+In one sentence each, the before/after: a shopper's agent can surface an anonymous demand signal to a store in one human-approved tool call, where before the store simply never knew; a merchant's agent can turn that signal into a claim-compliant promo in minutes, where before it took a design round-trip and a legal check. (The name: a hem loop is the small functional loop sewn inside a garment — hidden, structural, load-bearing. So is this one.)
+
 ## What it does
 
 Hemloop is a two-sided workflow orchestrated by the agent, with a browser-local bridge carrying only a consented demand event.
