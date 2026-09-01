@@ -1,8 +1,8 @@
 # Hemloop Verification Record
 
-Last updated: 2026-08-31 (America/Toronto)
+Last updated: 2026-09-01 (America/Toronto)
 
-This file separates verified behaviour from the one remaining browser-runtime gate.
+This file separates verified behaviour from the remaining ChatGPT natural-language pairing check.
 
 ## Green gates
 
@@ -15,22 +15,25 @@ This file separates verified behaviour from the one remaining browser-runtime ga
 - Cloudflare production check on `https://hemloop.marcoatwill.workers.dev`: `/`, `/closet` and `/studio` all load over HTTPS with the expected landing, closet and studio headings. The app was deployed with Wrangler 4.127.0.
 - HyperFrames exporter: previously checked with `npx hyperframes check` (0 errors, 0 warnings); exporter structure is also covered by unit tests.
 
-## Real WebMCP runtime: pending exact-profile flag relaunch
+## Real WebMCP runtime: verified on the live deployment
 
-On 2026-08-31, Chrome 151.0.7922.174 was retested across all three connected profiles against the public HTTPS `/closet` URL. All three correctly fell back to `6 tools · preview mode`; the production `/studio` route likewise showed `9 tools · preview mode`. This rules out localhost origin restrictions as the sole cause: the WebMCP API is still not exposed to these page sessions. Chrome's internal flag UI and relaunch are intentionally human-controlled, so the next check is to enable `chrome://flags/#enable-webmcp-testing` in the exact profile used for the demo, press **Relaunch**, and reopen the live URL.
+On 2026-09-01, Chrome 151 with `chrome://flags/#enable-webmcp-testing` enabled exposed the real WebMCP runtime on the public HTTPS deployment. In this build `document.modelContext` is defined while `navigator.modelContext` is undefined, proving that Hemloop's dual-namespace probe is required. The runtime calling convention observed was `executeTool(RegisteredTool, JSON-string-args)`; results returned as serialized JSON MCP content blocks.
 
-The ChatGPT in-app browser was not available to this Codex session. A deployed HTTPS URL now exists, but ChatGPT pairing remains unverified until it is opened there.
+Evidence chain on the live routes:
 
-Do not change these labels to “verified” on unit-test evidence alone.
+- `/closet` showed `6 WebMCP tools live`.
+- `find_gaps` returned the missing hoodie category.
+- The first `report_demand_gap` call returned `human-approval-required` and sent nothing.
+- After one human **Approve next signal** click, the same call emitted zero-ID event `#8bb9b54a` and returned the exact minimized payload.
+- An immediate third call returned `human-approval-required` again, proving the approval was consumed.
+- `/studio` showed `9 WebMCP tools live` and its Live Demand panel received the event across the same-origin bridge.
 
-## Exact P4 completion script
+The approval-gate and signal-bridge design therefore passed the real runtime test. Keep these labels evidence-based; do not infer ChatGPT pairing from the Chrome test.
 
-1. In the Chrome profile where the flag was enabled, press **Relaunch**.
-2. Open `https://hemloop.marcoatwill.workers.dev/closet`; confirm the header says `6 WebMCP tools live`.
-3. Ask the agent to call `find_gaps`, then `report_demand_gap`. Confirm the first report returns `human-approval-required` and emits nothing.
-4. Press **Approve next signal**, retry `report_demand_gap`, and confirm the complete zero-ID payload appears. Retry once more and confirm approval is required again.
-5. Open `https://hemloop.marcoatwill.workers.dev/studio`; confirm the header says `9 WebMCP tools live` and the demand event appears.
-6. Exercise `get_campaign_state`, a clean `update_scene`, an unsafe `update_scene` (structured rejection, canvas unchanged), `seek_preview`, and `export_composition`.
-7. Repeat the two badge checks and one read/write/rejection cycle in ChatGPT's in-app browser.
+## Remaining ChatGPT pairing check
 
-Capture the browser version, profile, URL and results here before recording the submission video.
+1. Open both live routes in ChatGPT's browser and confirm the two live-tool badges.
+2. Run the exact prompts in `docs/DEMO-SCRIPT.md`: blocked report, human approval, successful report, one-shot re-block, clean campaign mutations, unsafe mutation rejection/correction, validation and export.
+3. Record the ChatGPT version/surface and results here before recording the final submission video.
+
+If ChatGPT pairing is unavailable or unstable, the already-verified Chrome 151 WebMCP runtime is the truthful fallback demo surface.
