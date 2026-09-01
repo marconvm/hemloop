@@ -90,7 +90,7 @@ then map into the `Catalog` shape in `lib/proofframe/shopify.ts` (fields: handle
 ## Verification
 
 ```sh
-npx tsx --test tests/*.test.ts   # 27 unit tests
+npx tsx --test tests/*.test.ts   # 33 unit tests
 npx tsc --noEmit                 # typecheck
 npx oxlint                       # lint (vendored components/ui excluded)
 npm run dev                      # studio on localhost:3000/3001

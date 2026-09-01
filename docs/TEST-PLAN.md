@@ -45,13 +45,13 @@ Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" h
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS — 27/27 at HEAD |
+| R1 | Full unit suite after every milestone | PASS — 33/33 at HEAD |
 | R2 | `tsc --noEmit` after each change | PASS — clean |
 | R3 | `oxlint` after each change | PASS — clean |
 | R4 | Production build after each change | PASS |
 | R5 | Blocked-claim demo still fires after the two-sided-loop refactor | PASS (browser) |
 
-Regression guard = the committed test suite; each of the 14 commits was gated on it.
+Regression guard = the committed test suite; each commit was gated on it.
 
 ## 5. User Acceptance Test (UAT) — does it meet the brief
 
@@ -89,7 +89,8 @@ Covered by a dedicated review pass (see [SECURITY.md](./SECURITY.md)). Summary o
 | Trust-boundary bypass (locked facts, share approval one-shot) | see SECURITY.md |
 | Privacy (zero-ID signal, no wardrobe leak) | see SECURITY.md |
 | Committed secrets | none (synthetic data only; no tokens in repo) |
-| Dependency audit | `npm audit`: sharp/libvips build-time CVEs only — not in the Worker runtime, accepted risk (see Go-Live) |
+| Two review passes + fixes | First pass (SEC-1/2) and an independent second pass (PF2-1…6) both in SECURITY.md; all six second-pass findings fixed and verified on the live runtime (third-pass section), pending Codex re-review |
+| Dependency audit | Runtime CVE-2026-44907 (`react-server-dom-webpack`) FIXED by upgrading the React trio to 19.2.8. Remaining advisories are build/dev tooling only (Vinext image-size, Windows-only Vite/esbuild, Undici under Miniflare) — not on a Worker request path; re-evaluate on the next Vinext upgrade |
 
 ## 8. Penetration Test (adversarial-agent, in-scope subset)
 
@@ -102,8 +103,11 @@ A full external pentest is out of scope for a synthetic-data prototype; the rele
 | P3 | Agent writes "50% off / guaranteed" against a 25% locked offer | Rejected atomically, nothing applied |
 | P4 | Agent tries to call a lock/unlock tool | No such tool exists on either surface |
 | P5 | Agent enumerates tools for a hidden identity field | `getTools()` surface carries no identity tool; DemandSignal schema has no id field |
+| P6 | Agent attaches an unadvertised `style` property to break out of the export `<style>` block | Live replay: property dropped by `parseSceneInput`, export clean; also colour-allowlisted in the exporter (PF2-1) |
+| P7 | Agent sends malformed field types to crash the canvas/exporter | Live replay: rejected as `invalid-input`, nothing stored (PF2-2) |
+| P8 | Agent evades the validator with Arabic-Indic/Persian digits or format controls | Normalized and flagged (PF2-3) |
 
-Deeper adversarial findings (unicode/whitespace claim bypass, ReDoS, prototype pollution) are the remit of the SECURITY.md review pass.
+The earlier deep findings (unicode/whitespace bypass, extra-property XSS, malformed-input DoS) were surfaced in the SECURITY.md second pass and are now fixed with regression tests; P6–P8 above enter through the real `buildTools()` tool boundary, not just the validator.
 
 ## 9. Disaster Recovery Test
 
@@ -113,24 +117,24 @@ Deeper adversarial findings (unicode/whitespace claim bypass, ReDoS, prototype p
 | D2 | Corrupt localStorage payload | `readSignals` returns `[]` on JSON error | PASS |
 | D3 | WebMCP runtime absent | Both surfaces fall back to preview mode, fully usable | PASS |
 | D4 | Bad worker version deployed | `wrangler rollback` to a prior Version ID (immutable versions retained) | PASS (mechanism available) |
-| D5 | Source loss | Full git history, 14 commits; can rebuild + redeploy from clone | PASS |
+| D5 | Source loss | Full git history; can rebuild + redeploy from clone | PASS |
 | D6 | Catalog snapshot stale | One CLI command regenerates `catalog.json` (documented in TECH-GUIDE) | PASS |
 
 Recovery objective for a prototype: redeploy from git + `wrangler deploy` in minutes; no stateful backend to restore.
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (27/27), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (33/33), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime
 - [x] MIT license in repo
 - [x] PRD, user guide, tech guide, test plan, verification record committed
-- [ ] SECURITY.md review findings triaged (in progress)
+- [x] SECURITY.md findings triaged: two passes done, all six second-pass findings fixed + live-verified (Codex re-review pending per the fix↔review pipeline)
 - [ ] Repo pushed public; license visible in host About
 - [ ] `hemloop.app` DNS cut over; HTTPS cert valid
 - [ ] Demo video recorded (< 3 min, audio, public YouTube)
 - [ ] ChatGPT natural-language pairing confirmed or Chrome fallback documented
 - [ ] Devpost form submitted before 2026-09-03 13:00 PDT
-- [ ] Accepted risk logged: sharp/libvips CVEs are build-time only, absent from the Worker runtime; no upstream patch at submission time
+- [x] Runtime dependency CVE (react-server-dom-webpack) fixed; remaining advisories are build/dev tooling only, logged for the next Vinext upgrade
 - [ ] Post-submission freeze: after the deadline, touch nothing (fork to keep building)
