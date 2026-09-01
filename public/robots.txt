@@ -1,0 +1,19 @@
+# Pre-submission: keep out of indexes and AI training crawls.
+# Real browsers (including ChatGPT's in-app browser driven by a user) are unaffected.
+User-agent: *
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
