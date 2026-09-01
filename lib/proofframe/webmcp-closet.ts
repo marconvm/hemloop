@@ -32,7 +32,9 @@ export interface ClosetCallbacks {
   addGarment(input: GarmentInput): Garment;
   /** Human-only, one-shot approval. No WebMCP tool may set it. */
   consumeShareApproval(): boolean;
-  emitSignal(signal: DemandSignal): void;
+  /** Deliver a signal to the bridge. Returns false when storage rejected it
+   * — the tool must then report failure, never a false `ok`. */
+  emitSignal(signal: DemandSignal): boolean;
 }
 
 function ok(data: object = {}): ToolContent {
@@ -168,6 +170,14 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
           args.kind === 'gap' || args.kind === 'fit' || args.kind === 'want'
             ? args.kind
             : 'want';
+        // Bound optional strings BEFORE consuming the one-shot approval —
+        // invalid input must not burn the human's grant.
+        if (args.size !== undefined && (typeof args.size !== 'string' || args.size.length > 20)) {
+          return fail('size must be a string of at most 20 characters.');
+        }
+        if (args.handle !== undefined && (typeof args.handle !== 'string' || args.handle.length > 80)) {
+          return fail('handle must be a string of at most 80 characters.');
+        }
         if (!cb.consumeShareApproval()) {
           return fail(
             'Human approval required. Ask the shopper to press “Approve next signal” in the closet UI, then retry.',
@@ -180,7 +190,14 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
           size: typeof args.size === 'string' ? args.size : undefined,
           handle: typeof args.handle === 'string' ? args.handle : undefined,
         });
-        cb.emitSignal(signal);
+        const delivered = cb.emitSignal(signal);
+        if (!delivered) {
+          // Approval stays consumed (privacy fail-closed); report honestly.
+          return fail(
+            'Signal could not be stored (bridge unavailable). Nothing was delivered; ask the shopper to approve again after fixing storage.',
+            'bridge-unavailable',
+          );
+        }
         return ok({ sent: signal });
       },
     },

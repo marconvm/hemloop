@@ -108,3 +108,20 @@ Current risk is **HIGH** until PF2-1 and PF2-4 are resolved and re-tested. The a
 2. Upgrade the matched React trio to `19.2.8`; rebuild, run tests/type/lint, and repeat live smoke/WebMCP checks before deploying.
 3. Close PF2-3 Unicode/code gaps and add the four exact regression cases.
 4. Harden docs sanitization/CSP and bridge delivery acknowledgement as time permits.
+
+## Third pass (Claude) — fixes applied and verified
+
+Marco set the review pipeline: Claude fixes → Codex re-reviews → back and forth until no concern; changes agreed by both. This section records the fixes; statuses are **FIXED (pending Codex re-review)**, not unilaterally closed.
+
+| # | Fix | Verified |
+|---|---|---|
+| PF2-1 | `add_scene`/`update_scene` now build a fresh allowlisted `SceneInput` via `parseSceneInput` (no spread/cast of raw args, so `style` and any other unadvertised key is dropped); schemas set `additionalProperties: false`; the exporter allowlists CSS colours (`safeColor`, strict hex/rgb/keyword) for scene and base styles. | Live replay on the deployment: `add_scene` with `style:{background:'</style><script>…'}` returns ok but the style is dropped and the export contains no script or `</style>` breakout. Unit: "add_scene drops extra properties…", "exporter neutralizes a malicious scene style colour". |
+| PF2-2 | Shared runtime parser requires enum kind, bounded strings (heading ≤200, body ≤400), and a finite duration in 0.5–30; malformed input returns a distinct `invalid-input` before claim validation. Schema `minimum` now agrees with the runtime bound. | Live replay: malformed `heading:{},body:null,durationSec:"3"` returns `ok:false error:invalid-input`, nothing stored. Unit: "add_scene rejects malformed field types". |
+| PF2-3 | `normalize` maps Arabic-Indic (U+0660–0669), Persian (U+06F0–06F9), the Arabic percent sign, and strips all `\p{Cf}` format controls; code-shaped caps tokens (letters+digits) are flagged whether or not a code is locked; bare decimals only flag inside a money-context window. | Unit: "validator handles Arabic-Indic / Persian digits and format controls" — `٥٠٪`, `۵۰%`, word-joiner banned phrase, codeless `SAVE90` all caught; `Rated 4.90 stars` correctly not flagged. |
+| PF2-4 | `react`, `react-dom`, `react-server-dom-webpack` upgraded to 19.2.8. | `npm audit --omit=dev` no longer lists CVE-2026-44907; build + 33/33 tests + live smoke pass on the redeployed Worker. |
+| PF2-5 | `/docs` now sanitizes `marked.parse()` output with DOMPurify (pinned + SRI). | Live `/docs/` 200; renders correctly. |
+| PF2-6 | `appendSignal` returns success only when the signal reads back from storage and dispatches the event only then; `report_demand_gap` returns `bridge-unavailable` (not a false `ok`) when delivery fails, approval staying consumed (fail-closed); `size`/`handle` bounded before the one-shot approval is spent; `readSignals` validates shape on readback. | Unit suite green; interface change threaded through the studio trail. |
+
+Gates after fixes: **33/33 tests, tsc clean, oxlint clean, production build clean, hyperframes check 0/0, live smoke 200 on all four routes, live WebMCP attack replays neutralized.** Redeployed as Worker version fb9486a3.
+
+Handoff to Codex (next pipeline turn): please adversarially re-review these six fixes with fresh eyes — especially whether `parseSceneInput` misses a sink, whether `CODE_SHAPED_RE` over/under-flags, and the `safeColor` allowlist. Also, Marco asked that this fix→review→fix pipeline itself be captured in the bucket-test skill (which you own) as a security loop step.

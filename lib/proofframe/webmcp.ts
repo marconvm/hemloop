@@ -81,10 +81,61 @@ function reject(violations: Violation[]): ToolContent {
 
 const sceneProps = {
   kind: { type: 'string', enum: ['hero', 'product', 'offer', 'cta'] },
-  heading: { type: 'string' },
-  body: { type: 'string' },
+  heading: { type: 'string', maxLength: 200 },
+  body: { type: 'string', maxLength: 400 },
   durationSec: { type: 'number', minimum: 0.5, maximum: 30 },
 };
+
+const SCENE_KINDS_SET = new Set(['hero', 'product', 'offer', 'cta']);
+const MAX_HEADING = 200;
+const MAX_BODY = 400;
+
+type ParseResult<T> = { ok: true; value: T } | { ok: false; message: string };
+
+/**
+ * Build a FRESH, allowlisted SceneInput from raw tool arguments. This is the
+ * PF2-1/PF2-2 fix: never spread or cast the raw args object (an agent can
+ * attach unadvertised keys like `style` that survive to the exporter, or
+ * malformed types that crash the canvas). Every field is a validated
+ * primitive; nothing else is carried through.
+ */
+function parseSceneInput(
+  args: Record<string, unknown>,
+  partial: boolean,
+): ParseResult<Partial<SceneInput>> {
+  const out: Partial<SceneInput> = {};
+  const required = !partial;
+
+  if (args.kind !== undefined || required) {
+    if (typeof args.kind !== 'string' || !SCENE_KINDS_SET.has(args.kind)) {
+      return { ok: false, message: `kind must be one of hero, product, offer, cta.` };
+    }
+    out.kind = args.kind as SceneKind;
+  }
+  for (const [field, max] of [['heading', MAX_HEADING], ['body', MAX_BODY]] as const) {
+    if (args[field] !== undefined || required) {
+      const v = args[field];
+      if (typeof v !== 'string' || v.length > max) {
+        return { ok: false, message: `${field} must be a string of at most ${max} chars.` };
+      }
+      (out as Record<string, unknown>)[field] = v;
+    }
+  }
+  if (args.durationSec !== undefined || required) {
+    const d = args.durationSec;
+    if (typeof d !== 'number' || !Number.isFinite(d) || d < 0.5 || d > 30) {
+      return { ok: false, message: `durationSec must be a finite number between 0.5 and 30.` };
+    }
+    out.durationSec = d;
+  }
+  return { ok: true, value: out };
+}
+
+function invalidInput(message: string): ToolContent {
+  return {
+    content: [{ type: 'text', text: JSON.stringify({ ok: false, error: 'invalid-input', message }) }],
+  };
+}
 
 export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
   const tools: WebMcpTool[] = [
@@ -118,9 +169,12 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
         type: 'object',
         properties: sceneProps,
         required: ['kind', 'heading', 'body', 'durationSec'],
+        additionalProperties: false,
       },
       execute: (args) => {
-        const input = args as unknown as SceneInput;
+        const parsed = parseSceneInput(args, false);
+        if (!parsed.ok) return invalidInput(parsed.message);
+        const input = parsed.value as SceneInput;
         const violations = validateScene(
           { id: 'candidate', ...input },
           cb.getState().facts,
@@ -138,6 +192,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
         type: 'object',
         properties: { id: { type: 'string' }, ...sceneProps },
         required: ['id'],
+        additionalProperties: false,
       },
       execute: (args) => {
         const state = cb.getState();
@@ -147,14 +202,11 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
           return reject([
             { rule: 'scene-duration', message: `No scene "${id}".` },
           ]);
-        const patch: Partial<SceneInput> = {};
-        for (const key of ['kind', 'heading', 'body', 'durationSec'] as const) {
-          if (args[key] !== undefined)
-            (patch as Record<string, unknown>)[key] = args[key];
-        }
-        const violations = validateScene({ ...current, ...patch }, state.facts);
+        const parsed = parseSceneInput(args, true);
+        if (!parsed.ok) return invalidInput(parsed.message);
+        const violations = validateScene({ ...current, ...parsed.value }, state.facts);
         if (violations.length > 0) return reject(violations);
-        cb.updateScene(id, patch);
+        cb.updateScene(id, parsed.value);
         return ok({});
       },
     },

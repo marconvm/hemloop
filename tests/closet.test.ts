@@ -37,7 +37,10 @@ function makeStore() {
       shareApproved = false;
       return true;
     },
-    emitSignal: (s) => emitted.push(s),
+    emitSignal: (s) => {
+      emitted.push(s);
+      return true;
+    },
   };
   return {
     wardrobe,

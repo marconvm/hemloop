@@ -14,26 +14,45 @@ function hasWindow(): boolean {
   return typeof window !== 'undefined';
 }
 
+function isSignalShaped(x: unknown): x is DemandSignal {
+  if (typeof x !== 'object' || x === null) return false;
+  const s = x as Record<string, unknown>;
+  return (
+    typeof s.signalId === 'string' &&
+    typeof s.kind === 'string' &&
+    typeof s.category === 'string' &&
+    typeof s.at === 'string'
+  );
+}
+
 export function readSignals(): DemandSignal[] {
   if (!hasWindow()) return [];
   try {
     const raw = window.localStorage.getItem(KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? (parsed as DemandSignal[]) : [];
+    // Validate shape on readback: corrupt same-origin storage must not
+    // crash consumers or smuggle non-signal objects into the UI.
+    return Array.isArray(parsed) ? parsed.filter(isSignalShaped) : [];
   } catch {
     return [];
   }
 }
 
-export function appendSignal(signal: DemandSignal): void {
-  if (!hasWindow()) return;
+/** Append and VERIFY. Returns true only when the signal is actually
+ * readable back from storage — callers must not report delivery otherwise. */
+export function appendSignal(signal: DemandSignal): boolean {
+  if (!hasWindow()) return false;
   try {
     const next = [signal, ...readSignals()].slice(0, MAX_STORED);
     window.localStorage.setItem(KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent(EVENT));
+    const delivered = readSignals().some((s) => s.signalId === signal.signalId);
+    if (delivered) window.dispatchEvent(new CustomEvent(EVENT));
+    return delivered;
   } catch {
     // storage unavailable (private mode etc.) - the closet still works,
-    // the merchant just receives nothing.
+    // the merchant just receives nothing. Approval stays consumed
+    // (privacy fail-closed); the tool reports the failure honestly.
+    return false;
   }
 }
 

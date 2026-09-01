@@ -105,6 +105,65 @@ void test('validator rejects an invalid scene kind (XSS vector)', () => {
   assert.ok(bad.some((v) => v.rule === 'scene-kind'));
 });
 
+// PF2-3 exact replay cases from the second security pass.
+void test('validator handles Arabic-Indic / Persian digits and format controls', () => {
+  const { facts } = seedCampaign();
+  assert.equal(validateText('Now ٥٠٪ off', facts)[0]?.rule, 'discount-mismatch'); // Arabic-Indic 50%
+  assert.equal(validateText('Now ۵۰% off', facts)[0]?.rule, 'discount-mismatch'); // Persian 50
+  assert.ok(validateText('lowest⁠ price', facts).some((v) => v.rule === 'banned-phrase')); // word-joiner
+  const nulled = { ...facts, promoCode: null };
+  assert.equal(validateText('Use SAVE90 at checkout', nulled)[0]?.rule, 'code-mismatch'); // codeless, no locked code
+  assert.deepEqual(validateText('Rated 4.90 stars', facts), []); // bare decimal, no money context → not a price
+});
+
+// PF2-1: an unadvertised `style` property must never reach the export.
+void test('add_scene drops extra properties; export has no style breakout', async () => {
+  const { state, cb } = makeStore();
+  const tools = buildTools(cb);
+  const res = payload(
+    await tool(tools, 'add_scene').execute({
+      kind: 'product',
+      heading: 'Built for cold',
+      body: 'Six colours.',
+      durationSec: 3,
+      style: { background: '</style><script>alert(1)</script>' },
+    } as Record<string, unknown>),
+  );
+  assert.equal(res.ok, true);
+  const added = state.scenes.at(-1) as Scene & { style?: unknown };
+  assert.equal(added.style, undefined, 'style must not survive the parser');
+  const html = exportComposition(state);
+  assert.ok(!html.includes('<script>alert(1)'), 'no injected script in export');
+  assert.ok(!html.includes('</style><script>'), 'no style breakout in export');
+});
+
+// PF2-2: malformed field types are rejected as invalid-input, not stored.
+void test('add_scene rejects malformed field types', async () => {
+  const { state, cb } = makeStore();
+  const before = state.scenes.length;
+  const res = payload(
+    await tool(buildTools(cb), 'add_scene').execute({
+      kind: 'product',
+      heading: { evil: true },
+      body: null,
+      durationSec: '3',
+    } as unknown as Record<string, unknown>),
+  );
+  assert.equal(res.ok, false);
+  assert.equal(res.error, 'invalid-input');
+  assert.equal(state.scenes.length, before, 'nothing stored');
+});
+
+// PF2-1 defence in depth: exporter allowlists CSS colours even if a style
+// is injected directly onto a scene (bypassing the tools).
+void test('exporter neutralizes a malicious scene style colour', () => {
+  const state = seedCampaign();
+  (state.scenes[0] as Scene).style = { background: 'red;}</style><script>x</script>' };
+  const html = exportComposition(state);
+  assert.ok(!html.includes('</style><script>'), 'malicious colour must not break out');
+  assert.ok(!html.includes('<script>x</script>'));
+});
+
 // ---------- exporter ----------
 
 void test('exporter emits a valid standalone HyperFrames composition', () => {

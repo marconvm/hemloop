@@ -10,11 +10,26 @@ const PRICE_RE = /\$\s?(\d+(?:\.\d{1,2})?)/g;
 const BARE_PRICE_RE = /(?<![\d.$])(\d+\.\d{2})(?![\d])/g;
 const CODE_KEYWORD_RE = /\bcode[:\s]+([A-Za-z0-9]{3,})/gi;
 
-// Normalize before matching so full-width / Arabic-Indic digits and stray
-// format chars cannot smuggle a claim past the ASCII regexes.
+// Normalize before matching so no digit system or invisible format character
+// can smuggle a claim past the ASCII regexes: NFKC (full-width), explicit
+// Arabic-Indic U+0660-0669 and Persian U+06F0-06F9 digit maps, the Arabic
+// percent sign U+066A, and a full Unicode Cf (format-control) strip.
 function normalize(text: string): string {
-  return text.normalize('NFKC').replace(/[​-‍﻿]/g, '');
+  return text
+    .normalize('NFKC')
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/٪/g, '%')
+    .replace(/\p{Cf}/gu, '');
 }
+
+// Money-context window for bare decimals: "Just 19.99 today" is a price
+// claim; "Rated 4.90 stars" is not.
+const MONEY_CONTEXT_RE = /price|only|just|now|today|sale|deal|save|off|pay|\$/i;
+// Code-shaped token: caps with BOTH letters and digits (SAVE90, BTS25) —
+// flagged whether or not a locked code exists; avoids flagging plain
+// all-caps words like TODAY.
+const CODE_SHAPED_RE = /\b(?=[A-Z0-9]{4,}\b)(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]+\b/g;
 
 export const MAX_SCENE_SECONDS = 30;
 export const MAX_TOTAL_SECONDS = 60;
@@ -50,7 +65,12 @@ export function validateText(rawText: string, facts: CampaignFacts): Violation[]
     (p): p is number => p !== null,
   );
   const seenPrice = new Set<string>();
-  for (const m of [...text.matchAll(PRICE_RE), ...text.matchAll(BARE_PRICE_RE)]) {
+  const bareWithContext = [...text.matchAll(BARE_PRICE_RE)].filter((m) => {
+    const start = Math.max(0, (m.index ?? 0) - 16);
+    const end = (m.index ?? 0) + m[0].length + 16;
+    return MONEY_CONTEXT_RE.test(text.slice(start, end));
+  });
+  for (const m of [...text.matchAll(PRICE_RE), ...bareWithContext]) {
     const price = Number(m[1]);
     if (seenPrice.has(m[1])) continue;
     seenPrice.add(m[1]);
@@ -66,15 +86,13 @@ export function validateText(rawText: string, facts: CampaignFacts): Violation[]
     }
   }
 
-  // Any ALL-CAPS/alnum token that looks like a promo code but is not the
-  // locked one, whether or not it follows the word "code".
+  // Promo-code claims: an explicit "code X" phrase (any token), plus any
+  // code-shaped caps token (letters+digits) — the latter runs whether or not
+  // a code is locked, so "Use SAVE90 at checkout" is caught when the
+  // campaign has no code at all.
   const codeTokens = new Set<string>();
   for (const m of text.matchAll(CODE_KEYWORD_RE)) codeTokens.add(m[1]);
-  if (facts.promoCode) {
-    for (const m of text.matchAll(/\b([A-Z][A-Z0-9]{3,})\b/g)) {
-      if (m[1] !== facts.promoCode.toUpperCase()) codeTokens.add(m[1]);
-    }
-  }
+  for (const m of text.matchAll(CODE_SHAPED_RE)) codeTokens.add(m[0]);
   for (const token of codeTokens) {
     if (
       facts.promoCode === null ||

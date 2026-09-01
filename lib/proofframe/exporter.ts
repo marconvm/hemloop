@@ -20,10 +20,18 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
+// Allowlist CSS colours before they enter the exported <style> block.
+// PF2-1 defence in depth: even if an unadvertised style value reaches here,
+// only a strict colour token can pass — no `</style>`/`<script>` breakout.
+const CSS_COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgb\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*\)|rgba\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*\)|[a-zA-Z]{1,20})$/;
+function safeColor(value: string | undefined, fallback: string): string {
+  return value && CSS_COLOR_RE.test(value.trim()) ? value.trim() : fallback;
+}
+
 function sceneCss(scene: Scene, base: CampaignState['style']): string {
-  const bg = scene.style?.background ?? base.background;
-  const ink = scene.style?.ink ?? base.ink;
-  const accent = scene.style?.accent ?? base.accent;
+  const bg = safeColor(scene.style?.background, base.background);
+  const ink = safeColor(scene.style?.ink, base.ink);
+  const accent = safeColor(scene.style?.accent, base.accent);
   return `#${scene.id} { background: ${bg}; color: ${ink}; }
 #${scene.id} .accent { color: ${accent}; }`;
 }

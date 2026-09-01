@@ -82,12 +82,17 @@ export function ClosetStudio() {
 
   const emitSignal = useCallback(
     (signal: DemandSignal) => {
-      appendSignal(signal);
+      const delivered = appendSignal(signal);
       pushTrail({
         actor: 'AI',
-        title: 'Sent an approved zero-ID signal',
-        detail: `${signal.kind} · ${signal.category}${signal.size ? ` · ${signal.size}` : ''}`,
+        title: delivered
+          ? 'Sent an approved zero-ID signal'
+          : 'Signal approved but storage rejected it',
+        detail: delivered
+          ? `${signal.kind} · ${signal.category}${signal.size ? ` · ${signal.size}` : ''}`
+          : 'Bridge unavailable; nothing was delivered.',
       });
+      return delivered;
     },
     [pushTrail],
   );

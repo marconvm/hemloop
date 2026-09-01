@@ -6,6 +6,7 @@
 <meta name="robots" content="noindex, nofollow" />
 <title>Hemloop — Documentation</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.2/marked.min.js" integrity="sha384-dAw12gnWShdrRMCwiNUvPHQ5IWS3uZwljXl3x7qNqvn+5gD/O/DXFCnR29GdXgOk" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.7/purify.min.js" integrity="sha384-qJNkHwhlYywDHfyoEe1np+1lYvX/8x+3gHCKFhSSBMQyCFlvFnn+zXmaebXl21rV" crossorigin="anonymous"></script>
 <style>
   :root {
     --bg: #0e0f11; --panel: #16181b; --ink: #e9e7e1; --dim: #a4a29c;
@@ -76,7 +77,7 @@
       const res = await fetch(file);
       if (!res.ok) throw new Error(res.status);
       const md = await res.text();
-      content.innerHTML = marked.parse(md);
+      content.innerHTML = DOMPurify.sanitize(marked.parse(md));
       window.scrollTo(0, 0);
     } catch (e) {
       content.innerHTML = "<p>Could not load " + file + ".</p>";
