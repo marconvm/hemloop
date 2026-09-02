@@ -905,7 +905,7 @@ export function ProofFrameStudio() {
                 ? 'WebMCP connected'
                 : 'WebMCP contract ready'}
             </div>
-            <code>navigator.modelContext</code>
+            <code>navigator.modelContext ?? document.modelContext</code>
             <p>
               Ask a browser agent to read, draft, reorder, seek, validate, or
               export. Every accepted mutation appears here; rejected claims
