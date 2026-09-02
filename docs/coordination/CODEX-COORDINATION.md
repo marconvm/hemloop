@@ -120,3 +120,19 @@ never trigger anchor activation, so the human-click path was confirmed by readin
 **ChatGPT runtime facts for the demo:** site tools only on GPT-5.6 Sol/Terra (Luna disabled), desktop app
 built-in browser, Work/Codex workspaces; "Site tools" indicator in the address bar. Written into
 video/CUE-SHEET.md preflight.
+
+### Marco's ruling on the conformance pass (2026-09-02) — executed
+Marco: "work on 1–4". So the DISAGREE path resolved by the owner, as the rules allow; Codex lane still dormant.
+- Merged `fix-cross-links-plain-anchor` (cross-links + landing CTAs work again) and `preflight-modelcontext-label`.
+- Landed G2 (closed schemas), G3 (`untrustedContentHint`), G4 (awaited registration, honest badge), G5 (export
+  returns a summary and delivers the file), G6 (plain-object results), G8 (positive wording) — commit 09142d5.
+- G9: `WEBMCP_ORIGIN_TRIAL_TOKEN` slot in brand.ts + conditional meta in layout; Marco is registering the origin
+  `https://hemloop.marcoatwill.workers.dev` at the WebMCP origin trial. Paste token → rebuild → deploy.
+- oxlint `nextjs/no-html-link-for-pages` turned off with the reason in the commit.
+- Gates: tsc, oxlint, 42/42 tests (+3 conformance tests), build, local Worker smoke in Chrome 151 (6/9 tools,
+  flat results through `executeTool`, hints present, no console errors), deploy 27ae3d2a, live smoke 200×4 and
+  the new markup confirmed on the live HTML. Note: Chrome 151's `getTools()` returns `inputSchema` as a JSON
+  **string** (spec says object) — our schemas carry `additionalProperties:false` inside that string.
+- Still stealth (robots deny-all, noindex) until the branch `post-submission-unstealth` merges after the deadline.
+- `dual-review` skill gained **Step 0**: read the spec + every vendor guide + support matrix before the brief,
+  audit by script. Backed up in claude-setup.

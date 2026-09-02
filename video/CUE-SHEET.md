@@ -35,11 +35,8 @@ browser, latest version, ChatGPT Work or Codex (not Enterprise/Edu). The address
 
 Three things to know before you roll:
 
-1. **The proof-trail card still prints `navigator.modelContext`** — the one namespace
-   that is not there. A judge with the console open sees the contradiction, and it sits
-   on screen for the whole take. One-line fix waiting on branch
-   `preflight-modelcontext-label`; not merged, because a change lands only when both
-   agents agree and the Codex lane is dormant.
+1. **Proof-trail card label fixed** — it now prints `navigator.modelContext ?? document.modelContext`
+   (live since Worker 27ae3d2a), matching what the runtime actually exposes.
 2. **The gaps panel shows two cards** — "Hoodie · No hoodie in the wardrobe" and
    "Jacket · Only one jacket in rotation" — while VO-02 says "the gap: no hoodie".
    Prompt C1 asks which category is *completely absent*, so the answer is right; just
