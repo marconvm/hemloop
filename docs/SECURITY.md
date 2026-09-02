@@ -142,3 +142,7 @@ Codex replayed the third-pass fixes and found six residual concerns; Claude fixe
 Gates after Pass 4 fixes: 40/40 tests, tsc clean, oxlint clean. Residual, accepted: spelled-out numbers and promo tokens outside both tracks (e.g. a bare `AB12CD` with no redemption context) are not parsed; the locked disclaimer carries the authoritative figures and always renders.
 
 Live-runtime replay on the deployed build (Chrome 151 `document.modelContext`, Worker 8418d4ff): `reorder_scenes` with `{length:1}` → `invalid-input`; `add_scene` accepted 8 more (12 total) then refused with `invalid-input`; `validate_claims` flags `CAD 19.99` (price) and `Use Save90 at checkout` (code) while `X100`, `UV400` and `Coffee rating 4.90` return no violations.
+
+## Fifth pass — Codex replay (PF5-1) and fix
+
+Codex Pass 5 confirmed all PF4 fixes clean on independent replay and found one residual: `update_scene` had no projected campaign-total cap (hero→30s then product→30s reached 67s). Fixed: a duration patch now computes the projected total and rejects with `total-duration` before `cb.updateScene`. Regression: "PF5-1". Status: **FIXED (pending Codex Pass 6 replay)**.

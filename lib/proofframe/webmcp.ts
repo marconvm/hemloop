@@ -218,6 +218,18 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
         if (!parsed.ok) return invalidInput(parsed.message);
         const violations = validateScene({ ...current, ...parsed.value }, state.facts);
         if (violations.length > 0) return reject(violations);
+        // PF5-1: a duration patch must respect the campaign total cap too.
+        if (parsed.value.durationSec !== undefined) {
+          const projected =
+            state.scenes.reduce((sum, x) => sum + x.durationSec, 0) -
+            current.durationSec +
+            parsed.value.durationSec;
+          if (projected > MAX_TOTAL_SECONDS) {
+            return reject([
+              { rule: 'total-duration', sceneId: id, message: `This duration would make the campaign ${projected}s, over the ${MAX_TOTAL_SECONDS}s limit.` },
+            ]);
+          }
+        }
         cb.updateScene(id, parsed.value);
         return ok({});
       },

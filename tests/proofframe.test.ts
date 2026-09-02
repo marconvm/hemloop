@@ -385,3 +385,15 @@ void test('PF4-4b: product/model tokens are not promo codes; Save90 still is', (
   assert.equal(validateText('Apply XR7 now', facts)[0]?.rule, undefined); // too short for either track
   assert.equal(validateText('Redeem AB12CD today', facts)[0]?.rule, 'code-mismatch'); // context window catches non-fallback shapes
 });
+
+// PF5-1: update_scene must honour the projected campaign total cap.
+void test('PF5-1: update_scene rejects a duration that pushes the total over 60s', async () => {
+  const { state, cb } = makeStore(); // seed = 15s
+  const upd = tool(buildTools(cb), 'update_scene');
+  assert.equal(payload(await upd.execute({ id: 'hero', durationSec: 30 })).ok, true); // 41s
+  const over = payload(await upd.execute({ id: 'product', durationSec: 30 })); // would be 67s
+  assert.equal(over.ok, false);
+  assert.equal(over.violations?.[0]?.rule, 'total-duration');
+  assert.equal(state.scenes.find((s) => s.id === 'product')?.durationSec, 4, 'unchanged');
+  assert.equal(state.scenes.reduce((s, x) => s + x.durationSec, 0), 41);
+});
