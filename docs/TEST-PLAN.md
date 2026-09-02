@@ -4,7 +4,7 @@ Last run: 2026-09-01 (America/Toronto). Scope: the Hemloop WebMCP prototype (Clo
 
 Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackathon prototype, with reason) / DEFERRED (needs a human step).
 
-## 1. Functional Test — does each feature do what it should
+## 1. Functional Test: does each feature do what it should
 
 | # | Case | Expected | Result |
 |---|---|---|---|
@@ -13,13 +13,18 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | F3 | `get_my_sizes` brand filter | Dedupes, filters case-insensitively | PASS (unit) |
 | F4 | `add_garment` valid/invalid | Valid appends; bad category or empty string rejected | PASS (unit) |
 | F5 | `report_demand_gap` without approval | `human-approval-required`, nothing emitted | PASS (unit + live) |
-| F6 | `report_demand_gap` after one approval | Emits zero-ID event; second call re-blocks | PASS (live, event #8bb9b54a) |
+| F6 | `report_demand_gap` after one approval | Emits an event with no shopper identifier; second call re-blocks | PASS (live, event #8bb9b54a) |
 | F7 | Merchant `add_scene`/`update_scene` clean copy | Applies, visible in canvas | PASS (unit + browser) |
 | F8 | `import_product` while locked / unlocked | Blocked when locked; imports when unlocked | PASS (unit + browser) |
 | F9 | `export_composition` clean campaign | Delivers standalone HyperFrames HTML to the page (download) and returns `{ delivered, chars, scenes, durationSec }` under 1.5K chars | PASS (unit; `hyperframes check` 0 errors) |
 | F10 | Disclaimer footer in export | Present for full duration, not a clip, not removable | PASS (unit) |
+| F11 | `get_offer` on a locked offer | Returns product, prices, promo code, validity dates, disclaimer and purchase link as structured data; `readOnlyHint` | manual (unit coverage to confirm) |
+| F12 | `next` field on a rejection | Every `human-approval-required` and `locked-fact-violation` rejection carries a `next` string naming the retry | manual (unit coverage to confirm) |
+| F13 | Untrusted-content fences | `get_wardrobe` and `import_product` wrap third-party text in `<<<untrusted-content>>>` fences with a do-not-follow preamble | manual (unit coverage to confirm) |
+| F14 | Need/Want labelling | `DemandSignal.kind` `gap`/`fit` render as **Need**, `want` renders as **Want**, on both the closet and studio surfaces | manual (UI-only) |
+| F15 | Tool-call counter | The studio panel heading ticks a count of tool calls, including blocked ones | manual (UI-only) |
 
-## 2. Smoke Test — does the deployed thing come up at all
+## 2. Smoke Test: does the deployed thing come up at all
 
 | # | Case | Result |
 |---|---|---|
@@ -31,29 +36,29 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 
 Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" https://hemloop.app/$p; done` → 200/200/200.
 
-## 3. Integration Test — do the parts work together
+## 3. Integration Test: do the parts work together
 
 | # | Case | Expected | Result |
 |---|---|---|---|
-| I1 | Closet emits signal → studio Live Demand receives it | Same-origin bridge delivers cross-page | PASS (live) |
-| I2 | Studio "Build campaign from this" pulls the signalled product | Facts update from catalog snapshot | PASS (browser) |
+| I1 | Closet emits a request → studio Incoming requests receives it | Same-origin bridge delivers cross-page | PASS (live) |
+| I2 | Studio "Answer this request" pulls the requested product | Facts update from catalog snapshot | PASS (browser) |
 | I3 | Validator ↔ both adapters ↔ UI share one source of truth | Rejection identical via tool call and UI button | PASS |
 | I4 | Shopify catalog snapshot ↔ importer ↔ facts | Real store pricing maps correctly | PASS (unit) |
 | I5 | Exporter output ↔ HyperFrames renderer | `hyperframes check` clean | PASS |
 
-## 4. Regression Test — did new work break old work
+## 4. Regression Test: did new work break old work
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS — 41/41 at HEAD |
-| R2 | `tsc --noEmit` after each change | PASS — clean |
-| R3 | `oxlint` after each change | PASS — clean |
+| R1 | Full unit suite after every milestone | PASS (42/42 at HEAD) |
+| R2 | `tsc --noEmit` after each change | PASS (clean) |
+| R3 | `oxlint` after each change | PASS (clean) |
 | R4 | Production build after each change | PASS |
 | R5 | Blocked-claim demo still fires after the two-sided-loop refactor | PASS (browser) |
 
 Regression guard = the committed test suite; each commit was gated on it.
 
-## 5. User Acceptance Test (UAT) — does it meet the brief
+## 5. User Acceptance Test (UAT): does it meet the brief
 
 Mapped to the Devpost judging criteria and the PRD acceptance criteria (AC-1…AC-12).
 
@@ -61,7 +66,7 @@ Mapped to the Devpost judging criteria and the PRD acceptance criteria (AC-1…A
 |---|---|---|
 | U1 | A shopper's agent finds gaps and requests demand without exposing identity or wardrobe (AC-10, AC-12) | PASS (live) |
 | U2 | Sharing requires a human one-shot approval no tool can grant (AC-10) | PASS (live) |
-| U3 | A merchant sees demand and answers it in a truth-locked workflow (AC-2, AC-11) | PASS |
+| U3 | A merchant sees demand and answers it in a workflow built on locked offer facts (AC-2, AC-11) | PASS |
 | U4 | An unsafe agent claim is rejected before it applies, with a machine-readable reason (AC-1) | PASS (live + browser) |
 | U5 | Export refuses on violations; disclaimer baked in (AC-3, AC-4) | PASS |
 | U6 | Works as a plain editor without WebMCP (AC-8) | PASS (preview mode) |
@@ -87,10 +92,10 @@ Covered by a dedicated review pass (see [SECURITY.md](./SECURITY.md)). Summary o
 |---|---|
 | Tool-argument → DOM injection (exporter HTML escaping) | see SECURITY.md |
 | Trust-boundary bypass (locked facts, share approval one-shot) | see SECURITY.md |
-| Privacy (zero-ID signal, no wardrobe leak) | see SECURITY.md |
+| Privacy (no shopper identifier, no wardrobe leak) | see SECURITY.md |
 | Committed secrets | none (synthetic data only; no tokens in repo) |
 | Review loop (closed) | Six passes: Claude first pass, Codex independent second pass, then a fix↔replay loop (passes 3–6). Every finding (SEC-1/2, PF2-1…6, PF4-1…6, PF5-1) fixed with a regression test and, where tool-reachable, a live-runtime replay. Pass 6 clean; SECURITY.md closed for this submission |
-| Dependency audit | Runtime CVE-2026-44907 (`react-server-dom-webpack`) FIXED by upgrading the React trio to 19.2.8. Remaining advisories are build/dev tooling only (Vinext image-size, Windows-only Vite/esbuild, Undici under Miniflare) — not on a Worker request path; re-evaluate on the next Vinext upgrade |
+| Dependency audit | Runtime CVE-2026-44907 (`react-server-dom-webpack`) FIXED by upgrading the React trio to 19.2.8. Remaining advisories are build/dev tooling only (Vinext image-size, Windows-only Vite/esbuild, Undici under Miniflare), not on a Worker request path, re-evaluate on the next Vinext upgrade |
 
 ## 8. Penetration Test (adversarial-agent, in-scope subset)
 
@@ -108,7 +113,7 @@ A full external pentest is out of scope for a synthetic-data prototype; the rele
 | P8 | Agent evades the validator with Arabic-Indic/Persian digits or format controls | Normalized and flagged (PF2-3) |
 | P9 | Agent passes a non-array with a `length` to `reorder_scenes` | `invalid-input`, no throw (PF4-2, live) |
 | P10 | Agent floods `add_scene` / stretches `update_scene` to inflate the campaign | Scene cap 12 and projected total ≤ 60 s enforced before any callback (PF4-3, PF5-1, live) |
-| P11 | Malicious base style or injected `shopperId` in stored signals | Base colours allowlisted with safe defaults; `readSignals` rebuilds exact-key signals (PF4-1, PF4-6) |
+| P11 | Malicious base style or injected `shopperId` in stored requests | Base colours allowlisted with safe defaults; `readSignals` rebuilds exact-key requests (PF4-1, PF4-6) |
 
 The earlier deep findings (unicode/whitespace bypass, extra-property XSS, malformed-input DoS) were surfaced in the SECURITY.md second pass and are now fixed with regression tests; P6–P8 above enter through the real `buildTools()` tool boundary, not just the validator.
 
@@ -127,7 +132,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (41/41), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (42/42), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime
