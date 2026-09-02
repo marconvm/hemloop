@@ -5,6 +5,7 @@
 // paused GSAP timeline registered synchronously at window.__timelines[id].
 // Deterministic: no clocks, no randomness, no network, finite tweens only.
 import type { CampaignState, Scene } from './types';
+import { BRAND } from './brand';
 import { validateCampaign } from './validator';
 
 const COMPOSITION_ID = 'proofframe';
@@ -112,7 +113,7 @@ export function exportComposition(state: CampaignState): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=${width}, height=${height}" />
-    <title>${escapeHtml(state.facts.productName)} — ProofFrame promo</title>
+    <title>${escapeHtml(state.facts.productName)} — ${BRAND.name} promo</title>
     <script src="${GSAP_SRC}"></script>
     <style>
       body { margin: 0; background: ${base.background}; font-family: Inter, system-ui, sans-serif; }

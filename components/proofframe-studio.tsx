@@ -424,7 +424,7 @@ export function ProofFrameStudio() {
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = 'proofframe-composition.html';
+    anchor.download = `${BRAND.name.toLowerCase()}-composition.html`;
     anchor.click();
     URL.revokeObjectURL(url);
     pushActivity({
@@ -489,7 +489,7 @@ export function ProofFrameStudio() {
 
       <section
         className="studio-grid"
-        aria-label="ProofFrame campaign workspace"
+        aria-label={`${BRAND.name} campaign workspace`}
       >
         <aside className="truth-panel panel">
           <div className="panel-heading">
