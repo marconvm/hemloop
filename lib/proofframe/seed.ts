@@ -1,4 +1,4 @@
-// Seeded synthetic campaign for the demo. "Aurora Threads" is a fictional
+// Seeded synthetic campaign for the demo. "Northlight Apparel" is a fictional
 // brand; every number here is invented.
 import type { CampaignState } from './types';
 
@@ -12,11 +12,13 @@ export function seedCampaign(): CampaignState {
       regularPrice: 59.9,
       salePrice: 44.9,
       discountPercent: 25,
-      promoCode: 'AURORA25',
+      promoCode: 'NORTHLIGHT25',
       startDate: '2026-08-28',
       endDate: '2026-09-07',
       disclaimer: '25% off select styles until Sep 7, 2026. Online only.',
       bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
+      purchaseUrl: 'https://hemloop.app/closet?product=northlight-hoodie',
+      productImage: '/products/northlight-hoodie.jpg',
     },
     factsLocked: true,
     scenes: [
@@ -38,14 +40,14 @@ export function seedCampaign(): CampaignState {
         id: 'offer',
         kind: 'offer',
         heading: '25% off right now',
-        body: '$59.90 → $44.90 with code AURORA25',
+        body: '$59.90 → $44.90 with code NORTHLIGHT25',
         durationSec: 4,
         style: { background: '#1d3557', accent: '#ffd166' },
       },
       {
         id: 'cta',
         kind: 'cta',
-        heading: 'Aurora Threads',
+        heading: 'Northlight Apparel',
         body: 'Shop the drop before Sep 7.',
         durationSec: 3,
       },
