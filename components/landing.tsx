@@ -56,7 +56,7 @@ const CLOSET_ROWS: ToolRow[] = [
     kind: 'write',
     what: 'The only tool that can send anything to a merchant',
     guarantee:
-      'Rejects with human-approval-required until the person arms one share, consumes it after one event, can emit only the zero-ID DemandSignal shape, returns the exact payload sent',
+      'Rejects with human-approval-required until the person approves one request, consumes that approval after one event, can emit only the DemandSignal shape, returns the exact payload sent',
     strong: true,
   },
 ];
@@ -245,7 +245,7 @@ export function Landing() {
         <p className="landing-sub" data-reveal>
           The store answers with an offer that cannot lie about the price. Hemloop is the loop
           between a shopper&apos;s private closet and a merchant&apos;s campaign studio, built on
-          WebMCP: fifteen typed tools on two web pages, running in the shopper&apos;s and
+          WebMCP: sixteen typed tools on two web pages, running in the shopper&apos;s and
           merchant&apos;s own browsers.
         </p>
         <div className="landing-ctas" data-reveal>

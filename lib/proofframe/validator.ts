@@ -35,7 +35,7 @@ const MONEY_CONTEXT_RE = /\b(?:price|only|just|now|today|sale|deal|save|off|pay|
 // 1) any letter+digit token inside a tight redemption-context window
 //    ("use / apply / enter / redeem / promo / coupon / voucher … at checkout");
 // 2) a narrow global fallback: 3+ leading letters then 2+ trailing digits
-//    (SAVE90, Save90, AURORA25) — so model/product tokens like X100, UV400,
+//    (SAVE90, Save90, NORTHLIGHT25) — so model/product tokens like X100, UV400,
 //    H2O2 and 1080P are never flagged on their own.
 const CODE_CONTEXT_RE = /\b(?:use|apply|enter|redeem|promo|coupon|voucher|checkout)\b/gi;
 const CODE_CONTEXT_WINDOW = 28;
