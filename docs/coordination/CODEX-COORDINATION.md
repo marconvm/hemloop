@@ -52,3 +52,9 @@ Marco's ask: code/design must be neat and super fast. Three axes, reviewed indep
 2. Code structure/quality/compatibility: latest-vs-stable choices; browser/OS availability of APIs used (document.modelContext, \p{Cf} regex, crypto.randomUUID, color-mix, localStorage).
 3. Setup: Cloudflare Workers config (compat date/flags, observability, assets caching, Smart Placement, Cache Rules, headers/CSP/HSTS), Vercel (domain only), paid add-ons — switch on/off with reasons.
 Status: brief sent to Codex (surface:19) and a Claude review subagent; awaiting both. Successor session: read this section, collect both reports, reconcile, execute agreed items, re-run gates, deploy.
+
+### Round 2 reconciliation (2026-09-02)
+AGREED by both reviewers: keep the whole stack (vinext beta + RSC, React 19.2.8, Vite 8, TS 5.9, Tailwind 4.2, wrangler 4.127) — no framework migration before submission; no new services; Smart Placement OFF; Tail Workers OFF; no paid add-on by default; keep compatibility_date; keep dual modelContext probe; static immutable cache already correct; ADD security headers (nosniff, Referrer-Policy, Permissions-Policy, HSTS) via vinext `headers()`; NO CSP before submission (RSC inline scripts → hydration risk).
+CLAUDE-ONLY (proposed, low risk): replace 3 user-visible "ProofFrame" strings with BRAND.name (export <title>, studio aria-label, download filename); check Workers CPU p99 in dashboard → enable Workers Paid only if near the 10 ms free cap; optional: exact-pin React versions.
+DISAGREEMENT → Marco decides: remove 58 unused components/ui + hooks/ + 8 dead deps now (Claude: S effort, shrinks CSS 209 KB→smaller, judges see a clean tree; guarded by build+tests+live smoke) vs after judging (Codex: pure regression risk this close to deadline).
+DEFERRED (post-challenge): Vite SPA migration (drop RSC/server bundle), split proofframe-studio.tsx, CSP, Tailwind retention, dedupe ok()/fail() helpers.
