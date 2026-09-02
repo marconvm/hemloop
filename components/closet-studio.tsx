@@ -1,7 +1,6 @@
 'use client';
 
 import { Radio, Shirt, ShieldCheck, Sparkles, Store } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -179,10 +178,10 @@ export function ClosetStudio() {
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
-          <Link className="cross-link" href="/studio">
+          <a className="cross-link" href="/studio">
             <Store data-icon="inline-start" aria-hidden="true" />
             Merchant studio
-          </Link>
+          </a>
         </div>
       </header>
 
