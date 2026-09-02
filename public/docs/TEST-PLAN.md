@@ -29,7 +29,7 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | S4 | WebMCP badges render (preview or live) | PASS |
 | S5 | No uncaught console errors on load (framework error-boundary shims excluded) | PASS |
 
-Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" https://hemloop.marcoatwill.workers.dev/$p; done` → 200/200/200.
+Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" https://hemloop.app/$p; done` → 200/200/200.
 
 ## 3. Integration Test — do the parts work together
 
@@ -135,7 +135,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 - [x] PRD, user guide, tech guide, test plan, verification record committed
 - [x] SECURITY.md CLOSED: six review passes (two independent reviewers, fix↔review loop), all findings fixed with regressions and live-runtime replays; Pass 6 clean
 - [ ] Repo pushed public; license visible in host About
-- [ ] `hemloop.app` DNS cut over; HTTPS cert valid
+- [x] `hemloop.app` DNS cut over (zone on Cloudflare, Worker custom domains for apex + www); HTTPS cert valid (Google Trust Services, 2026-09-02). `hemloop.marcoatwill.workers.dev` stays live as fallback.
 - [ ] Demo video recorded (< 3 min, audio, public YouTube)
 - [ ] ChatGPT natural-language pairing confirmed or Chrome fallback documented
 - [ ] Devpost form submitted before 2026-09-03 13:00 PDT

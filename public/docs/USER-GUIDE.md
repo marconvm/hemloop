@@ -25,7 +25,7 @@ A promo-video studio that you and an AI agent edit together. You control the fac
 ### Enable WebMCP first
 
 - **Challenge-supported Chrome:** in the exact profile you will use, open `chrome://flags/#enable-webmcp-testing`, set it to Enabled, then press **Relaunch**. Reopen the live URL after the browser restarts. This is a manual browser setting; nothing on the page can flip it for you.
-- **ChatGPT with browsing:** open `https://hemloop.marcoatwill.workers.dev` inside ChatGPT's browser; tools are picked up automatically where WebMCP is supported.
+- **ChatGPT with browsing:** open `https://hemloop.app` inside ChatGPT's browser; tools are picked up automatically where WebMCP is supported.
 
 The badge in the studio header tells you the state: "9 WebMCP tools live" when connected, "preview mode" when the page is running as a plain editor.
 

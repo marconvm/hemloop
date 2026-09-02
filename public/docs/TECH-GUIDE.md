@@ -81,7 +81,7 @@ Read on 2026-09-02 (not during planning — recorded in the coordination log): t
 | No iframes, no declarative API (ChatGPT does not support them) | ChatGPT | none used |
 | `Origin-Agent-Cluster: ?0` must not be sent; `Permissions-Policy` leaves `tools` at default | Chrome | verified on the live headers |
 
-**Chrome without the flag — origin trial.** Chrome 149+ runs WebMCP on an origin that presents an origin-trial token, so judges need not touch `chrome://flags`. Register `https://hemloop.marcoatwill.workers.dev` at the [WebMCP origin trial](https://developer.chrome.com/origintrials/#/register_trial/4163014905550602241), tokens live in `WEBMCP_ORIGIN_TRIAL_TOKENS` in `lib/proofframe/brand.ts` (one per origin: workers.dev and hemloop.app, both registered 2026-09-02, trial ends Nov 16 2026); the layout emits one `<meta http-equiv="origin-trial">` per token. ChatGPT desktop needs no token: site tools work on GPT-5.6 Sol/Terra in its built-in browser.
+**Chrome without the flag — origin trial.** Chrome 149+ runs WebMCP on an origin that presents an origin-trial token, so judges need not touch `chrome://flags`. Register `https://hemloop.app` at the [WebMCP origin trial](https://developer.chrome.com/origintrials/#/register_trial/4163014905550602241), tokens live in `WEBMCP_ORIGIN_TRIAL_TOKENS` in `lib/proofframe/brand.ts` (one per origin: workers.dev and hemloop.app, both registered 2026-09-02, trial ends Nov 16 2026); the layout emits one `<meta http-equiv="origin-trial">` per token. ChatGPT desktop needs no token: site tools work on GPT-5.6 Sol/Terra in its built-in browser.
 
 ## The export format
 
@@ -126,7 +126,7 @@ Verified runtime behaviour (Chrome 151, `chrome://flags/#enable-webmcp-testing`,
 
 ## Cloudflare deployment
 
-The production app is deployed at `https://hemloop.marcoatwill.workers.dev`. Use the pinned Wrangler version and sanitize Vinext's generated config before deployment:
+The production app is deployed at `https://hemloop.app` (Worker custom domains for the apex and `www`; the zone lives on Cloudflare, the domain is registered at Vercel). `https://hemloop.marcoatwill.workers.dev` serves the same Worker and stays live as a fallback — `prepare:worker` pins `workers_dev: true`, because adding routes otherwise disables it silently. Use the pinned Wrangler version and sanitize Vinext's generated config before deployment:
 
 ```sh
 npm run build

@@ -30,7 +30,7 @@ Paste these prompts exactly. They name the intended page tools and constrain the
 ### Preflight — do not record
 
 1. Use the same ChatGPT browser session for both live routes so the same-origin signal bridge is available.
-2. Open `https://hemloop.marcoatwill.workers.dev/closet` and `https://hemloop.marcoatwill.workers.dev/studio` in separate tabs. Reload both after WebMCP is enabled.
+2. Open `https://hemloop.app/closet` and `https://hemloop.app/studio` in separate tabs. Reload both after WebMCP is enabled.
 3. Confirm the badges say **6 WebMCP tools live** and **9 WebMCP tools live**.
 4. If previous rehearsal signals remain, clear site data before the final rehearsal, then reload both tabs. Confirm the studio says there are no signals yet.
 5. Keep the closet's **Approve next signal** button and the studio's **Live Demand** / **Proof trail** panels visible. Start with campaign truth locked.

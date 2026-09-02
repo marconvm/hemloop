@@ -4,7 +4,7 @@
 
 Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/). Two surfaces, one origin, with the agent orchestrating both sides of the workflow:
 
-**Live app:** [hemloop.marcoatwill.workers.dev](https://hemloop.marcoatwill.workers.dev)
+**Live app:** [hemloop.app](https://hemloop.app)
 
 1. **The Closet** (`/closet`) — the shopper surface. The agent uses 6 WebMCP tools to find wardrobe gaps and check fit against a Shopify catalog snapshot. When something is missing, `report_demand_gap` can send one **zero-ID, schema-limited demand event** — but only after the shopper arms a one-shot approval in the UI. The payload has category, size, optional product handle and event metadata; it has no account ID, stable hash or wardrobe rows.
 2. **The Studio** (`/studio`) — the merchant surface. Consented demand arrives in a live panel: intent that purchase history often misses. The merchant answers it with a workflow: lock the campaign truth (prices, offer, code, dates, disclaimer), then let their agent build the response through 9 WebMCP tools. A promo video is one output of that workflow — the trust machinery around it is the product, not the video editor.
@@ -43,7 +43,7 @@ To connect an agent in a challenge-supported Chrome build: enable `chrome://flag
 - **Shopify** — campaign facts and fit checks run against a real (synthetic-data) Shopify development store catalog
 - **Google Chrome** — target WebMCP runtime; final production flag/relaunch verification is tracked in the verification record
 - **OpenAI / ChatGPT** — target agent surface for the two-sided demo; in-app pairing is the remaining P4 gate
-- **Cloudflare** — the live app is deployed on Cloudflare Workers at [hemloop.marcoatwill.workers.dev](https://hemloop.marcoatwill.workers.dev)
+- **Cloudflare** — the live app is deployed on Cloudflare Workers at [hemloop.app](https://hemloop.app)
 
 ## Cloudflare deployment
 
