@@ -59,3 +59,19 @@ CLAUDE-ONLY (proposed, low risk): replace 3 user-visible "ProofFrame" strings wi
 DISAGREEMENT → Marco decides: remove 58 unused components/ui + hooks/ + 8 dead deps now (Claude: S effort, shrinks CSS 209 KB→smaller, judges see a clean tree; guarded by build+tests+live smoke) vs after judging (Codex: pure regression risk this close to deadline).
 DEFERRED (post-challenge): Vite SPA migration (drop RSC/server bundle), split proofframe-studio.tsx, CSP, Tailwind retention, dedupe ok()/fail() helpers.
 Executed (both agreed, 2026-09-02): security headers via vinext `headers()` — nosniff, Referrer-Policy, Permissions-Policy, HSTS — live-verified on /studio; three user-visible "ProofFrame" strings → BRAND.name (export title, studio aria-label, download filename). CPU: no preemptive Workers Paid; enable only on observed exceededCpu/1102 signals. Deployed Worker 8dd6f959. The dual-review protocol is now a reusable skill: ~/.claude/skills/dual-review (facts.sh + reconciliation protocol).
+
+### Round-2 DISAGREE resolved by Marco (2026-09-02) — dead code removed
+Marco's call on the one open disagreement (Claude: remove now / Codex: after judging): **remove now, guarded**.
+Executed on `main` (commit a80f9c4): 58 unused `components/ui/*` + `hooks/use-mobile.ts` deleted after a
+reachability closure from the real entries (`app/`, top-level `components/`, `lib/`, `tests/`) — only `badge`
+and `button` are reachable. Dropped the 8 deps only those files used: `@shadcn/react`, `cmdk`, `date-fns`,
+`embla-carousel-react`, `input-otp`, `react-day-picker`, `react-resizable-panels`, `recharts`. Kept
+`react-dom`, `react-server-dom-webpack`, `vinext` (framework runtime, never imported directly).
+Guard, in order: 41/41 tests → build clean → oxlint clean → local `wrangler dev` smoke (/, /studio, /closet
+200, headers identical to prod) → deploy → live smoke on hemloop.marcoatwill.workers.dev (same three routes
+200, byte-identical to local, security headers unchanged). dist 2.2M → 1.8M, client 936K → 772K.
+Worker version 5499efd5. Codex's regression concern is answered by the live smoke, not by argument.
+
+Also landed: the `dual-review` skill gained a **Handshake** section — the five peer-agent coordination rules
+this log produced the hard way (durable log over session-local messages, handoff-safe briefs, instruction-source
+boundary, declared file ownership, stalled reviewer ≠ consent). Backed up in `~/projects/claude-setup`.
