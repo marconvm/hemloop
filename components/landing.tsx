@@ -1,7 +1,6 @@
 'use client';
 
 import { ArrowRight, Lock, Radio, Shirt, Sparkles, Store } from 'lucide-react';
-import Link from 'next/link';
 import { useEffect } from 'react';
 
 import { BRAND } from '@/lib/proofframe/brand';
@@ -62,16 +61,16 @@ export function Landing() {
           {BRAND.sub}
         </p>
         <div className="landing-ctas" data-reveal>
-          <Link className="landing-cta primary" href="/closet">
+          <a className="landing-cta primary" href="/closet">
             <Shirt aria-hidden="true" />
             Open the shopper closet
             <ArrowRight aria-hidden="true" />
-          </Link>
-          <Link className="landing-cta" href="/studio">
+          </a>
+          <a className="landing-cta" href="/studio">
             <Store aria-hidden="true" />
             Open the merchant studio
             <ArrowRight aria-hidden="true" />
-          </Link>
+          </a>
         </div>
       </section>
 

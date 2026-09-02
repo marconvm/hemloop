@@ -14,7 +14,6 @@ import {
   UnlockKeyhole,
   WandSparkles,
 } from 'lucide-react';
-import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -465,10 +464,10 @@ export function ProofFrameStudio() {
         </div>
 
         <div className="header-actions">
-          <Link className="cross-link" href="/closet">
+          <a className="cross-link" href="/closet">
             <Shirt data-icon="inline-start" aria-hidden="true" />
             Shopper closet
-          </Link>
+          </a>
           <Badge
             variant="outline"
             className={`webmcp-badge status-${webMcpStatus}`}
