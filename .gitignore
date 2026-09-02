@@ -38,3 +38,6 @@ next-env.d.ts
 /work/
 tsconfig.tsbuildinfo
 video/vo/
+video/vo-el/
+video/vo-clone/
+video/voice-samples/

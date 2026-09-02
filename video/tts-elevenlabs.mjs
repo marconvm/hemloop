@@ -18,7 +18,18 @@ function loadKey() {
   process.exit(1);
 }
 
-const [out, text, voiceId = 'onwK4e9ZLuTAKqWW03F9'] = process.argv.slice(2);
+// Voice precedence: CLI arg → $ELEVENLABS_VOICE_ID / env file (your clone) → Daniel.
+function loadVoiceId() {
+  if (process.env.ELEVENLABS_VOICE_ID) return process.env.ELEVENLABS_VOICE_ID;
+  const envFile = `${homedir()}/.config/hemloop-video/env`;
+  if (existsSync(envFile)) {
+    const m = readFileSync(envFile, 'utf8').match(/^ELEVENLABS_VOICE_ID=(\S+)/m);
+    if (m) return m[1];
+  }
+  return 'onwK4e9ZLuTAKqWW03F9';
+}
+const [out, text, voiceArg] = process.argv.slice(2);
+const voiceId = voiceArg || loadVoiceId();
 if (!out || !text) {
   console.error('Usage: tts-elevenlabs.mjs <out.mp3> "text" [voiceId]');
   process.exit(1);
