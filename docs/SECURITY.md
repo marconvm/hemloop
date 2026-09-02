@@ -145,4 +145,18 @@ Live-runtime replay on the deployed build (Chrome 151 `document.modelContext`, W
 
 ## Fifth pass — Codex replay (PF5-1) and fix
 
-Codex Pass 5 confirmed all PF4 fixes clean on independent replay and found one residual: `update_scene` had no projected campaign-total cap (hero→30s then product→30s reached 67s). Fixed: a duration patch now computes the projected total and rejects with `total-duration` before `cb.updateScene`. Regression: "PF5-1". Status: **FIXED (pending Codex Pass 6 replay)**.
+Codex Pass 5 confirmed all PF4 fixes clean on independent replay and found one residual: `update_scene` had no projected campaign-total cap (hero→30s then product→30s reached 67s). Fixed: a duration patch now computes the projected total and rejects with `total-duration` before `cb.updateScene`. Regression: "PF5-1".
+
+## Pass 6 — Codex final replay
+
+Status: **CLEAN — no open application-security findings from the reviewed paths.**
+
+Independent replay after commit `71bad0a` verified:
+
+- Base-style breakout is neutralized; malformed `reorder_scenes` returns structured `invalid-input` without throwing.
+- Scene growth stops at 12 scenes and 60 seconds. A two-step `update_scene` attack (hero→30s, then product→30s) accepts the first at 41s, rejects the second at 67s before the callback, and leaves state unchanged at 41s.
+- `CAD 19.99` and `Save90` in checkout context are flagged; `Coffee rating 4.90`, `X100`, `UV400`, `H2O2`, and `1080P` are not false-flagged.
+- Invalid closet `kind` is rejected before approval consumption; corrupt localStorage entries are dropped and extra keys are not returned.
+- The approval gate remains fail-closed when signal storage is unavailable: no success is reported and approval is not restored.
+
+Gates: **41/41 tests, TypeScript clean, oxlint clean, diff check clean, and the documentation mirror byte-identical.** This review made no deployment. Remaining audit advisories are confined to previously recorded build/dev tooling paths; they are not new reachable application findings.
