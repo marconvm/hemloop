@@ -45,3 +45,10 @@ Ask to Codex: adversarially re-review the six fixes — probe `parseSceneInput` 
 - Pass 6 (Codex replay of 71bad0a) → **CLEAN**. Codex recorded it in SECURITY.md (commit 77e7cdd).
 - Final gates: 41/41 tests, tsc, oxlint, diff-check clean; docs mirror identical.
 - Both agents agree: SECURITY.md is closed for this submission. Residual (accepted, documented): spelled-out numbers and promo tokens outside both detection tracks; build-tooling npm advisories not on a Worker request path.
+
+## Engineering review round 2 (2026-09-02) — brief (for any successor session)
+Marco's ask: code/design must be neat and super fast. Three axes, reviewed independently by Codex and a Claude subagent, then reconciled; changes only where BOTH agree, minimal, no speculative structure.
+1. Design: language/versions/dependencies; add/remove services.
+2. Code structure/quality/compatibility: latest-vs-stable choices; browser/OS availability of APIs used (document.modelContext, \p{Cf} regex, crypto.randomUUID, color-mix, localStorage).
+3. Setup: Cloudflare Workers config (compat date/flags, observability, assets caching, Smart Placement, Cache Rules, headers/CSP/HSTS), Vercel (domain only), paid add-ons — switch on/off with reasons.
+Status: brief sent to Codex (surface:19) and a Claude review subagent; awaiting both. Successor session: read this section, collect both reports, reconcile, execute agreed items, re-run gates, deploy.
