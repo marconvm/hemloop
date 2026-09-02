@@ -16,7 +16,7 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | F6 | `report_demand_gap` after one approval | Emits zero-ID event; second call re-blocks | PASS (live, event #8bb9b54a) |
 | F7 | Merchant `add_scene`/`update_scene` clean copy | Applies, visible in canvas | PASS (unit + browser) |
 | F8 | `import_product` while locked / unlocked | Blocked when locked; imports when unlocked | PASS (unit + browser) |
-| F9 | `export_composition` clean campaign | Returns standalone HyperFrames HTML | PASS (unit; `hyperframes check` 0 errors) |
+| F9 | `export_composition` clean campaign | Delivers standalone HyperFrames HTML to the page (download) and returns `{ delivered, chars, scenes, durationSec }` under 1.5K chars | PASS (unit; `hyperframes check` 0 errors) |
 | F10 | Disclaimer footer in export | Present for full duration, not a clip, not removable | PASS (unit) |
 
 ## 2. Smoke Test — does the deployed thing come up at all

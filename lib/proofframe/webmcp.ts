@@ -13,20 +13,56 @@ import type {
 import { MAX_TOTAL_SECONDS, validateCampaign, validateScene, validateText } from './validator';
 import { exportComposition } from './exporter';
 
-export interface ToolContent {
-  content: { type: 'text'; text: string }[];
-}
+// A tool result is a plain JSON object. The browser serialises whatever
+// `execute` returns (spec: executeTool resolves to the JSON string of the
+// value), so wrapping it in MCP content blocks only double-encoded the text.
+export type ToolContent = Record<string, unknown>;
 
 export interface WebMcpTool {
   name: string;
+  title?: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  annotations?: { readOnlyHint?: boolean };
-  execute(args: Record<string, unknown>): Promise<ToolContent> | ToolContent;
+  annotations?: { readOnlyHint?: boolean; untrustedContentHint?: boolean };
+  execute(
+    args: Record<string, unknown>,
+    options?: { signal?: AbortSignal },
+  ): Promise<ToolContent> | ToolContent;
 }
 
 export interface ModelContextLike {
+  /** Spec: returns a Promise; rejects on duplicate name or disabled permission. */
   registerTool(tool: WebMcpTool): unknown;
+}
+
+/** Every schema closes over its declared properties (ChatGPT's own sample does this even for `{}`). */
+export function closeSchemas(tools: WebMcpTool[]): WebMcpTool[] {
+  return tools.map((t) => ({
+    ...t,
+    inputSchema: { ...t.inputSchema, additionalProperties: false },
+  }));
+}
+
+export interface RegisterResult {
+  registered: string[];
+  rejected: { name: string; reason: string }[];
+}
+
+/** Register every tool, awaiting each promise so a rejection is seen, not swallowed. */
+export async function registerAll(
+  mc: ModelContextLike | null,
+  tools: WebMcpTool[],
+): Promise<RegisterResult> {
+  if (!mc) return { registered: [], rejected: [] };
+  const settled = await Promise.allSettled(
+    tools.map((t) => Promise.resolve().then(() => mc.registerTool(t))),
+  );
+  const result: RegisterResult = { registered: [], rejected: [] };
+  settled.forEach((s, i) => {
+    if (s.status === 'fulfilled') result.registered.push(tools[i].name);
+    else result.rejected.push({ name: tools[i].name, reason: String(s.reason) });
+  });
+  return result;
 }
 
 /** Probe both namespaces — the spec moved between navigator and document. */
@@ -54,28 +90,21 @@ export interface ProofFrameCallbacks {
   seekPreview(tSec: number): void;
   /** Optional: fetch real product facts (e.g. Shopify Storefront API). */
   importProduct?(handle: string): Promise<CampaignFacts> | CampaignFacts;
+  /** Optional: hand the exported HTML to the page (e.g. trigger the download the human would). */
+  deliverExport?(html: string): void;
 }
 
 function ok(data: object = {}): ToolContent {
-  return {
-    content: [{ type: 'text', text: JSON.stringify({ ok: true, ...data }) }],
-  };
+  return { ok: true, ...data };
 }
 
 function reject(violations: Violation[]): ToolContent {
   return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify({
-          ok: false,
-          error: 'locked-fact-violation',
-          message:
-            'Rejected: the copy contradicts human-locked campaign facts. Nothing was applied. Fix the copy to match the locked facts — you cannot change the facts themselves.',
-          violations,
-        }),
-      },
-    ],
+    ok: false,
+    error: 'locked-fact-violation',
+    message:
+      'Rejected: the copy contradicts human-locked campaign facts. Nothing was applied. Fix the copy to match the locked facts — you cannot change the facts themselves.',
+    violations,
   };
 }
 
@@ -134,9 +163,7 @@ function parseSceneInput(
 }
 
 function invalidInput(message: string): ToolContent {
-  return {
-    content: [{ type: 'text', text: JSON.stringify({ ok: false, error: 'invalid-input', message }) }],
-  };
+  return { ok: false, error: 'invalid-input', message };
 }
 
 export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
@@ -303,14 +330,22 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'export_composition',
       description:
-        'Export the campaign as a standalone HyperFrames HTML composition (renderable to video). Fails if any claim violation remains.',
+        'Export the campaign as a standalone HyperFrames HTML composition (renderable to video). The page receives the file as a download; the result carries its size and scene count. Fails if any claim violation remains.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () => {
         const state = cb.getState();
         const violations = validateCampaign(state);
         if (violations.length > 0) return reject(violations);
-        return ok({ html: exportComposition(state) });
+        const html = exportComposition(state);
+        cb.deliverExport?.(html);
+        // Budget: Chrome asks for ≤1.5K chars per tool output; the full HTML is ~4K.
+        return ok({
+          delivered: typeof cb.deliverExport === 'function',
+          chars: html.length,
+          scenes: state.scenes.length,
+          durationSec: state.scenes.reduce((sum, s) => sum + s.durationSec, 0),
+        });
       },
     },
   ];
@@ -325,6 +360,8 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
         properties: { handle: { type: 'string' } },
         required: ['handle'],
       },
+      // Storefront data is external content from the page author's perspective.
+      annotations: { untrustedContentHint: true },
       execute: async (args) => {
         try {
           const facts = await cb.importProduct!(
@@ -333,32 +370,22 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
           return ok({ facts });
         } catch (error) {
           return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  ok: false,
-                  error: 'import-failed',
-                  message: error instanceof Error ? error.message : String(error),
-                }),
-              },
-            ],
+            ok: false,
+            error: 'import-failed',
+            message: error instanceof Error ? error.message : String(error),
           };
         }
       },
     });
   }
 
-  return tools;
+  return closeSchemas(tools);
 }
 
-/** Register all tools on the page's model context. Returns registered names. */
+/** Register all tools on the page's model context. Resolves with confirmed names and any rejections. */
 export function registerProofFrameTools(
   cb: ProofFrameCallbacks,
   mc: ModelContextLike | null = getModelContext(),
-): { registered: string[] } {
-  if (!mc) return { registered: [] };
-  const tools = buildTools(cb);
-  for (const tool of tools) mc.registerTool(tool);
-  return { registered: tools.map((t) => t.name) };
+): Promise<RegisterResult> {
+  return registerAll(mc, buildTools(cb));
 }

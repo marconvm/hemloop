@@ -89,9 +89,9 @@ Expected: the first call returns `locked-fact-violation` for the 50% mismatch an
 
 ### Studio prompt M3 — validate and export (2:10)
 
-> Call `validate_claims` for the whole campaign with no text argument. If it is valid, call `export_composition`. Do not paste the HTML. Report only `valid`, whether HTML was returned, and its character count.
+> Call `validate_claims` for the whole campaign with no text argument. If it is valid, call `export_composition`. Report only `valid`, the scene count and the character count it returns.
 
-Expected: valid campaign and a standalone HTML composition returned. Click the human **Export composition** button if the recording also needs to show the downloaded file.
+Expected: valid campaign; the composition file downloads in the page (the same path the human Export button takes) and the tool returns `{ delivered: true, chars, scenes, durationSec }` — a summary, never the HTML, which keeps the tool output inside Chrome's 1.5K budget. The download landing is the visible proof; no second click needed.
 
 ### Fast recovery lines
 

@@ -40,7 +40,7 @@ Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at 
 
 ## The WebMCP contract
 
-Registration probes `navigator.modelContext` then `document.modelContext` (the namespace moved between spec drafts). Each tool is `{ name, description, inputSchema, annotations?, execute }`; results are MCP text content blocks whose text is JSON.
+Registration targets `document.modelContext` (the spec's namespace; `navigator.modelContext` is probed first only as a fallback for older drafts). Each tool is `{ name, description, inputSchema, annotations?, execute }`. `execute` returns a plain JSON object — the browser serialises it for the agent (spec: `executeTool` resolves to the JSON string of the returned value), so there is no MCP content-block wrapper.
 
 Success: `{ "ok": true, ... }`. Rejection (mutation contradicting locked facts):
 
@@ -60,8 +60,28 @@ Guarantees the adapter enforces:
 
 - Validation runs **before** the state callback; a rejected call applies nothing (AC-1).
 - There is no lock/unlock tool (AC-2). `import_product` is registered only when the page passes an `importProduct` callback, and the studio's callback throws while facts are locked.
-- `get_campaign_state`, `validate_claims` and `export_composition` carry `readOnlyHint: true`.
+- `get_campaign_state`, `validate_claims` and `export_composition` carry `readOnlyHint: true`. `get_wardrobe` (shopper-entered rows) and `import_product` (storefront data) carry `untrustedContentHint: true`.
+- Every `inputSchema` is closed with `additionalProperties: false`; `registerTool()` promises are awaited via `Promise.allSettled`, so the header badge counts confirmed registrations and a duplicate-name `InvalidStateError` or a `NotAllowedError` surfaces as `WebMCP registration rejected` instead of a silent "tools live".
+- `export_composition` hands the HTML to the page through the `deliverExport` callback (the studio downloads it, same as the human Export button) and returns a summary, keeping every tool result inside Chrome's 1.5K-character output budget.
 - On the closet surface, no tool can arm sharing. `report_demand_gap` rejects with `human-approval-required` until the human presses “Approve next signal”, then consumes that approval after one event.
+
+## Spec and vendor guidance this build follows
+
+Read on 2026-09-02 (not during planning — recorded in the coordination log): the [WebMCP spec](https://webmachinelearning.github.io/webmcp/), its [explainer](https://github.com/webmachinelearning/webmcp), Chrome's [WebMCP guide](https://developer.chrome.com/docs/ai/webmcp) (best practices, build tools, secure tools, imperative API) and ChatGPT's [WebMCP page](https://learn.chatgpt.com/docs/webmcp).
+
+| guideline | source | Hemloop |
+|---|---|---|
+| Namespace `document.modelContext`; tool names ASCII + `_ - .`, ≤128 chars | spec | yes |
+| Name ≤30, description ≤500, parameter description ≤150, output ≤1.5K chars | Chrome secure-tools | yes (unit-tested for names/descriptions/schema; output verified per tool) |
+| `readOnlyHint` on read-only tools; `untrustedContentHint` on user/external content | spec, Chrome | yes |
+| `additionalProperties: false` on every schema | ChatGPT sample | yes |
+| Await `registerTool()`; handle `InvalidStateError` / `NotAllowedError` | spec | yes |
+| "Validate strictly in code, loosely in schema"; descriptive errors so the agent self-corrects | Chrome best-practices | the validator and `locked-fact-violation` / `human-approval-required` shapes |
+| Consequential actions need a human step | Chrome, ChatGPT | the closet approval button and studio lock are human-only; no tool can arm either |
+| No iframes, no declarative API (ChatGPT does not support them) | ChatGPT | none used |
+| `Origin-Agent-Cluster: ?0` must not be sent; `Permissions-Policy` leaves `tools` at default | Chrome | verified on the live headers |
+
+**Chrome without the flag — origin trial.** Chrome 149+ runs WebMCP on an origin that presents an origin-trial token, so judges need not touch `chrome://flags`. Register `https://hemloop.marcoatwill.workers.dev` at the [WebMCP origin trial](https://developer.chrome.com/origintrials/#/register_trial/4163014905550602241), paste the token into `WEBMCP_ORIGIN_TRIAL_TOKEN` in `lib/proofframe/brand.ts`, rebuild and deploy; the layout emits `<meta http-equiv="origin-trial">` only when the constant is set. ChatGPT desktop needs no token: site tools work on GPT-5.6 Sol/Terra in its built-in browser.
 
 ## The export format
 
@@ -101,7 +121,7 @@ Manual checks: the "Try unsafe agent claim" button exercises the full rejection 
 Verified runtime behaviour (Chrome 151, `chrome://flags/#enable-webmcp-testing`, live deployment):
 
 - Chrome 151 exposes **`document.modelContext` only**; `navigator.modelContext` is undefined. The adapters probe both, so registration works either way.
-- The testing API surface is `getTools()`, `executeTool(registeredTool, argsJsonString)`, `registerTool()`, `ontoolchange`. `executeTool` takes the RegisteredTool object from `getTools()` (not a name) and a JSON **string** of arguments; results return as serialized JSON content blocks.
+- The testing API surface is `getTools()`, `executeTool(registeredTool, argsJsonString)`, `registerTool()`, `ontoolchange`. `executeTool` takes the RegisteredTool object from `getTools()` (not a name) and a JSON **string** of arguments; results return as the JSON string of whatever `execute` returned.
 - Full loop proven end to end: `find_gaps` → `report_demand_gap` blocked with `human-approval-required` → human presses Approve → same call succeeds emitting the zero-ID event → immediate retry blocked again (one-shot consumed) → the event appears in the studio's Live Demand panel cross-page.
 
 ## Cloudflare deployment

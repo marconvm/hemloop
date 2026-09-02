@@ -14,7 +14,7 @@ interface ToolPayload {
 }
 
 function payload(result: ToolContent): ToolPayload {
-  return JSON.parse(result.content[0].text) as ToolPayload;
+  return result as unknown as ToolPayload;
 }
 
 void test('catalog snapshot has the demo product first and real provenance', () => {

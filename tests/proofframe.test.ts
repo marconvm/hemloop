@@ -43,10 +43,12 @@ interface ToolPayload {
   error?: string;
   violations?: Violation[];
   html?: string;
+  chars?: number;
+  delivered?: boolean;
 }
 
 function payload(result: ToolContent): ToolPayload {
-  return JSON.parse(result.content[0].text) as ToolPayload;
+  return result as unknown as ToolPayload;
 }
 
 function tool(tools: WebMcpTool[], name: string): WebMcpTool {
@@ -306,24 +308,63 @@ void test('reorder_scenes requires a permutation', async () => {
   assert.equal(state.scenes[0].id, 'cta');
 });
 
-void test('seek_preview clamps into the composition and export_composition returns HTML', async () => {
+void test('seek_preview clamps into the composition; export_composition delivers HTML to the page and returns a summary under the 1.5K output budget', async () => {
   const { cb, lastSeek } = makeStore();
+  let delivered = '';
+  cb.deliverExport = (html) => {
+    delivered = html;
+  };
   const tools = buildTools(cb);
   await tool(tools, 'seek_preview').execute({ tSec: 9999 });
   assert.equal(lastSeek(), 15);
-  const exported = payload(await tool(tools, 'export_composition').execute({}));
+  const result = await tool(tools, 'export_composition').execute({});
+  const exported = payload(result);
   assert.equal(exported.ok, true);
-  assert.match(String(exported.html), /data-composition-id="proofframe"/);
+  assert.match(delivered, /data-composition-id="proofframe"/);
+  assert.equal(exported.chars, delivered.length);
+  assert.equal(exported.delivered, true);
+  assert.ok(!('html' in exported), 'HTML goes to the page, not into the tool result');
+  assert.ok(JSON.stringify(result).length <= 1500);
 });
 
-void test('registerProofFrameTools registers on a provided model context', () => {
+void test('every tool closes its input schema and stays inside Chrome\'s character budgets', () => {
+  const { cb } = makeStore();
+  for (const t of buildTools(cb)) {
+    assert.equal(t.inputSchema.additionalProperties, false, t.name);
+    assert.ok(t.name.length <= 30, t.name);
+    assert.ok(t.description.length <= 500, t.name);
+  }
+});
+
+void test('registerProofFrameTools awaits every registration and reports rejections', async () => {
   const { cb } = makeStore();
   const seen: string[] = [];
-  const { registered } = registerProofFrameTools(cb, {
-    registerTool: (t) => seen.push(t.name),
+  const { registered, rejected } = await registerProofFrameTools(cb, {
+    registerTool: (t) => {
+      seen.push(t.name);
+      return Promise.resolve();
+    },
   });
   assert.equal(registered.length, 8);
   assert.deepEqual(seen, registered);
+  assert.deepEqual(rejected, []);
+
+  // Spec: a second registration of the same name rejects with InvalidStateError.
+  const names = new Set<string>();
+  const dup = await registerProofFrameTools(cb, {
+    registerTool: (t) =>
+      names.has(t.name)
+        ? Promise.reject(new Error('InvalidStateError'))
+        : (names.add(t.name), Promise.resolve()),
+  });
+  assert.equal(dup.registered.length, 8);
+  const again = await registerProofFrameTools(cb, {
+    registerTool: (t) =>
+      names.has(t.name) ? Promise.reject(new Error('InvalidStateError')) : Promise.resolve(),
+  });
+  assert.equal(again.registered.length, 0);
+  assert.equal(again.rejected.length, 8);
+  assert.match(again.rejected[0].reason, /InvalidStateError/);
 });
 
 // ---------- Security pass 4 (PF4-1..PF4-4) ----------

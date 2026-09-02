@@ -249,6 +249,17 @@ export function ProofFrameStudio() {
     [commit, pushActivity],
   );
 
+  // Shared by the human Export button and the agent's export_composition tool:
+  // the file lands the same way whoever asked for it.
+  const saveComposition = useCallback((html: string) => {
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${BRAND.name.toLowerCase()}-composition.html`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }, []);
+
   const callbacks = useMemo<ProofFrameCallbacks>(
     () => ({
       getState: () => campaignRef.current,
@@ -258,10 +269,12 @@ export function ProofFrameStudio() {
       reorderScenes: agentReorderScenes,
       seekPreview: agentSeekPreview,
       importProduct: agentImportProduct,
+      deliverExport: saveComposition,
     }),
     [
       agentAddScene,
       agentImportProduct,
+      saveComposition,
       agentReorderScenes,
       agentSeekPreview,
       agentSetBrief,
@@ -271,21 +284,31 @@ export function ProofFrameStudio() {
 
   useEffect(() => {
     let active = true;
-    queueMicrotask(() => {
-      if (!active) return;
-      try {
-        const result = registerProofFrameTools(callbacks);
+    registerProofFrameTools(callbacks)
+      .then((result) => {
+        if (!active) return;
+        // Count confirmed registrations, not the list we tried to register.
         setRegisteredCount(
           result.registered.length > 0
             ? result.registered.length
             : buildTools(callbacks).length,
         );
-        setWebMcpStatus(result.registered.length > 0 ? 'active' : 'preview');
-      } catch (error) {
+        if (result.rejected.length > 0) {
+          console.error('WebMCP registration rejected', result.rejected);
+        }
+        setWebMcpStatus(
+          result.registered.length > 0
+            ? 'active'
+            : result.rejected.length > 0
+              ? 'error'
+              : 'preview',
+        );
+      })
+      .catch((error) => {
+        if (!active) return;
         console.error('WebMCP registration failed', error);
         setWebMcpStatus('error');
-      }
-    });
+      });
     return () => {
       active = false;
     };
@@ -374,7 +397,7 @@ export function ProofFrameStudio() {
         selectedId,
       heading: '50% off everything — guaranteed lowest price',
     });
-    const payload = JSON.parse(response.content[0]?.text ?? '{}') as {
+    const payload = response as {
       ok?: boolean;
       violations?: { message: string }[];
     };
@@ -419,13 +442,7 @@ export function ProofFrameStudio() {
 
   const downloadComposition = () => {
     if (violations.length > 0) return;
-    const html = exportComposition(campaign);
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${BRAND.name.toLowerCase()}-composition.html`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    saveComposition(exportComposition(campaign));
     pushActivity({
       actor: 'MC',
       title: 'Exported a validated composition',

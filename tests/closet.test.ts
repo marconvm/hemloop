@@ -15,7 +15,7 @@ import type { ToolContent } from '../lib/proofframe/webmcp';
 import type { DemandSignal, Garment } from '../lib/proofframe/closet';
 
 function payload(result: ToolContent): Record<string, unknown> {
-  return JSON.parse(result.content[0].text) as Record<string, unknown>;
+  return result as Record<string, unknown>;
 }
 
 function makeStore() {

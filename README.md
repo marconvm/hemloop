@@ -29,7 +29,7 @@ To connect an agent in a challenge-supported Chrome build: enable `chrome://flag
 
 **Closet (shopper, 6 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit` (all read-only), `add_garment`, and `report_demand_gap` — the single merchant-facing tool. It rejects until the human arms one share, can emit only the zero-ID `DemandSignal` schema, consumes the approval, and returns the exact payload sent.
 
-**Studio (merchant, 9 tools):** `get_campaign_state`, `validate_claims`, `export_composition` (read-only), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`. Mutations validate against locked facts before applying. There is deliberately **no** lock/unlock tool on either surface: locking truth and releasing wardrobe facts are human-only acts.
+**Studio (merchant, 9 tools):** `get_campaign_state`, `validate_claims`, `export_composition` (read-only; hands the HTML to the page as a download and returns its size), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`. Mutations validate against locked facts before applying. There is deliberately **no** lock/unlock tool on either surface: locking truth and releasing wardrobe facts are human-only acts.
 
 ## Documentation
 

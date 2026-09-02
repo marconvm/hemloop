@@ -32,7 +32,7 @@ type Trail = {
   detail: string;
 };
 
-type WebMcpStatus = 'checking' | 'active' | 'preview';
+type WebMcpStatus = 'checking' | 'active' | 'preview' | 'error';
 
 export function ClosetStudio() {
   const [wardrobe, setWardrobe] = useState<Wardrobe>(seedWardrobe);
@@ -115,16 +115,30 @@ export function ClosetStudio() {
 
   useEffect(() => {
     let active = true;
-    queueMicrotask(() => {
-      if (!active) return;
-      const result = registerClosetTools(callbacks);
-      setToolCount(
-        result.registered.length > 0
-          ? result.registered.length
-          : buildClosetTools(callbacks).length,
-      );
-      setWebMcpStatus(result.registered.length > 0 ? 'active' : 'preview');
-    });
+    registerClosetTools(callbacks)
+      .then((result) => {
+        if (!active) return;
+        setToolCount(
+          result.registered.length > 0
+            ? result.registered.length
+            : buildClosetTools(callbacks).length,
+        );
+        if (result.rejected.length > 0) {
+          console.error('WebMCP registration rejected', result.rejected);
+        }
+        setWebMcpStatus(
+          result.registered.length > 0
+            ? 'active'
+            : result.rejected.length > 0
+              ? 'error'
+              : 'preview',
+        );
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error('WebMCP registration failed', error);
+        setWebMcpStatus('error');
+      });
     return () => {
       active = false;
     };
@@ -147,7 +161,9 @@ export function ClosetStudio() {
   const statusLabel =
     webMcpStatus === 'active'
       ? `${toolCount} WebMCP tools live`
-      : webMcpStatus === 'checking'
+      : webMcpStatus === 'error'
+        ? 'WebMCP registration rejected'
+        : webMcpStatus === 'checking'
         ? 'Checking WebMCP…'
         : `${toolCount} tools · preview mode`;
 

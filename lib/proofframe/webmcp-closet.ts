@@ -14,7 +14,10 @@ import {
   type Wardrobe,
 } from './closet';
 import {
+  closeSchemas,
   getModelContext,
+  registerAll,
+  type RegisterResult,
   type ModelContextLike,
   type ToolContent,
   type WebMcpTool,
@@ -38,27 +41,22 @@ export interface ClosetCallbacks {
 }
 
 function ok(data: object = {}): ToolContent {
-  return {
-    content: [{ type: 'text', text: JSON.stringify({ ok: true, ...data }) }],
-  };
+  return { ok: true, ...data };
 }
 
 function fail(message: string, error = 'invalid-input'): ToolContent {
-  return {
-    content: [
-      { type: 'text', text: JSON.stringify({ ok: false, error, message }) },
-    ],
-  };
+  return { ok: false, error, message };
 }
 
 export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
-  return [
+  return closeSchemas([
     {
       name: 'get_wardrobe',
       description:
-        "Read the shopper's wardrobe for this task: garments with category, brand, size and colour. Hemloop's merchant bridge never includes these rows.",
+        "Read the shopper's wardrobe for this task: garments with category, brand, size and colour. These rows stay on this page; the merchant bridge carries only the zero-ID demand event.",
       inputSchema: { type: 'object', properties: {} },
-      annotations: { readOnlyHint: true },
+      // Shopper-entered rows are user content from the page author's perspective.
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: () => {
         const wardrobe = cb.getWardrobe();
         return ok({ garments: wardrobe.garments });
@@ -202,15 +200,12 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
         return ok({ sent: signal });
       },
     },
-  ];
+  ]);
 }
 
 export function registerClosetTools(
   cb: ClosetCallbacks,
   mc: ModelContextLike | null = getModelContext(),
-): { registered: string[] } {
-  if (!mc) return { registered: [] };
-  const tools = buildClosetTools(cb);
-  for (const tool of tools) mc.registerTool(tool);
-  return { registered: tools.map((t) => t.name) };
+): Promise<RegisterResult> {
+  return registerAll(mc, buildClosetTools(cb));
 }
