@@ -28,6 +28,18 @@ function safeColor(value: string | undefined, fallback: string): string {
   return value && CSS_COLOR_RE.test(value.trim()) ? value.trim() : fallback;
 }
 
+// PF4-1: the base CampaignState style is interpolated into body, footer and
+// every scene rule, and is the fallback for scene overrides — so it must be
+// allowlisted too, with hardcoded safe defaults as the final fallback.
+const SAFE_BASE = { background: '#101418', ink: '#f4f1ea', accent: '#ff7a45' } as const;
+function safeBase(style: CampaignState['style']): CampaignState['style'] {
+  return {
+    background: safeColor(style?.background, SAFE_BASE.background),
+    ink: safeColor(style?.ink, SAFE_BASE.ink),
+    accent: safeColor(style?.accent, SAFE_BASE.accent),
+  };
+}
+
 function sceneCss(scene: Scene, base: CampaignState['style']): string {
   const bg = safeColor(scene.style?.background, base.background);
   const ink = safeColor(scene.style?.ink, base.ink);
@@ -56,6 +68,7 @@ export function exportComposition(state: CampaignState): string {
 
   const { width, height, fps } = state.format;
   const total = state.scenes.reduce((sum, s) => sum + s.durationSec, 0);
+  const base = safeBase(state.style);
 
   let cursor = 0;
   const placed = state.scenes.map((scene, i) => {
@@ -102,13 +115,13 @@ export function exportComposition(state: CampaignState): string {
     <title>${escapeHtml(state.facts.productName)} — ProofFrame promo</title>
     <script src="${GSAP_SRC}"></script>
     <style>
-      body { margin: 0; background: ${state.style.background}; font-family: Inter, system-ui, sans-serif; }
+      body { margin: 0; background: ${base.background}; font-family: Inter, system-ui, sans-serif; }
       #root { position: relative; width: ${width}px; height: ${height}px; overflow: hidden; }
       .clip { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 24px; text-align: center; padding: 0 72px; }
       .scene h1 { margin: 0; font-size: ${Math.round(height * 0.05)}px; line-height: 1.1; }
       .scene p { margin: 0; font-size: ${Math.round(height * 0.028)}px; }
-      #proofframe-disclaimer { position: absolute; left: 0; right: 0; bottom: ${Math.round(height * 0.02)}px; text-align: center; font-size: ${Math.round(height * 0.012)}px; color: ${state.style.ink}; opacity: 0.75; }
-${state.scenes.map((s) => sceneCss(s, state.style)).join('\n')}
+      #proofframe-disclaimer { position: absolute; left: 0; right: 0; bottom: ${Math.round(height * 0.02)}px; text-align: center; font-size: ${Math.round(height * 0.012)}px; color: ${base.ink}; opacity: 0.75; }
+${state.scenes.map((s) => sceneCss(s, base)).join('\n')}
     </style>
   </head>
   <body>

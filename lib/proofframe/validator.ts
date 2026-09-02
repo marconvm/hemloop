@@ -6,7 +6,8 @@ export const SCENE_KINDS: SceneKind[] = ['hero', 'product', 'offer', 'cta'];
 
 const PERCENT_RE = /(\d{1,3})\s*%/g;
 // Prices: with a currency symbol, OR a bare decimal near a money word.
-const PRICE_RE = /\$\s?(\d+(?:\.\d{1,2})?)/g;
+// Currency-aware: $, C$, US$, CAD, USD (symbol or code, before the number).
+const PRICE_RE = /(?:\$|C\$|US\$|\b(?:CAD|USD)\b)\s?(\d+(?:\.\d{1,2})?)/gi;
 const BARE_PRICE_RE = /(?<![\d.$])(\d+\.\d{2})(?![\d])/g;
 const CODE_KEYWORD_RE = /\bcode[:\s]+([A-Za-z0-9]{3,})/gi;
 
@@ -25,11 +26,21 @@ function normalize(text: string): string {
 
 // Money-context window for bare decimals: "Just 19.99 today" is a price
 // claim; "Rated 4.90 stars" is not.
-const MONEY_CONTEXT_RE = /price|only|just|now|today|sale|deal|save|off|pay|\$/i;
+// Word-bounded so "Coffee" no longer matches "off".
+const MONEY_CONTEXT_RE = /\b(?:price|only|just|now|today|sale|deal|save|off|pay|cad|usd)\b|\$/i;
 // Code-shaped token: caps with BOTH letters and digits (SAVE90, BTS25) —
 // flagged whether or not a locked code exists; avoids flagging plain
 // all-caps words like TODAY.
-const CODE_SHAPED_RE = /\b(?=[A-Z0-9]{4,}\b)(?=[A-Z0-9]*[A-Z])(?=[A-Z0-9]*\d)[A-Z0-9]+\b/g;
+// Codeless promo detection, two tracks (agreed with the second reviewer):
+// 1) any letter+digit token inside a tight redemption-context window
+//    ("use / apply / enter / redeem / promo / coupon / voucher … at checkout");
+// 2) a narrow global fallback: 3+ leading letters then 2+ trailing digits
+//    (SAVE90, Save90, AURORA25) — so model/product tokens like X100, UV400,
+//    H2O2 and 1080P are never flagged on their own.
+const CODE_CONTEXT_RE = /\b(?:use|apply|enter|redeem|promo|coupon|voucher|checkout)\b/gi;
+const CODE_CONTEXT_WINDOW = 28;
+const LETTER_DIGIT_TOKEN_RE = /\b(?=[A-Za-z0-9]{4,}\b)(?=[A-Za-z0-9]*[A-Za-z])(?=[A-Za-z0-9]*\d)[A-Za-z0-9]+\b/g;
+const CODE_SHAPED_RE = /\b[A-Za-z]{3,}\d{2,}\b/g;
 
 export const MAX_SCENE_SECONDS = 30;
 export const MAX_TOTAL_SECONDS = 60;
@@ -93,6 +104,11 @@ export function validateText(rawText: string, facts: CampaignFacts): Violation[]
   const codeTokens = new Set<string>();
   for (const m of text.matchAll(CODE_KEYWORD_RE)) codeTokens.add(m[1]);
   for (const m of text.matchAll(CODE_SHAPED_RE)) codeTokens.add(m[0]);
+  for (const c of text.matchAll(CODE_CONTEXT_RE)) {
+    const i = c.index ?? 0;
+    const window = text.slice(Math.max(0, i - CODE_CONTEXT_WINDOW), i + c[0].length + CODE_CONTEXT_WINDOW);
+    for (const t of window.matchAll(LETTER_DIGIT_TOKEN_RE)) codeTokens.add(t[0]);
+  }
   for (const token of codeTokens) {
     if (
       facts.promoCode === null ||

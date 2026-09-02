@@ -10,7 +10,7 @@ import type {
   SceneKind,
   Violation,
 } from './types';
-import { validateCampaign, validateScene, validateText } from './validator';
+import { MAX_TOTAL_SECONDS, validateCampaign, validateScene, validateText } from './validator';
 import { exportComposition } from './exporter';
 
 export interface ToolContent {
@@ -89,6 +89,8 @@ const sceneProps = {
 const SCENE_KINDS_SET = new Set(['hero', 'product', 'offer', 'cta']);
 const MAX_HEADING = 200;
 const MAX_BODY = 400;
+// PF4-3: bound campaign growth before any callback runs.
+const MAX_SCENES = 12;
 
 type ParseResult<T> = { ok: true; value: T } | { ok: false; message: string };
 
@@ -180,6 +182,16 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
           cb.getState().facts,
         );
         if (violations.length > 0) return reject(violations);
+        const state = cb.getState();
+        if (state.scenes.length >= MAX_SCENES) {
+          return invalidInput(`Scene limit reached (${MAX_SCENES}). Update or remove a scene instead.`);
+        }
+        const projected = state.scenes.reduce((s, x) => s + x.durationSec, 0) + input.durationSec;
+        if (projected > MAX_TOTAL_SECONDS) {
+          return reject([
+            { rule: 'total-duration', message: `Adding this scene would make the campaign ${projected}s, over the ${MAX_TOTAL_SECONDS}s limit.` },
+          ]);
+        }
         const scene = cb.addScene(input);
         return ok({ scene });
       },
@@ -221,7 +233,13 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
         required: ['orderedIds'],
       },
       execute: (args) => {
-        const ids = (args.orderedIds as string[]) ?? [];
+        // PF4-2: never trust the shape — an object with a length property
+        // used to reach ids.includes and throw.
+        const rawIds = args.orderedIds;
+        if (!Array.isArray(rawIds) || !rawIds.every((x) => typeof x === 'string')) {
+          return invalidInput('orderedIds must be an array of scene id strings.');
+        }
+        const ids = rawIds as string[];
         const current = cb.getState().scenes.map((s) => s.id);
         const valid =
           ids.length === current.length &&

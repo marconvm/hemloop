@@ -4,7 +4,7 @@
 // event. Only zero-ID DemandSignal objects travel through here.
 // ponytail: localStorage bridge; production would be a queue/API - the
 // payload contract (DemandSignal) is the part that matters.
-import type { DemandSignal } from './closet';
+import { GARMENT_CATEGORIES, type DemandSignal, type GarmentCategory } from './closet';
 
 const KEY = 'proofframe-demand-signals';
 const EVENT = 'proofframe-signal';
@@ -14,15 +14,29 @@ function hasWindow(): boolean {
   return typeof window !== 'undefined';
 }
 
-function isSignalShaped(x: unknown): x is DemandSignal {
-  if (typeof x !== 'object' || x === null) return false;
+const KINDS = new Set(['gap', 'fit', 'want']);
+const CATEGORIES = new Set(GARMENT_CATEGORIES);
+
+/** Rebuild a bounded, exact-key DemandSignal from untrusted storage, or null.
+ * Extra keys (e.g. an injected shopperId) are dropped, enums enforced,
+ * strings bounded, and the timestamp must parse. */
+function toSignal(x: unknown): DemandSignal | null {
+  if (typeof x !== 'object' || x === null) return null;
   const s = x as Record<string, unknown>;
-  return (
-    typeof s.signalId === 'string' &&
-    typeof s.kind === 'string' &&
-    typeof s.category === 'string' &&
-    typeof s.at === 'string'
-  );
+  if (typeof s.signalId !== 'string' || s.signalId.length > 64) return null;
+  if (typeof s.kind !== 'string' || !KINDS.has(s.kind)) return null;
+  if (typeof s.category !== 'string' || !CATEGORIES.has(s.category as GarmentCategory)) return null;
+  if (typeof s.at !== 'string' || Number.isNaN(Date.parse(s.at))) return null;
+  const size = typeof s.size === 'string' && s.size.length <= 20 ? s.size : null;
+  const handle = typeof s.handle === 'string' && s.handle.length <= 80 ? s.handle : null;
+  return {
+    signalId: s.signalId,
+    kind: s.kind as DemandSignal['kind'],
+    category: s.category as GarmentCategory,
+    size,
+    handle,
+    at: s.at,
+  };
 }
 
 export function readSignals(): DemandSignal[] {
@@ -32,7 +46,8 @@ export function readSignals(): DemandSignal[] {
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     // Validate shape on readback: corrupt same-origin storage must not
     // crash consumers or smuggle non-signal objects into the UI.
-    return Array.isArray(parsed) ? parsed.filter(isSignalShaped) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(toSignal).filter((s): s is DemandSignal => s !== null);
   } catch {
     return [];
   }

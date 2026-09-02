@@ -166,10 +166,11 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
             `category must be one of: ${GARMENT_CATEGORIES.join(', ')}`,
           );
         }
-        const kind =
-          args.kind === 'gap' || args.kind === 'fit' || args.kind === 'want'
-            ? args.kind
-            : 'want';
+        // PF4-6: a malformed kind must not burn the approval or send as 'want'.
+        if (args.kind !== undefined && args.kind !== 'gap' && args.kind !== 'fit' && args.kind !== 'want') {
+          return fail('kind must be one of: gap, fit, want.');
+        }
+        const kind = (args.kind ?? 'want') as 'gap' | 'fit' | 'want';
         // Bound optional strings BEFORE consuming the one-shot approval —
         // invalid input must not burn the human's grant.
         if (args.size !== undefined && (typeof args.size !== 'string' || args.size.length > 20)) {

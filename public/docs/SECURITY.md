@@ -125,3 +125,18 @@ Marco set the review pipeline: Claude fixes → Codex re-reviews → back and fo
 Gates after fixes: **33/33 tests, tsc clean, oxlint clean, production build clean, hyperframes check 0/0, live smoke 200 on all four routes, live WebMCP attack replays neutralized.** Redeployed as Worker version fb9486a3.
 
 Handoff to Codex (next pipeline turn): please adversarially re-review these six fixes with fresh eyes — especially whether `parseSceneInput` misses a sink, whether `CODE_SHAPED_RE` over/under-flags, and the `safeColor` allowlist. Also, Marco asked that this fix→review→fix pipeline itself be captured in the bucket-test skill (which you own) as a security loop step.
+
+## Fourth pass — Codex replay findings (PF4-1..6) and Claude fixes
+
+Codex replayed the third-pass fixes and found six residual concerns; Claude fixed all six in the same fix↔review loop. Statuses are **FIXED (pending Codex Pass 5 replay)**.
+
+| # | Finding | Fix |
+|---|---|---|
+| PF4-1 (PF2-1 residual) | Base `CampaignState.style` was interpolated raw into the body rule and the disclaimer footer, and was the unsanitized fallback for scene styles. | `safeBase()` allowlists background/ink/accent with hardcoded safe defaults; every interpolation (body, footer, scene rules, scene fallback) now reads the sanitized base. Test: "PF4-1: malicious BASE style cannot break out of the export". |
+| PF4-2 (PF2-2 residual) | `reorder_scenes` cast `orderedIds`; an object with a `length` property threw. | Runtime guard: must be an array of strings, else `invalid-input`. Test: "PF4-2". |
+| PF4-3 (PF2-2 residual) | Scene count uncapped (140 adds accepted). | `MAX_SCENES = 12` and a projected total-duration check (≤ 60 s) run **before** the state callback. Test: "PF4-3". |
+| PF4-4 (PF2-3 residual) | `CAD 19.99` and mixed-case `Save90` passed; "Coffee" matched money-context `off`; `1080P` false-flagged. | Currency-aware price regex ($, C$, US$, CAD, USD); word-bounded money context; two-track code detection agreed with the reviewer — a redemption-context window (use/apply/enter/redeem/promo/coupon/voucher/checkout) catches any letter+digit token, and the global fallback is narrowed to 3+ letters then 2+ digits so X100, UV400, H2O2, 1080P stay clean. Tests: "PF4-4", "PF4-4b". |
+| PF4-5 (PF2-5) | Pinned DOMPurify 3.2.7 inside CVE-2026-41238 range. | Pinned to 3.4.14 with a fresh SHA-384 SRI. |
+| PF4-6 (PF2-6 residual) | Malformed `kind` defaulted to `want` and consumed the approval; `readSignals` accepted invalid enums/dates and extra keys such as `shopperId`. | Invalid provided `kind` is rejected before the approval is consumed; `readSignals` rebuilds an exact-key, enum-validated, bounded `DemandSignal` (extra keys dropped, unparseable dates rejected). Tests: "PF4-6a", "PF4-6b". |
+
+Gates after Pass 4 fixes: 40/40 tests, tsc clean, oxlint clean. Residual, accepted: spelled-out numbers and promo tokens outside both tracks (e.g. a bare `AB12CD` with no redemption context) are not parsed; the locked disclaimer carries the authoritative figures and always renders.

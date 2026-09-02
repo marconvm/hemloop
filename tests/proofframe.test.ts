@@ -325,3 +325,63 @@ void test('registerProofFrameTools registers on a provided model context', () =>
   assert.equal(registered.length, 8);
   assert.deepEqual(seen, registered);
 });
+
+// ---------- Security pass 4 (PF4-1..PF4-4) ----------
+
+void test('PF4-1: malicious BASE style cannot break out of the export', () => {
+  const state = seedCampaign();
+  state.style = { background: 'red;}</style><script>x</script>', ink: 'url(x)', accent: '#fff' };
+  const html = exportComposition(state);
+  assert.ok(!html.includes('</style><script>'));
+  assert.ok(!html.includes('<script>x'));
+  assert.ok(!html.includes('url(x)'));
+});
+
+void test('PF4-2: reorder_scenes rejects a non-array with a length property', async () => {
+  const { state, cb } = makeStore();
+  const before = state.scenes.map((s) => s.id);
+  const res = payload(
+    await tool(buildTools(cb), 'reorder_scenes').execute({ orderedIds: { length: 1 } } as never),
+  );
+  assert.equal(res.ok, false);
+  assert.equal(res.error, 'invalid-input');
+  assert.deepEqual(state.scenes.map((s) => s.id), before);
+});
+
+void test('PF4-3: add_scene caps scene count and total duration', async () => {
+  const { state, cb } = makeStore();
+  const add = tool(buildTools(cb), 'add_scene');
+  const clean = { kind: 'product', heading: 'Cold ready', body: 'Six colours.', durationSec: 1 };
+  // seed = 4 scenes / 15s; cap is 12 scenes — 8 more should pass, the 9th must not
+  for (let i = 0; i < 8; i++) assert.equal(payload(await add.execute(clean)).ok, true, `add ${i}`);
+  const capped = payload(await add.execute(clean));
+  assert.equal(capped.ok, false);
+  assert.equal(capped.error, 'invalid-input');
+  assert.equal(state.scenes.length, 12);
+  // total-duration guard: fresh store, 15s + 30s ok, next 30s would be 75s > 60
+  const fresh = makeStore();
+  const add2 = tool(buildTools(fresh.cb), 'add_scene');
+  assert.equal(payload(await add2.execute({ ...clean, durationSec: 30 })).ok, true);
+  const over = payload(await add2.execute({ ...clean, durationSec: 30 }));
+  assert.equal(over.ok, false);
+  assert.equal(over.violations?.[0]?.rule, 'total-duration');
+});
+
+void test('PF4-4: currency-aware prices, letter-led codes, no false flags', () => {
+  const { facts } = seedCampaign();
+  assert.equal(validateText('Now CAD 19.99', facts)[0]?.rule, 'price-mismatch');
+  assert.equal(validateText('Use Save90 at checkout', facts)[0]?.rule, 'code-mismatch');
+  assert.deepEqual(validateText('Coffee rating 4.90', facts), []); // "off" inside Coffee must not count
+  assert.deepEqual(validateText('Watch it in 1080P', facts), []); // digit-led token is not a code
+});
+
+// PF4-4 (agreed design): context-window + narrow fallback; product tokens stay clean.
+void test('PF4-4b: product/model tokens are not promo codes; Save90 still is', () => {
+  const { facts } = seedCampaign();
+  for (const clean of ['Try the X100 today', 'UV400 lenses included', 'Contains H2O2', 'Watch in 1080P']) {
+    assert.deepEqual(validateText(clean, facts), [], clean);
+  }
+  assert.equal(validateText('Use Save90 at checkout', facts)[0]?.rule, 'code-mismatch');
+  assert.equal(validateText('Apply XR7 now', facts)[0]?.rule, undefined); // too short for either track
+  assert.equal(validateText('Redeem AB12CD today', facts)[0]?.rule, 'code-mismatch'); // context window catches non-fallback shapes
+});

@@ -201,3 +201,61 @@ void test('report_demand_gap requires human approval, consumes it, and returns e
   assert.equal(second.error, 'human-approval-required');
   assert.equal(emitted.length, 1);
 });
+
+// ---------- Security pass 4 (PF4-6) ----------
+
+void test('PF4-6a: an invalid kind is rejected BEFORE the approval is consumed', async () => {
+  let approved = true;
+  const emitted: DemandSignal[] = [];
+  const cb: ClosetCallbacks = {
+    getWardrobe: () => seedWardrobe(),
+    addGarment: (input) => ({ id: 'g-x', ...input }),
+    consumeShareApproval: () => {
+      if (!approved) return false;
+      approved = false;
+      return true;
+    },
+    emitSignal: (s) => {
+      emitted.push(s);
+      return true;
+    },
+  };
+  const report = buildClosetTools(cb).find((t) => t.name === 'report_demand_gap')!;
+  const bad = payload(await report.execute({ kind: 'bogus', category: 'hoodie' }));
+  assert.equal(bad.ok, false);
+  assert.equal(approved, true, 'approval must survive a malformed call');
+  assert.equal(emitted.length, 0);
+  const good = payload(await report.execute({ kind: 'gap', category: 'hoodie' }));
+  assert.equal(good.ok, true);
+  assert.equal(approved, false);
+});
+
+void test('PF4-6b: readSignals rebuilds exact-key signals and drops junk', async () => {
+  const store = new Map<string, string>();
+  (globalThis as { window?: unknown }).window = {
+    localStorage: {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+    },
+    dispatchEvent: () => true,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  };
+  const { readSignals } = await import('../lib/proofframe/signal-bridge');
+  store.set(
+    'proofframe-demand-signals',
+    JSON.stringify([
+      { signalId: 'a', kind: 'gap', category: 'hoodie', size: 'M', handle: null, at: '2026-09-01T00:00:00Z', shopperId: 'LEAK' },
+      { signalId: 'b', kind: 'bogus', category: 'hoodie', at: '2026-09-01T00:00:00Z' },
+      { signalId: 'c', kind: 'gap', category: 'spaceship', at: '2026-09-01T00:00:00Z' },
+      { signalId: 'd', kind: 'gap', category: 'hoodie', at: 'not-a-date' },
+      'garbage',
+    ]),
+  );
+  const out = readSignals();
+  assert.equal(out.length, 1);
+  assert.deepEqual(Object.keys(out[0]).sort(), ['at', 'category', 'handle', 'kind', 'signalId', 'size']);
+  assert.ok(!('shopperId' in out[0]));
+  delete (globalThis as { window?: unknown }).window;
+});
