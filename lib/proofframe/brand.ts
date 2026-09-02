@@ -15,6 +15,6 @@ export const BRAND = {
 export const WEBMCP_ORIGIN_TRIAL_TOKENS = [
   // https://hemloop.marcoatwill.workers.dev
   'ArJrc8xOlGFP0G5J9CkIrxpbbbqesM8cze7S3CmVC3beb+dxfjgKmBQuAGRyJ7HkL/I8QI11leErNu1U3YIZ7wYAAABfeyJvcmlnaW4iOiJodHRwczovL2hlbWxvb3AubWFyY29hdHdpbGwud29ya2Vycy5kZXY6NDQzIiwiZmVhdHVyZSI6IldlYk1DUCIsImV4cGlyeSI6MTc5NDg3MzYwMH0=',
-  // https://hemloop.app
-  'ArhT9FIX3tve7C4Fd7cgCTF9DhqHl8azu+72C6CO4Wgv09ooQZWurKTtKfwz2bnF8WZUt0iX9DhbWJHZ552STAkAAABLeyJvcmlnaW4iOiJodHRwczovL2hlbWxvb3AuYXBwOjQ0MyIsImZlYXR1cmUiOiJXZWJNQ1AiLCJleHBpcnkiOjE3OTQ4NzM2MDB9',
+  // https://hemloop.app (+ subdomains, so www is covered)
+  'ApFUe/lxzXpfZZV806oh51ryGekLYIfhoIK6zJZRFp0oBUQu0tvu0fmCaSnD1zpvt8SEk26SCSPp3xsAhzYLlgwAAABeeyJvcmlnaW4iOiJodHRwczovL2hlbWxvb3AuYXBwOjQ0MyIsImZlYXR1cmUiOiJXZWJNQ1AiLCJleHBpcnkiOjE3OTQ4NzM2MDAsImlzU3ViZG9tYWluIjp0cnVlfQ==',
 ] as const;
