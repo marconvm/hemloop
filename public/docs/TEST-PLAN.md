@@ -45,7 +45,7 @@ Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" h
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS — 33/33 at HEAD |
+| R1 | Full unit suite after every milestone | PASS — 41/41 at HEAD |
 | R2 | `tsc --noEmit` after each change | PASS — clean |
 | R3 | `oxlint` after each change | PASS — clean |
 | R4 | Production build after each change | PASS |
@@ -89,7 +89,7 @@ Covered by a dedicated review pass (see [SECURITY.md](./SECURITY.md)). Summary o
 | Trust-boundary bypass (locked facts, share approval one-shot) | see SECURITY.md |
 | Privacy (zero-ID signal, no wardrobe leak) | see SECURITY.md |
 | Committed secrets | none (synthetic data only; no tokens in repo) |
-| Two review passes + fixes | First pass (SEC-1/2) and an independent second pass (PF2-1…6) both in SECURITY.md; all six second-pass findings fixed and verified on the live runtime (third-pass section), pending Codex re-review |
+| Review loop (closed) | Six passes: Claude first pass, Codex independent second pass, then a fix↔replay loop (passes 3–6). Every finding (SEC-1/2, PF2-1…6, PF4-1…6, PF5-1) fixed with a regression test and, where tool-reachable, a live-runtime replay. Pass 6 clean; SECURITY.md closed for this submission |
 | Dependency audit | Runtime CVE-2026-44907 (`react-server-dom-webpack`) FIXED by upgrading the React trio to 19.2.8. Remaining advisories are build/dev tooling only (Vinext image-size, Windows-only Vite/esbuild, Undici under Miniflare) — not on a Worker request path; re-evaluate on the next Vinext upgrade |
 
 ## 8. Penetration Test (adversarial-agent, in-scope subset)
@@ -106,6 +106,9 @@ A full external pentest is out of scope for a synthetic-data prototype; the rele
 | P6 | Agent attaches an unadvertised `style` property to break out of the export `<style>` block | Live replay: property dropped by `parseSceneInput`, export clean; also colour-allowlisted in the exporter (PF2-1) |
 | P7 | Agent sends malformed field types to crash the canvas/exporter | Live replay: rejected as `invalid-input`, nothing stored (PF2-2) |
 | P8 | Agent evades the validator with Arabic-Indic/Persian digits or format controls | Normalized and flagged (PF2-3) |
+| P9 | Agent passes a non-array with a `length` to `reorder_scenes` | `invalid-input`, no throw (PF4-2, live) |
+| P10 | Agent floods `add_scene` / stretches `update_scene` to inflate the campaign | Scene cap 12 and projected total ≤ 60 s enforced before any callback (PF4-3, PF5-1, live) |
+| P11 | Malicious base style or injected `shopperId` in stored signals | Base colours allowlisted with safe defaults; `readSignals` rebuilds exact-key signals (PF4-1, PF4-6) |
 
 The earlier deep findings (unicode/whitespace bypass, extra-property XSS, malformed-input DoS) were surfaced in the SECURITY.md second pass and are now fixed with regression tests; P6–P8 above enter through the real `buildTools()` tool boundary, not just the validator.
 
@@ -124,7 +127,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (33/33), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (41/41), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime
