@@ -1,12 +1,12 @@
 # Hemloop Verification Record
 
-Last updated: 2026-09-01 (America/Toronto)
+Last updated: 2026-09-02 (America/Toronto)
 
 This file separates verified behaviour from the remaining ChatGPT natural-language pairing check.
 
 ## Green gates
 
-- `npm test`: 27/27 tests pass, including the zero-ID signal schema, human-approval rejection, one-shot approval consumption, exact returned/sent payload equality, claim rejection, tool registration, catalog mapping and export structure.
+- `npm test`: 41/41 tests pass, including the zero-ID signal schema, human-approval rejection, one-shot approval consumption, exact returned/sent payload equality, claim rejection, tool registration, catalog mapping and export structure.
 - `npm exec -- tsc --noEmit`: clean.
 - `npm exec -- oxlint`: clean.
 - `npm run build`: clean; `/`, `/closet` and `/studio` are present in the Vinext output.
@@ -14,6 +14,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 - Chrome visual/interaction check on `http://localhost:3001`: all three routes render; the closet approval control arms and cancels visibly; the studio editor and proof trail render.
 - Cloudflare production check on `https://hemloop.marcoatwill.workers.dev`: `/`, `/closet` and `/studio` all load over HTTPS with the expected landing, closet and studio headings. The app was deployed with Wrangler 4.127.0.
 - HyperFrames exporter: previously checked with `npx hyperframes check` (0 errors, 0 warnings); exporter structure is also covered by unit tests.
+- Re-verified 2026-09-02 at HEAD after the dead-code removal (58 unused `components/ui/*`, `hooks/`, 8 unused dependencies): 41/41 tests, build and oxlint clean, local Worker smoke and live smoke on `/`, `/closet` and `/studio` all 200 with unchanged security headers. No runtime behaviour changed — only `badge` and `button` were ever reachable from the app.
 
 ## Real WebMCP runtime: verified on the live deployment
 

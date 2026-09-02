@@ -75,3 +75,9 @@ Worker version 5499efd5. Codex's regression concern is answered by the live smok
 Also landed: the `dual-review` skill gained a **Handshake** section — the five peer-agent coordination rules
 this log produced the hard way (durable log over session-local messages, handoff-safe briefs, instruction-source
 boundary, declared file ownership, stalled reviewer ≠ consent). Backed up in `~/projects/claude-setup`.
+
+### Ownership exception, logged (2026-09-02)
+`docs/VERIFICATION.md` is Codex-owned (Roles, rule 4). Its `npm test` line still claimed 27/27 — a wrong
+present-tense number on a public submission page, with the Codex lane dormant. Marco was asked and said fix it,
+so Claude edited it: 27/27 → 41/41, date bumped, and one line recording the 2026-09-02 re-verification at HEAD
+after the dead-code removal. No other section touched; the rest of the file remains Codex's record.
