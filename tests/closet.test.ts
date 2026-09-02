@@ -61,10 +61,12 @@ void test('seed wardrobe has a hoodie gap (the demo arc)', () => {
 });
 
 void test('sizesOwned dedupes and filters by brand case-insensitively', () => {
-  const all = sizesOwned(seedWardrobe());
-  const aurora = sizesOwned(seedWardrobe(), 'aurora threads');
-  assert.ok(all.length > aurora.length);
-  assert.ok(aurora.every((r) => r.brand === 'Aurora Threads'));
+  const wardrobe = seedWardrobe();
+  const targetBrand = wardrobe.garments[0].brand;
+  const all = sizesOwned(wardrobe);
+  const filtered = sizesOwned(wardrobe, targetBrand.toLowerCase());
+  assert.ok(all.length > filtered.length);
+  assert.ok(filtered.every((r) => r.brand === targetBrand));
 });
 
 void test('checkFit maps the northlight hoodie and recommends from owned sizes', () => {
@@ -127,12 +129,25 @@ void test('closet tool surface: 6 tools, reads flagged readOnly', () => {
   }
 });
 
-void test('get_wardrobe returns garment rows and no identity field', async () => {
+void test('get_wardrobe fences brand/colour as untrusted content and carries no identity field', async () => {
   const { cb, wardrobe } = makeStore();
   const tool = buildClosetTools(cb).find((t) => t.name === 'get_wardrobe')!;
-  const result = payload(await tool.execute({}));
-  assert.deepEqual(result.garments, wardrobe.garments);
+  const result = payload(await tool.execute({})) as {
+    garments: (Garment & { brand: string; colour: string })[];
+    note: string;
+  };
+  assert.equal(result.garments.length, wardrobe.garments.length);
+  result.garments.forEach((g, i) => {
+    assert.equal(g.id, wardrobe.garments[i].id);
+    assert.equal(g.category, wardrobe.garments[i].category);
+    assert.equal(g.size, wardrobe.garments[i].size);
+    assert.ok(g.brand.startsWith('<<<untrusted-content>>>'), 'brand is fenced');
+    assert.ok(g.brand.includes(wardrobe.garments[i].brand));
+    assert.ok(g.colour.startsWith('<<<untrusted-content>>>'), 'colour is fenced');
+    assert.ok(g.colour.includes(wardrobe.garments[i].colour));
+  });
   assert.equal('shopperId' in result, false);
+  assert.match(result.note, /untrusted-content/);
 });
 
 void test('add_garment validates category and strings', async () => {
@@ -151,7 +166,7 @@ void test('add_garment validates category and strings', async () => {
   const good = payload(
     await tool.execute({
       category: 'hoodie',
-      brand: 'Aurora Threads',
+      brand: 'Northlight Apparel',
       size: 'M',
       colour: 'rust',
     }),
@@ -176,6 +191,11 @@ void test('report_demand_gap requires human approval, consumes it, and returns e
   assert.equal(rejected.ok, false);
   assert.equal(rejected.error, 'human-approval-required');
   assert.equal(emitted.length, 0);
+  assert.equal(typeof rejected.next, 'string');
+  assert.ok(
+    typeof rejected.next === 'string' && rejected.next.length > 0,
+    'a human-approval-required rejection must say what to do next',
+  );
 
   approve();
   const result = payload(

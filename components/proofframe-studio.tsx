@@ -3,6 +3,7 @@
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   Download,
   LockKeyhole,
   Pause,
@@ -24,14 +25,21 @@ import { seedCampaign } from '@/lib/proofframe/seed';
 import { makeCatalogImporter } from '@/lib/proofframe/shopify';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
-import type { CampaignState, Scene } from '@/lib/proofframe/types';
+import type { CampaignFacts, CampaignState, Scene } from '@/lib/proofframe/types';
 import { validateCampaign } from '@/lib/proofframe/validator';
 import {
   buildTools,
-  registerProofFrameTools,
+  getModelContext,
+  instrumentTools,
+  registerAll,
   type ProofFrameCallbacks,
   type SceneInput,
+  type ToolContent,
 } from '@/lib/proofframe/webmcp';
+
+// Optional fields another agent may add to CampaignFacts; treated as optional
+// here so this component compiles standalone regardless of merge order.
+type FactsView = CampaignFacts & { purchaseUrl?: string; productImage?: string };
 
 type Activity = {
   id: number;
@@ -56,7 +64,7 @@ const initialActivity: Activity[] = [
   {
     id: 2,
     actor: 'MC',
-    title: 'Locked campaign truth',
+    title: 'Locked the offer facts',
     detail: 'Agents can use these facts but cannot rewrite them.',
     status: 'human',
     at: 'HUMAN ONLY',
@@ -98,6 +106,54 @@ function money(value: number | null, currency: string) {
   }).format(value);
 }
 
+function demandLabel(kind: DemandSignal['kind']): 'Need' | 'Want' {
+  return kind === 'want' ? 'Want' : 'Need';
+}
+
+type AggregateRow = {
+  key: string;
+  category: string;
+  size: string;
+  total: number;
+  need: number;
+  want: number;
+  newest: string;
+};
+
+function aggregateSignals(signals: DemandSignal[]): AggregateRow[] {
+  const map = new Map<string, AggregateRow>();
+  for (const s of signals) {
+    const size = s.size ?? 'any size';
+    const key = `${s.category}|${size}`;
+    const row = map.get(key) ?? {
+      key,
+      category: s.category,
+      size,
+      total: 0,
+      need: 0,
+      want: 0,
+      newest: s.at,
+    };
+    row.total += 1;
+    if (s.kind === 'want') row.want += 1;
+    else row.need += 1;
+    if (s.at > row.newest) row.newest = s.at;
+    map.set(key, row);
+  }
+  return Array.from(map.values()).sort((a, b) => (a.newest < b.newest ? 1 : -1));
+}
+
+/** Need rows first, newest-first order preserved within each group
+ * (Array.prototype.sort is stable). */
+function sortNeedsFirst(signals: DemandSignal[]): DemandSignal[] {
+  return [...signals].sort((a, b) => {
+    const aNeed = a.kind !== 'want';
+    const bNeed = b.kind !== 'want';
+    if (aNeed === bNeed) return 0;
+    return aNeed ? -1 : 1;
+  });
+}
+
 export function ProofFrameStudio() {
   const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
   const campaignRef = useRef(campaign);
@@ -108,26 +164,54 @@ export function ProofFrameStudio() {
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>('checking');
   const [registeredCount, setRegisteredCount] = useState(0);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
+  const [toolCallCount, setToolCallCount] = useState(0);
+  const [blockedCount, setBlockedCount] = useState(0);
+  const [inspectorOpen, setInspectorOpen] = useState(true);
+
+  // Row ids that just appeared, so the GA-debugger flash plays once and only
+  // once (never re-derived from a ref read during render).
+  const prevSignalIdsRef = useRef<Set<string> | null>(null);
+  const [newSignalIds, setNewSignalIds] = useState<Set<string>>(new Set());
+  const [newActivityIds, setNewActivityIds] = useState<Set<number>>(new Set());
+
+  const handleToolCall = useCallback((_name: string, result: ToolContent) => {
+    setToolCallCount((n) => n + 1);
+    if ((result as { ok?: boolean }).ok === false) {
+      setBlockedCount((n) => n + 1);
+    }
+  }, []);
+
+  const applySignals = useCallback((next: DemandSignal[]) => {
+    const prev = prevSignalIdsRef.current;
+    setNewSignalIds(
+      prev === null
+        ? new Set()
+        : new Set(
+            next.filter((s) => !prev.has(s.signalId)).map((s) => s.signalId),
+          ),
+    );
+    prevSignalIdsRef.current = new Set(next.map((s) => s.signalId));
+    setSignals(next);
+  }, []);
 
   useEffect(() => {
     let active = true;
     queueMicrotask(() => {
-      if (active) setSignals(readSignals());
+      if (active) applySignals(readSignals());
     });
-    const unsubscribe = subscribeSignals(() => setSignals(readSignals()));
+    const unsubscribe = subscribeSignals(() => applySignals(readSignals()));
     return () => {
       active = false;
       unsubscribe();
     };
-  }, []);
+  }, [applySignals]);
 
   const pushActivity = useCallback((entry: Omit<Activity, 'id' | 'at'>) => {
+    const id = Date.now() + Math.random();
     setActivity((current) =>
-      [
-        { ...entry, id: Date.now() + Math.random(), at: timeLabel() },
-        ...current,
-      ].slice(0, 6),
+      [{ ...entry, id, at: timeLabel() }, ...current].slice(0, 6),
     );
+    setNewActivityIds((current) => new Set(current).add(id));
   }, []);
 
   const commit = useCallback(
@@ -228,7 +312,7 @@ export function ProofFrameStudio() {
     (handle: string) => {
       if (campaignRef.current.factsLocked) {
         throw new Error(
-          'Campaign truth is locked. Ask the human to unlock it before importing a product.',
+          'Offer facts are locked. Ask the merchant to unlock them before importing a product.',
         );
       }
       const facts = makeCatalogImporter(() => campaignRef.current.facts)(
@@ -284,14 +368,13 @@ export function ProofFrameStudio() {
 
   useEffect(() => {
     let active = true;
-    registerProofFrameTools(callbacks)
+    const tools = instrumentTools(buildTools(callbacks), handleToolCall);
+    registerAll(getModelContext(), tools)
       .then((result) => {
         if (!active) return;
         // Count confirmed registrations, not the list we tried to register.
         setRegisteredCount(
-          result.registered.length > 0
-            ? result.registered.length
-            : buildTools(callbacks).length,
+          result.registered.length > 0 ? result.registered.length : tools.length,
         );
         if (result.rejected.length > 0) {
           console.error('WebMCP registration rejected', result.rejected);
@@ -312,7 +395,7 @@ export function ProofFrameStudio() {
     return () => {
       active = false;
     };
-  }, [callbacks]);
+  }, [callbacks, handleToolCall]);
 
   const totalDuration = useMemo(
     () => campaign.scenes.reduce((sum, scene) => sum + scene.durationSec, 0),
@@ -325,6 +408,9 @@ export function ProofFrameStudio() {
     campaign.scenes[0];
   const progress =
     totalDuration > 0 ? Math.min(playhead / totalDuration, 1) : 0;
+  const facts = campaign.facts as FactsView;
+  const sortedSignals = useMemo(() => sortNeedsFirst(signals), [signals]);
+  const aggregatedSignals = useMemo(() => aggregateSignals(signals), [signals]);
 
   useEffect(() => {
     if (!playing || totalDuration <= 0) return;
@@ -362,7 +448,7 @@ export function ProofFrameStudio() {
     commit((current) => ({ ...current, factsLocked: willLock }));
     pushActivity({
       actor: 'MC',
-      title: willLock ? 'Locked campaign truth' : 'Unlocked campaign truth',
+      title: willLock ? 'Locked the offer facts' : 'Unlocked the offer facts',
       detail: willLock
         ? 'Agent tools still cannot alter these source facts.'
         : 'Only the human UI can edit source facts.',
@@ -395,8 +481,9 @@ export function ProofFrameStudio() {
       id:
         campaign.scenes.find((scene) => scene.kind === 'offer')?.id ??
         selectedId,
-      heading: '50% off everything — guaranteed lowest price',
+      heading: '50% off everything, guaranteed lowest price',
     });
+    handleToolCall('update_scene', response as ToolContent);
     const payload = response as {
       ok?: boolean;
       violations?: { message: string }[];
@@ -426,14 +513,14 @@ export function ProofFrameStudio() {
       }));
       pushActivity({
         actor: 'MC',
-        title: `Campaign re-aimed at demand signal #${signal.signalId}`,
-        detail: `${facts.productName} pulled from the catalog. Lock the truth, then let the agent rebuild.`,
+        title: `Campaign re-aimed at request #${signal.signalId}`,
+        detail: `${facts.productName} pulled from the catalog. Lock the facts, then let the agent rebuild.`,
         status: 'human',
       });
     } catch (error) {
       pushActivity({
         actor: 'PF',
-        title: 'Signal import failed',
+        title: 'Request import failed',
         detail: error instanceof Error ? error.message : String(error),
         status: 'system',
       });
@@ -476,7 +563,7 @@ export function ProofFrameStudio() {
 
         <div className="campaign-title">
           <span className="status-dot" aria-hidden="true" />
-          Aurora Threads / Back to school
+          Northlight Apparel / Back to school
           <Badge className="status-badge">Synthetic demo</Badge>
         </div>
 
@@ -488,6 +575,7 @@ export function ProofFrameStudio() {
           <Badge
             variant="outline"
             className={`webmcp-badge status-${webMcpStatus}`}
+            title="WebMCP lets a browser agent call tools this page registers directly. No server, no account, no OAuth."
           >
             <Sparkles data-icon="inline-start" />
             {statusLabel}
@@ -511,15 +599,25 @@ export function ProofFrameStudio() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Human control</p>
-              <h2>Campaign truth</h2>
+              <h2>Approved offer facts</h2>
             </div>
             <ShieldCheck aria-hidden="true" />
           </div>
 
           <p className="panel-intro">
-            Source facts are controlled here, never through agent tools. Lock
-            them before asking an agent to compose.
+            Locked by the merchant. No agent tool can change these. Lock them
+            before asking an agent to compose.
           </p>
+
+          {facts.productImage ? (
+            // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
+            <img
+              src={facts.productImage}
+              alt={facts.productName}
+              className="facts-product-photo"
+              loading="lazy"
+            />
+          ) : null}
 
           <div className="truth-list">
             <label className="truth-row">
@@ -644,7 +742,7 @@ export function ProofFrameStudio() {
             ) : (
               <LockKeyhole data-icon="inline-start" />
             )}
-            {campaign.factsLocked ? 'Unlock as human' : 'Lock campaign truth'}
+            {campaign.factsLocked ? 'Unlock offer facts' : 'Lock offer facts'}
           </Button>
           <p className="human-only-note">
             Human-only control · deliberately absent from WebMCP
@@ -686,6 +784,16 @@ export function ProofFrameStudio() {
                 }
               >
                 <div className="preview-grain" aria-hidden="true" />
+                {facts.productImage &&
+                (activeScene.kind === 'hero' || activeScene.kind === 'product') ? (
+                  // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
+                  <img
+                    src={facts.productImage}
+                    alt={facts.productName}
+                    className="preview-product-photo"
+                    loading="lazy"
+                  />
+                ) : null}
                 <p className="preview-kicker">
                   {activeScene.kind} / {campaign.facts.productName}
                 </p>
@@ -775,41 +883,59 @@ export function ProofFrameStudio() {
               ))}
             </div>
             {activeScene && (
-              <div className="scene-inspector">
-                <label>
-                  <span>Heading</span>
-                  <input
-                    value={activeScene.heading}
-                    onChange={(event) =>
-                      updateSceneAsHuman({ heading: event.target.value })
-                    }
+              <>
+                <button
+                  type="button"
+                  className="inspector-toggle"
+                  onClick={() => setInspectorOpen((v) => !v)}
+                  aria-expanded={inspectorOpen}
+                >
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={inspectorOpen ? 'chevron-open' : 'chevron-closed'}
                   />
-                </label>
-                <label>
-                  <span>Body</span>
-                  <input
-                    value={activeScene.body}
-                    onChange={(event) =>
-                      updateSceneAsHuman({ body: event.target.value })
-                    }
-                  />
-                </label>
-                <label className="duration-input">
-                  <span>Seconds</span>
-                  <input
-                    type="number"
-                    min="0.5"
-                    max="30"
-                    step="0.5"
-                    value={activeScene.durationSec}
-                    onChange={(event) =>
-                      updateSceneAsHuman({
-                        durationSec: Number(event.target.value),
-                      })
-                    }
-                  />
-                </label>
-              </div>
+                  {inspectorOpen ? 'Hide scene details' : 'Show scene details'}
+                </button>
+                <div
+                  className={`scene-inspector ${inspectorOpen ? '' : 'collapsed'}`}
+                >
+                  <div className="scene-inspector-inner">
+                    <label>
+                      <span>Heading</span>
+                      <input
+                        value={activeScene.heading}
+                        onChange={(event) =>
+                          updateSceneAsHuman({ heading: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span>Body</span>
+                      <input
+                        value={activeScene.body}
+                        onChange={(event) =>
+                          updateSceneAsHuman({ body: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="duration-input">
+                      <span>Seconds</span>
+                      <input
+                        type="number"
+                        min="0.5"
+                        max="30"
+                        step="0.5"
+                        value={activeScene.durationSec}
+                        onChange={(event) =>
+                          updateSceneAsHuman({
+                            durationSec: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </section>
@@ -818,7 +944,14 @@ export function ProofFrameStudio() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Human + agent</p>
-              <h2>Proof trail</h2>
+              <h2>Agent activity log</h2>
+              <p
+                className="tool-counter"
+                title="A tool call is one request from a browser agent to a WebMCP tool registered on this page, accepted or blocked."
+              >
+                {toolCallCount} tool call{toolCallCount === 1 ? '' : 's'} ·{' '}
+                {blockedCount} blocked
+              </p>
             </div>
             <WandSparkles aria-hidden="true" />
           </div>
@@ -849,69 +982,104 @@ export function ProofFrameStudio() {
             onClick={runBlockedDemo}
           >
             <ShieldCheck data-icon="inline-start" />
-            Try unsafe agent claim
+            Try a false claim
           </Button>
 
           <div className="demand-list" aria-live="polite">
             <p className="eyebrow">
-              <Radio data-icon="inline-start" aria-hidden="true" /> Live demand
-              · zero-ID events
+              <Radio data-icon="inline-start" aria-hidden="true" /> Incoming
+              requests
             </p>
-            {signals.length === 0 ? (
+            <p className="panel-subtitle">
+              No shopper identifier, one per approval.
+            </p>
+            {aggregatedSignals.length > 0 && (
+              <div className="demand-aggregate">
+                {aggregatedSignals.map((row) => (
+                  <div className="aggregate-row" key={row.key}>
+                    <strong>
+                      {row.category} · {row.size}
+                    </strong>
+                    <span>
+                      {row.total} request{row.total === 1 ? '' : 's'} (
+                      {row.need} need{row.need === 1 ? '' : 's'}, {row.want}{' '}
+                      want{row.want === 1 ? '' : 's'})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {sortedSignals.length === 0 ? (
               <p className="panel-intro">
-                No signals yet. Shopper agents can report a human-approved,
+                No requests yet. Shopper agents can report a human-approved,
                 schema-limited demand event from the closet page.
               </p>
             ) : (
-              signals.slice(0, 4).map((signal) => (
-                <div className="demand-item" key={signal.signalId}>
-                  <strong>
-                    {signal.category}
-                    {signal.size ? ` · ${signal.size}` : ''}
-                    {signal.handle ? ` · ${signal.handle}` : ''}
-                  </strong>
-                  <small>
-                    {signal.kind} · event #{signal.signalId.slice(0, 8)} · no
-                    shopper ID or wardrobe rows
-                  </small>
-                  {signal.handle && (
-                    <button
-                      type="button"
-                      className="demand-use"
-                      disabled={campaign.factsLocked}
-                      title={
-                        campaign.factsLocked
-                          ? 'Unlock campaign truth first (human-only)'
-                          : 'Pull this product into the campaign facts'
-                      }
-                      onClick={() => applySignalToCampaign(signal)}
-                    >
-                      {campaign.factsLocked
-                        ? 'Unlock truth to use'
-                        : 'Build campaign from this'}
-                    </button>
-                  )}
-                </div>
-              ))
+              sortedSignals.slice(0, 4).map((signal) => {
+                const isNew = newSignalIds.has(signal.signalId);
+                return (
+                  <div
+                    className={`demand-item ${isNew ? 'is-new' : ''}`}
+                    key={signal.signalId}
+                  >
+                    <div className="demand-item-head">
+                      <strong>
+                        {signal.category}
+                        {signal.size ? ` · ${signal.size}` : ''}
+                        {signal.handle ? ` · ${signal.handle}` : ''}
+                      </strong>
+                      <span
+                        className={`kind-pill ${signal.kind === 'want' ? 'kind-want' : 'kind-need'}`}
+                      >
+                        {demandLabel(signal.kind)}
+                      </span>
+                    </div>
+                    <small>
+                      event #{signal.signalId.slice(0, 8)} · no shopper ID or
+                      wardrobe rows
+                    </small>
+                    {signal.handle && (
+                      <button
+                        type="button"
+                        className="demand-use"
+                        disabled={campaign.factsLocked}
+                        title={
+                          campaign.factsLocked
+                            ? 'Unlock offer facts first (human-only)'
+                            : 'Pull this product into the campaign facts'
+                        }
+                        onClick={() => applySignalToCampaign(signal)}
+                      >
+                        {campaign.factsLocked
+                          ? 'Unlock facts to use'
+                          : 'Answer this request'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
 
           <div className="activity-list" aria-live="polite">
-            {activity.map((item) => (
-              <div
-                className={`activity-item ${item.status === 'blocked' ? 'blocked-item' : ''}`}
-                key={item.id}
-              >
-                <span className={`activity-marker ${item.status}-marker`}>
-                  {item.actor}
-                </span>
-                <div>
-                  <strong>{item.title}</strong>
-                  <p>{item.detail}</p>
-                  <small>{item.at}</small>
+            {activity.map((item) => {
+              const isNew = newActivityIds.has(item.id);
+              return (
+                <div
+                  className={`activity-item ${item.status === 'blocked' ? 'blocked-item' : ''} ${isNew ? 'is-new' : ''}`}
+                  key={item.id}
+                >
+                  <span className={`activity-marker ${item.status}-marker`}>
+                    {item.actor}
+                  </span>
+                  <div>
+                    <strong>{item.title}</strong>
+                    <p>{item.detail}</p>
+                    <small>{item.at}</small>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="tool-card">
@@ -921,7 +1089,9 @@ export function ProofFrameStudio() {
                 ? 'WebMCP connected'
                 : 'WebMCP contract ready'}
             </div>
-            <code>navigator.modelContext ?? document.modelContext</code>
+            <code title="The browser API this page registers its tools on.">
+              navigator.modelContext ?? document.modelContext
+            </code>
             <p>
               Ask a browser agent to read, draft, reorder, seek, validate, or
               export. Every accepted mutation appears here; rejected claims
