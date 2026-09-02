@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { BRAND, WEBMCP_ORIGIN_TRIAL_TOKEN } from '@/lib/proofframe/brand';
+import { BRAND, WEBMCP_ORIGIN_TRIAL_TOKENS } from '@/lib/proofframe/brand';
 
 import './globals.css';
 
@@ -21,9 +21,9 @@ export default function RootLayout({
       <head>
         {/* Pre-submission stealth; vinext does not render metadata.robots yet */}
         <meta name="robots" content="noindex, nofollow" />
-        {WEBMCP_ORIGIN_TRIAL_TOKEN ? (
-          <meta httpEquiv="origin-trial" content={WEBMCP_ORIGIN_TRIAL_TOKEN} />
-        ) : null}
+        {WEBMCP_ORIGIN_TRIAL_TOKENS.map((token) => (
+          <meta key={token.slice(0, 12)} httpEquiv="origin-trial" content={token} />
+        ))}
       </head>
       <body>{children}</body>
     </html>

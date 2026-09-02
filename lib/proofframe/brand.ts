@@ -7,9 +7,14 @@ export const BRAND = {
   challenge: 'OpenAI WebMCP Challenge entry',
 } as const;
 
-// Chrome origin-trial token for WebMCP (Chrome 149+). Lets judges use the live
-// site without flipping chrome://flags. Register the origin at
+// Chrome origin-trial tokens for WebMCP (Chrome 149+, trial ends Nov 16 2026).
+// Let judges use the live site without flipping chrome://flags. One token per
+// origin — the token is bound to scheme+host+port. Registered 2026-09-02 at
 // https://developer.chrome.com/origintrials/#/register_trial/4163014905550602241
-// and paste the token here; the layout emits the meta tag only when it is set.
-// The token is public by design (it ships in the HTML), so committing it is fine.
-export const WEBMCP_ORIGIN_TRIAL_TOKEN = '';
+// Tokens are public by design (they ship in the HTML), so committing them is fine.
+export const WEBMCP_ORIGIN_TRIAL_TOKENS = [
+  // https://hemloop.marcoatwill.workers.dev
+  'ArJrc8xOlGFP0G5J9CkIrxpbbbqesM8cze7S3CmVC3beb+dxfjgKmBQuAGRyJ7HkL/I8QI11leErNu1U3YIZ7wYAAABfeyJvcmlnaW4iOiJodHRwczovL2hlbWxvb3AubWFyY29hdHdpbGwud29ya2Vycy5kZXY6NDQzIiwiZmVhdHVyZSI6IldlYk1DUCIsImV4cGlyeSI6MTc5NDg3MzYwMH0=',
+  // https://hemloop.app
+  'ArhT9FIX3tve7C4Fd7cgCTF9DhqHl8azu+72C6CO4Wgv09ooQZWurKTtKfwz2bnF8WZUt0iX9DhbWJHZ552STAkAAABLeyJvcmlnaW4iOiJodHRwczovL2hlbWxvb3AuYXBwOjQ0MyIsImZlYXR1cmUiOiJXZWJNQ1AiLCJleHBpcnkiOjE3OTQ4NzM2MDB9',
+] as const;
