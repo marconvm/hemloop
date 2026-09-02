@@ -17,10 +17,10 @@ function payload(result: ToolContent): ToolPayload {
   return result as unknown as ToolPayload;
 }
 
-void test('catalog snapshot has the demo product first and real provenance', () => {
-  assert.equal(demoCatalog.source, 'playground-6mz3jwlf.myshopify.com');
+void test('catalog snapshot has the demo product first and synthetic provenance', () => {
+  assert.equal(demoCatalog.source, 'synthetic apparel catalog (Shopify-shaped)');
   assert.equal(demoCatalog.products[0]?.handle, 'northlight-hoodie');
-  assert.ok(demoCatalog.products.length >= 10);
+  assert.equal(demoCatalog.products.length, 8);
 });
 
 void test('productToFacts derives sale pricing and keeps promo terms human-owned', () => {

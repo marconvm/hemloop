@@ -17,6 +17,12 @@ export interface Garment {
   brand: string;
   size: string;
   colour: string;
+  image?: string;
+  price?: number;
+  currency?: string;
+  retailer?: string;
+  material?: string;
+  purchasedAt?: string; // ISO yyyy-mm-dd
 }
 
 export interface Wardrobe {
@@ -50,58 +56,106 @@ export function seedWardrobe(): Wardrobe {
       {
         id: 'g1',
         category: 'tee',
-        brand: 'Aurora Threads',
+        brand: 'Northlight Apparel',
         size: 'M',
         colour: 'bone',
+        image: '/products/harborview-crew-tee.jpg',
+        price: 22.9,
+        currency: 'CAD',
+        retailer: 'Northlight Apparel online store',
+        material: '100% combed cotton jersey',
+        purchasedAt: '2025-11-02',
       },
       {
         id: 'g2',
         category: 'tee',
-        brand: 'Aurora Threads',
+        brand: 'Northlight Apparel',
         size: 'M',
         colour: 'moss',
+        image: '/products/moss-tee.jpg',
+        price: 24.0,
+        currency: 'CAD',
+        retailer: 'Northlight Apparel online store',
+        material: 'Organic cotton jersey',
+        purchasedAt: '2026-01-15',
       },
       {
         id: 'g3',
         category: 'tee',
-        brand: 'Field Supply',
+        brand: 'Denim Supply Co.',
         size: 'M',
         colour: 'black',
+        image: '/products/black-tee.jpg',
+        price: 19.99,
+        currency: 'CAD',
+        retailer: 'Mall outlet',
+        material: 'Cotton jersey',
+        purchasedAt: '2025-08-20',
       },
       {
         id: 'g4',
         category: 'denim',
-        brand: 'Field Supply',
+        brand: 'Denim Supply Co.',
         size: '32x30',
         colour: 'indigo',
+        image: '/products/east-side-straight-jean.jpg',
+        price: 68.0,
+        currency: 'CAD',
+        retailer: 'Denim Supply Co. flagship',
+        material: 'Rigid cotton denim',
+        purchasedAt: '2025-09-12',
       },
       {
         id: 'g5',
         category: 'denim',
-        brand: 'Field Supply',
+        brand: 'Denim Supply Co.',
         size: '32x30',
         colour: 'washed',
+        image: '/products/washed-denim.jpg',
+        price: 54.0,
+        currency: 'CAD',
+        retailer: 'Mall outlet',
+        material: 'Stretch cotton denim',
+        purchasedAt: '2026-02-28',
       },
       {
         id: 'g6',
         category: 'footwear',
-        brand: 'Northgate',
+        brand: 'Ridgeline Outdoor',
         size: '10',
         colour: 'white',
+        image: '/products/white-sneaker.jpg',
+        price: 79.0,
+        currency: 'CAD',
+        retailer: 'Ridgeline Outdoor',
+        material: 'Canvas upper, rubber sole',
+        purchasedAt: '2026-03-05',
       },
       {
         id: 'g7',
         category: 'accessory',
-        brand: 'Aurora Threads',
+        brand: 'Northlight Apparel',
         size: 'OS',
         colour: 'olive',
+        image: '/products/olive-cap.jpg',
+        price: 26.0,
+        currency: 'CAD',
+        retailer: 'Northlight Apparel online store',
+        material: 'Cotton twill',
+        purchasedAt: '2025-06-18',
       },
       {
         id: 'g8',
         category: 'jacket',
-        brand: 'Northgate',
+        brand: 'Ridgeline Outdoor',
         size: 'M',
         colour: 'navy',
+        image: '/products/tidewater-shell-jacket.jpg',
+        price: 96.0,
+        currency: 'CAD',
+        retailer: 'Ridgeline Outdoor',
+        material: 'Nylon shell, sherpa-lined collar',
+        purchasedAt: '2025-12-24',
       },
     ],
   };
@@ -143,10 +197,10 @@ export function sizesOwned(
 const CATEGORY_KEYWORDS: [GarmentCategory, RegExp][] = [
   ['hoodie', /hoodie|fleece|sweat/i],
   ['tee', /tee|t-shirt|shirt/i],
-  ['denim', /denim|jean|pant/i],
+  ['denim', /denim|jean|pant|chino/i],
   ['jacket', /jacket|coat|parka/i],
   ['footwear', /boot|shoe|sneaker|snowboard boot/i],
-  ['accessory', /card|wax|bag|beanie|accessor/i],
+  ['accessory', /card|wax|bag|beanie|accessor|cap|hat/i],
 ];
 
 export function guessCategory(product: CatalogProduct): GarmentCategory | null {

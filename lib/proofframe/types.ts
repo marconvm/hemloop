@@ -11,6 +11,8 @@ export interface CampaignFacts {
   endDate: string; // ISO yyyy-mm-dd
   disclaimer: string; // must appear in the finished composition
   bannedPhrases: string[]; // copy that legal never allows, case-insensitive
+  purchaseUrl?: string;
+  productImage?: string;
 }
 
 export type SceneKind = 'hero' | 'product' | 'offer' | 'cta';

@@ -86,7 +86,7 @@ void test('validator catches wrong discount, price, code, banned phrase', () => 
 void test('validator accepts copy matching locked facts', () => {
   const { facts } = seedCampaign();
   assert.deepEqual(
-    validateText('25% off — $59.90 now $44.90 with code AURORA25', facts),
+    validateText('25% off — $59.90 now $44.90 with code NORTHLIGHT25', facts),
     [],
   );
 });
@@ -289,7 +289,7 @@ void test('update_scene rejects a patch that breaks a locked fact', async () => 
     }),
   );
   assert.equal(result.ok, false);
-  assert.equal(state.scenes[2].body, '$59.90 → $44.90 with code AURORA25');
+  assert.equal(state.scenes[2].body, '$59.90 → $44.90 with code NORTHLIGHT25');
 });
 
 void test('reorder_scenes requires a permutation', async () => {

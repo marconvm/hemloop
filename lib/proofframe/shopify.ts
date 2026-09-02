@@ -14,6 +14,22 @@ export interface CatalogProduct {
   currency: string;
   price: number;
   compareAtPrice: number | null;
+  vendor?: string;
+  productType?: string;
+  tags?: string[];
+  image?: string;
+  options?: { name: string; values: string[] }[];
+  variants?: {
+    sku: string;
+    title: string;
+    size?: string;
+    colour?: string;
+    price: number;
+    compareAtPrice: number | null;
+    inventoryQuantity: number;
+  }[];
+  metafields?: { material?: string; fit?: string; care?: string; origin?: string };
+  url?: string;
 }
 
 export interface Catalog {

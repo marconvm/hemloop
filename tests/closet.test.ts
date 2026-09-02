@@ -62,9 +62,9 @@ void test('seed wardrobe has a hoodie gap (the demo arc)', () => {
 
 void test('sizesOwned dedupes and filters by brand case-insensitively', () => {
   const all = sizesOwned(seedWardrobe());
-  const aurora = sizesOwned(seedWardrobe(), 'aurora threads');
-  assert.ok(all.length > aurora.length);
-  assert.ok(aurora.every((r) => r.brand === 'Aurora Threads'));
+  const northlight = sizesOwned(seedWardrobe(), 'northlight apparel');
+  assert.ok(all.length > northlight.length);
+  assert.ok(northlight.every((r) => r.brand === 'Northlight Apparel'));
 });
 
 void test('checkFit maps the northlight hoodie and recommends from owned sizes', () => {
@@ -72,9 +72,9 @@ void test('checkFit maps the northlight hoodie and recommends from owned sizes',
   assert.equal(fit.category, 'hoodie');
   // seed owns no hoodie, so no size history
   assert.equal(fit.ownedSize, null);
-  const card = checkFit(seedWardrobe(), 'gift-card');
-  assert.equal(card.category, 'accessory');
-  assert.equal(card.ownedSize, 'OS');
+  const cap = checkFit(seedWardrobe(), 'fieldhouse-cap');
+  assert.equal(cap.category, 'accessory');
+  assert.equal(cap.ownedSize, 'OS');
   const unknown = checkFit(seedWardrobe(), 'nope');
   assert.match(unknown.note, /Unknown product/);
 });
@@ -151,7 +151,7 @@ void test('add_garment validates category and strings', async () => {
   const good = payload(
     await tool.execute({
       category: 'hoodie',
-      brand: 'Aurora Threads',
+      brand: 'Northlight Apparel',
       size: 'M',
       colour: 'rust',
     }),

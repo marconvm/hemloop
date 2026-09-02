@@ -1,175 +1,249 @@
 {
-  "source": "playground-6mz3jwlf.myshopify.com",
-  "kind": "storefront-snapshot",
-  "generatedAt": "2026-08-30",
+  "source": "synthetic apparel catalog (Shopify-shaped)",
+  "kind": "catalog-snapshot",
+  "generatedAt": "2026-09-02",
   "products": [
     {
       "handle": "northlight-hoodie",
       "title": "Northlight Hoodie",
-      "description": "Heavyweight brushed fleece hoodie. Boxy fit, six colours. Synthetic demo product for the ProofFrame WebMCP Challenge entry.",
+      "description": "Heavyweight 400gsm brushed cotton fleece with a boxy, dropped-shoulder fit. Kangaroo pocket and a lined hood for cold mornings.",
       "currency": "CAD",
       "price": 44.9,
-      "compareAtPrice": 59.9
+      "compareAtPrice": 59.9,
+      "vendor": "Northlight Apparel",
+      "productType": "Hoodie",
+      "tags": ["hoodie", "fleece", "boxy-fit", "unisex", "new-season"],
+      "image": "/products/northlight-hoodie.jpg",
+      "url": "https://hemloop.app/closet?product=northlight-hoodie",
+      "options": [
+        { "name": "Size", "values": ["XS", "S", "M", "L", "XL"] },
+        { "name": "Colour", "values": ["Moss", "Bone", "Ink"] }
+      ],
+      "variants": [
+        { "sku": "NL-HD-MOSS-S", "title": "Moss / S", "size": "S", "colour": "Moss", "price": 44.9, "compareAtPrice": 59.9, "inventoryQuantity": 18 },
+        { "sku": "NL-HD-MOSS-M", "title": "Moss / M", "size": "M", "colour": "Moss", "price": 44.9, "compareAtPrice": 59.9, "inventoryQuantity": 26 },
+        { "sku": "NL-HD-BONE-M", "title": "Bone / M", "size": "M", "colour": "Bone", "price": 44.9, "compareAtPrice": 59.9, "inventoryQuantity": 14 },
+        { "sku": "NL-HD-BONE-L", "title": "Bone / L", "size": "L", "colour": "Bone", "price": 44.9, "compareAtPrice": 59.9, "inventoryQuantity": 9 },
+        { "sku": "NL-HD-INK-M", "title": "Ink / M", "size": "M", "colour": "Ink", "price": 44.9, "compareAtPrice": 59.9, "inventoryQuantity": 21 },
+        { "sku": "NL-HD-INK-XL", "title": "Ink / XL", "size": "XL", "colour": "Ink", "price": 44.9, "compareAtPrice": 59.9, "inventoryQuantity": 6 }
+      ],
+      "metafields": {
+        "material": "400gsm brushed cotton fleece",
+        "fit": "Boxy",
+        "care": "Machine wash cold, tumble dry low",
+        "origin": "Made in Portugal"
+      }
     },
     {
-      "handle": "the-inventory-not-tracked-snowboard",
-      "title": "The Inventory Not Tracked Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 949.95,
-      "compareAtPrice": null
+      "handle": "solstice-graphic-tee",
+      "title": "Solstice Graphic Tee",
+      "description": "Garment-dyed cotton tee with a hand-drawn sun motif screen-printed across the chest. Relaxed fit that keeps its shape wash after wash.",
+      "currency": "CAD",
+      "price": 28.9,
+      "compareAtPrice": null,
+      "vendor": "Northlight Apparel",
+      "productType": "T-Shirt",
+      "tags": ["tee", "graphic", "relaxed-fit", "unisex", "cotton"],
+      "image": "/products/solstice-graphic-tee.jpg",
+      "url": "https://hemloop.app/closet?product=solstice-graphic-tee",
+      "options": [
+        { "name": "Size", "values": ["S", "M", "L", "XL"] },
+        { "name": "Colour", "values": ["Bone", "Black"] }
+      ],
+      "variants": [
+        { "sku": "SGT-BONE-S", "title": "Bone / S", "size": "S", "colour": "Bone", "price": 28.9, "compareAtPrice": null, "inventoryQuantity": 12 },
+        { "sku": "SGT-BONE-M", "title": "Bone / M", "size": "M", "colour": "Bone", "price": 28.9, "compareAtPrice": null, "inventoryQuantity": 20 },
+        { "sku": "SGT-BONE-L", "title": "Bone / L", "size": "L", "colour": "Bone", "price": 28.9, "compareAtPrice": null, "inventoryQuantity": 8 },
+        { "sku": "SGT-BLACK-M", "title": "Black / M", "size": "M", "colour": "Black", "price": 28.9, "compareAtPrice": null, "inventoryQuantity": 17 },
+        { "sku": "SGT-BLACK-L", "title": "Black / L", "size": "L", "colour": "Black", "price": 28.9, "compareAtPrice": null, "inventoryQuantity": 5 }
+      ],
+      "metafields": {
+        "material": "100% ringspun cotton, 180gsm",
+        "fit": "Relaxed",
+        "care": "Machine wash cold, hang dry",
+        "origin": "Made in Portugal"
+      }
     },
     {
-      "handle": "gift-card",
-      "title": "Gift Card",
-      "description": "This is a gift card for the store",
-      "currency": "USD",
-      "price": 10,
-      "compareAtPrice": null
+      "handle": "harborview-crew-tee",
+      "title": "Harborview Crew Tee",
+      "description": "A no-logo staple in combed cotton jersey. Tagless neck label and a slightly tapered fit for a cleaner line under layers.",
+      "currency": "CAD",
+      "price": 22.9,
+      "compareAtPrice": null,
+      "vendor": "Denim Supply Co.",
+      "productType": "T-Shirt",
+      "tags": ["tee", "basics", "tapered-fit", "unisex", "cotton"],
+      "image": "/products/harborview-crew-tee.jpg",
+      "url": "https://hemloop.app/closet?product=harborview-crew-tee",
+      "options": [
+        { "name": "Size", "values": ["XS", "S", "M", "L", "XL"] },
+        { "name": "Colour", "values": ["Bone", "Black", "Moss"] }
+      ],
+      "variants": [
+        { "sku": "HV-TEE-BONE-S", "title": "Bone / S", "size": "S", "colour": "Bone", "price": 22.9, "compareAtPrice": null, "inventoryQuantity": 24 },
+        { "sku": "HV-TEE-BONE-M", "title": "Bone / M", "size": "M", "colour": "Bone", "price": 22.9, "compareAtPrice": null, "inventoryQuantity": 31 },
+        { "sku": "HV-TEE-BLACK-M", "title": "Black / M", "size": "M", "colour": "Black", "price": 22.9, "compareAtPrice": null, "inventoryQuantity": 19 },
+        { "sku": "HV-TEE-BLACK-L", "title": "Black / L", "size": "L", "colour": "Black", "price": 22.9, "compareAtPrice": null, "inventoryQuantity": 11 },
+        { "sku": "HV-TEE-MOSS-M", "title": "Moss / M", "size": "M", "colour": "Moss", "price": 22.9, "compareAtPrice": null, "inventoryQuantity": 15 },
+        { "sku": "HV-TEE-MOSS-L", "title": "Moss / L", "size": "L", "colour": "Moss", "price": 22.9, "compareAtPrice": null, "inventoryQuantity": 7 }
+      ],
+      "metafields": {
+        "material": "100% combed cotton, 160gsm",
+        "fit": "Tapered",
+        "care": "Machine wash cold",
+        "origin": "Made in Vietnam"
+      }
     },
     {
-      "handle": "the-minimal-snowboard",
-      "title": "The Minimal Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 885.95,
-      "compareAtPrice": null
+      "handle": "east-side-straight-jean",
+      "title": "East Side Straight Jean",
+      "description": "Mid-rise straight leg in rigid indigo denim that breaks in with wear. Five-pocket construction with a hidden coin pocket.",
+      "currency": "CAD",
+      "price": 68.0,
+      "compareAtPrice": 84.0,
+      "vendor": "Denim Supply Co.",
+      "productType": "Denim",
+      "tags": ["denim", "straight-leg", "mid-rise", "unisex", "five-pocket"],
+      "image": "/products/east-side-straight-jean.jpg",
+      "url": "https://hemloop.app/closet?product=east-side-straight-jean",
+      "options": [
+        { "name": "Size", "values": ["28", "30", "32", "34", "36"] },
+        { "name": "Colour", "values": ["Indigo", "Washed Blue"] }
+      ],
+      "variants": [
+        { "sku": "ES-DNM-IND-30", "title": "Indigo / 30", "size": "30", "colour": "Indigo", "price": 68.0, "compareAtPrice": 84.0, "inventoryQuantity": 13 },
+        { "sku": "ES-DNM-IND-32", "title": "Indigo / 32", "size": "32", "colour": "Indigo", "price": 68.0, "compareAtPrice": 84.0, "inventoryQuantity": 22 },
+        { "sku": "ES-DNM-IND-34", "title": "Indigo / 34", "size": "34", "colour": "Indigo", "price": 68.0, "compareAtPrice": 84.0, "inventoryQuantity": 10 },
+        { "sku": "ES-DNM-WB-30", "title": "Washed Blue / 30", "size": "30", "colour": "Washed Blue", "price": 68.0, "compareAtPrice": 84.0, "inventoryQuantity": 9 },
+        { "sku": "ES-DNM-WB-32", "title": "Washed Blue / 32", "size": "32", "colour": "Washed Blue", "price": 68.0, "compareAtPrice": 84.0, "inventoryQuantity": 16 },
+        { "sku": "ES-DNM-WB-34", "title": "Washed Blue / 34", "size": "34", "colour": "Washed Blue", "price": 68.0, "compareAtPrice": 84.0, "inventoryQuantity": 4 }
+      ],
+      "metafields": {
+        "material": "100% cotton rigid denim, 13oz",
+        "fit": "Straight",
+        "care": "Machine wash cold, inside out",
+        "origin": "Made in Turkey"
+      }
     },
     {
-      "handle": "the-complete-snowboard",
-      "title": "The Complete Snowboard",
-      "description": "This PREMIUM snowboard is so SUPERDUPER awesome!",
-      "currency": "USD",
-      "price": 699.95,
-      "compareAtPrice": null
+      "handle": "tidewater-shell-jacket",
+      "title": "Tidewater Shell Jacket",
+      "description": "Water-resistant nylon shell with a sherpa-lined collar and zip hand pockets. Packs down into its own pocket for transit.",
+      "currency": "CAD",
+      "price": 96.0,
+      "compareAtPrice": null,
+      "vendor": "Ridgeline Outdoor",
+      "productType": "Jacket",
+      "tags": ["jacket", "shell", "water-resistant", "unisex", "outerwear"],
+      "image": "/products/tidewater-shell-jacket.jpg",
+      "url": "https://hemloop.app/closet?product=tidewater-shell-jacket",
+      "options": [
+        { "name": "Size", "values": ["S", "M", "L", "XL"] },
+        { "name": "Colour", "values": ["Navy", "Olive"] }
+      ],
+      "variants": [
+        { "sku": "TW-JKT-NAVY-S", "title": "Navy / S", "size": "S", "colour": "Navy", "price": 96.0, "compareAtPrice": null, "inventoryQuantity": 8 },
+        { "sku": "TW-JKT-NAVY-M", "title": "Navy / M", "size": "M", "colour": "Navy", "price": 96.0, "compareAtPrice": null, "inventoryQuantity": 14 },
+        { "sku": "TW-JKT-NAVY-L", "title": "Navy / L", "size": "L", "colour": "Navy", "price": 96.0, "compareAtPrice": null, "inventoryQuantity": 6 },
+        { "sku": "TW-JKT-OLIVE-M", "title": "Olive / M", "size": "M", "colour": "Olive", "price": 96.0, "compareAtPrice": null, "inventoryQuantity": 11 },
+        { "sku": "TW-JKT-OLIVE-L", "title": "Olive / L", "size": "L", "colour": "Olive", "price": 96.0, "compareAtPrice": null, "inventoryQuantity": 3 }
+      ],
+      "metafields": {
+        "material": "Nylon shell, sherpa-lined collar",
+        "fit": "Regular",
+        "care": "Machine wash cold, do not tumble dry",
+        "origin": "Made in Vietnam"
+      }
     },
     {
-      "handle": "the-hidden-snowboard",
-      "title": "The Hidden Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 749.95,
-      "compareAtPrice": null
+      "handle": "amble-court-sneaker",
+      "title": "Amble Court Sneaker",
+      "description": "Low-top court sneaker in colour-blocked leather and mesh with a cushioned EVA midsole. Built for all-day wear.",
+      "currency": "CAD",
+      "price": 79.0,
+      "compareAtPrice": null,
+      "vendor": "Ridgeline Outdoor",
+      "productType": "Footwear",
+      "tags": ["sneaker", "footwear", "court", "unisex", "low-top"],
+      "image": "/products/amble-court-sneaker.jpg",
+      "url": "https://hemloop.app/closet?product=amble-court-sneaker",
+      "options": [
+        { "name": "Size", "values": ["7", "8", "9", "10", "11"] },
+        { "name": "Colour", "values": ["White Multi"] }
+      ],
+      "variants": [
+        { "sku": "AC-SNK-WM-7", "title": "White Multi / 7", "size": "7", "colour": "White Multi", "price": 79.0, "compareAtPrice": null, "inventoryQuantity": 5 },
+        { "sku": "AC-SNK-WM-8", "title": "White Multi / 8", "size": "8", "colour": "White Multi", "price": 79.0, "compareAtPrice": null, "inventoryQuantity": 12 },
+        { "sku": "AC-SNK-WM-9", "title": "White Multi / 9", "size": "9", "colour": "White Multi", "price": 79.0, "compareAtPrice": null, "inventoryQuantity": 18 },
+        { "sku": "AC-SNK-WM-10", "title": "White Multi / 10", "size": "10", "colour": "White Multi", "price": 79.0, "compareAtPrice": null, "inventoryQuantity": 15 },
+        { "sku": "AC-SNK-WM-11", "title": "White Multi / 11", "size": "11", "colour": "White Multi", "price": 79.0, "compareAtPrice": null, "inventoryQuantity": 7 }
+      ],
+      "metafields": {
+        "material": "Leather and mesh upper, EVA midsole",
+        "fit": "True to size",
+        "care": "Wipe clean with a damp cloth",
+        "origin": "Made in Vietnam"
+      }
     },
     {
-      "handle": "the-collection-snowboard-hydrogen",
-      "title": "The Collection Snowboard: Hydrogen",
-      "description": "",
-      "currency": "USD",
-      "price": 600,
-      "compareAtPrice": null
+      "handle": "fieldhouse-cap",
+      "title": "Fieldhouse Cap",
+      "description": "Structured five-panel trucker cap with a mesh back and snapback closure. One size, curved brim.",
+      "currency": "CAD",
+      "price": 26.0,
+      "compareAtPrice": null,
+      "vendor": "Overland Trading Co.",
+      "productType": "Accessory",
+      "tags": ["cap", "accessory", "unisex", "one-size", "headwear"],
+      "image": "/products/fieldhouse-cap.jpg",
+      "url": "https://hemloop.app/closet?product=fieldhouse-cap",
+      "options": [
+        { "name": "Size", "values": ["OS"] },
+        { "name": "Colour", "values": ["Black/White", "Olive", "Navy"] }
+      ],
+      "variants": [
+        { "sku": "FH-CAP-BW-OS", "title": "Black/White / OS", "size": "OS", "colour": "Black/White", "price": 26.0, "compareAtPrice": null, "inventoryQuantity": 30 },
+        { "sku": "FH-CAP-OLV-OS", "title": "Olive / OS", "size": "OS", "colour": "Olive", "price": 26.0, "compareAtPrice": null, "inventoryQuantity": 22 },
+        { "sku": "FH-CAP-NVY-OS", "title": "Navy / OS", "size": "OS", "colour": "Navy", "price": 26.0, "compareAtPrice": null, "inventoryQuantity": 17 }
+      ],
+      "metafields": {
+        "material": "Cotton twill front, nylon mesh back",
+        "fit": "One size, adjustable snap",
+        "care": "Spot clean only",
+        "origin": "Made in Bangladesh"
+      }
     },
     {
-      "handle": "the-videographer-snowboard",
-      "title": "The Videographer Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 885.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "the-compare-at-price-snowboard",
-      "title": "The Compare at Price Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 785.95,
-      "compareAtPrice": 885.95
-    },
-    {
-      "handle": "the-out-of-stock-snowboard",
-      "title": "The Out of Stock Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 885.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "selling-plans-ski-wax",
-      "title": "Selling Plans Ski Wax",
-      "description": "",
-      "currency": "USD",
-      "price": 24.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "the-multi-location-snowboard",
-      "title": "The Multi-location Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 729.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "the-3p-fulfilled-snowboard",
-      "title": "The 3p Fulfilled Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 2629.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "the-multi-managed-snowboard",
-      "title": "The Multi-managed Snowboard",
-      "description": "",
-      "currency": "USD",
-      "price": 629.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "the-collection-snowboard-oxygen",
-      "title": "The Collection Snowboard: Oxygen",
-      "description": "",
-      "currency": "USD",
-      "price": 1025,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "the-collection-snowboard-liquid",
-      "title": "The Collection Snowboard: Liquid",
-      "description": "",
-      "currency": "USD",
-      "price": 749.95,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "skater-jeans",
-      "title": "Skater Jeans",
-      "description": "",
-      "currency": "USD",
-      "price": 31.99,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "chloe-low-rise-baggy-jeans",
-      "title": "Chloe Low Rise Baggy Jeans",
-      "description": "",
-      "currency": "USD",
-      "price": 31.99,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "aero-1987-graphic-tee",
-      "title": "AERO 1987 Graphic Tee",
-      "description": "",
-      "currency": "USD",
-      "price": 15.99,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "toyota-supra-mk4-turbo-graphic-tee",
-      "title": "Toyota Supra MK4 Turbo Graphic Tee",
-      "description": "",
-      "currency": "USD",
-      "price": 15.99,
-      "compareAtPrice": null
-    },
-    {
-      "handle": "fleece-oversized-hoodie",
-      "title": "Fleece Oversized Hoodie",
-      "description": "",
-      "currency": "USD",
-      "price": 27.99,
-      "compareAtPrice": null
+      "handle": "camden-chino",
+      "title": "Camden Chino",
+      "description": "Slim-tapered chino in brushed cotton twill with a touch of stretch. Flat front with a clean, tailored break.",
+      "currency": "CAD",
+      "price": 58.0,
+      "compareAtPrice": null,
+      "vendor": "Denim Supply Co.",
+      "productType": "Chino",
+      "tags": ["chino", "slim-tapered", "unisex", "stretch", "twill"],
+      "image": "/products/camden-chino.jpg",
+      "url": "https://hemloop.app/closet?product=camden-chino",
+      "options": [
+        { "name": "Size", "values": ["28", "30", "32", "34", "36"] },
+        { "name": "Colour", "values": ["Olive", "Khaki", "Navy"] }
+      ],
+      "variants": [
+        { "sku": "CC-CHN-OLV-30", "title": "Olive / 30", "size": "30", "colour": "Olive", "price": 58.0, "compareAtPrice": null, "inventoryQuantity": 10 },
+        { "sku": "CC-CHN-OLV-32", "title": "Olive / 32", "size": "32", "colour": "Olive", "price": 58.0, "compareAtPrice": null, "inventoryQuantity": 14 },
+        { "sku": "CC-CHN-KHK-30", "title": "Khaki / 30", "size": "30", "colour": "Khaki", "price": 58.0, "compareAtPrice": null, "inventoryQuantity": 19 },
+        { "sku": "CC-CHN-KHK-32", "title": "Khaki / 32", "size": "32", "colour": "Khaki", "price": 58.0, "compareAtPrice": null, "inventoryQuantity": 21 },
+        { "sku": "CC-CHN-NVY-32", "title": "Navy / 32", "size": "32", "colour": "Navy", "price": 58.0, "compareAtPrice": null, "inventoryQuantity": 8 },
+        { "sku": "CC-CHN-NVY-34", "title": "Navy / 34", "size": "34", "colour": "Navy", "price": 58.0, "compareAtPrice": null, "inventoryQuantity": 5 }
+      ],
+      "metafields": {
+        "material": "98% cotton twill, 2% elastane",
+        "fit": "Slim-tapered",
+        "care": "Machine wash cold",
+        "origin": "Made in Turkey"
+      }
     }
   ]
 }
