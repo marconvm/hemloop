@@ -136,3 +136,11 @@ Marco: "work on 1–4". So the DISAGREE path resolved by the owner, as the rules
 - Still stealth (robots deny-all, noindex) until the branch `post-submission-unstealth` merges after the deadline.
 - `dual-review` skill gained **Step 0**: read the spec + every vendor guide + support matrix before the brief,
   audit by script. Backed up in claude-setup.
+
+### hemloop.app cutover (2026-09-02) — done
+Domain registered at Vercel (2026-08-31), nameservers moved to Cloudflare (zone 70bfe32d…, active), imported
+Vercel A/CNAME records deleted by Marco (CAA kept — they name the CAs Cloudflare uses). `prepare:worker` now
+adds `routes` for `hemloop.app` + `www` as custom domains and pins `workers_dev: true` (routes disable
+workers.dev silently — it was dark ~2 min on the first attempt). Cert: Google Trust Services. Origin-trial
+tokens for both origins ship in the layout (expire 2026-11-17). Reader-facing docs now say hemloop.app;
+VERIFICATION.md and this log keep historical URLs. Worker 9aaf46c2.
