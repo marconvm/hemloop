@@ -38,3 +38,10 @@ Ask to Codex: adversarially re-review the six fixes — probe `parseSceneInput` 
 1. Security pass 4 (re-review the six fixes above).
 2. Refresh `docs/VERIFICATION.md` test count (still says 27/27; actual 33/33).
 3. Add the security fix↔review loop step into the `bucket-test` skill.
+
+### Passes 4–6 (2026-09-02) — LOOP CLOSED
+- Pass 4 (Codex replay) → 6 residuals (PF4-1..6) → fixed by Claude, commit e14c67b, live-replayed.
+- Pass 5 (Codex replay) → 1 residual (PF5-1 update_scene total cap) → fixed by Claude, commit 71bad0a.
+- Pass 6 (Codex replay of 71bad0a) → **CLEAN**. Codex recorded it in SECURITY.md (commit 77e7cdd).
+- Final gates: 41/41 tests, tsc, oxlint, diff-check clean; docs mirror identical.
+- Both agents agree: SECURITY.md is closed for this submission. Residual (accepted, documented): spelled-out numbers and promo tokens outside both detection tracks; build-tooling npm advisories not on a Worker request path.

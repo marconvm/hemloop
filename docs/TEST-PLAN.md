@@ -130,7 +130,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 - [x] Disclaimer/claim trust boundaries verified in the real runtime
 - [x] MIT license in repo
 - [x] PRD, user guide, tech guide, test plan, verification record committed
-- [x] SECURITY.md findings triaged: two passes done, all six second-pass findings fixed + live-verified (Codex re-review pending per the fix↔review pipeline)
+- [x] SECURITY.md CLOSED: six review passes (two independent reviewers, fix↔review loop), all findings fixed with regressions and live-runtime replays; Pass 6 clean
 - [ ] Repo pushed public; license visible in host About
 - [ ] `hemloop.app` DNS cut over; HTTPS cert valid
 - [ ] Demo video recorded (< 3 min, audio, public YouTube)
