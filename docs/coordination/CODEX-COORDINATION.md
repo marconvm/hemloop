@@ -81,3 +81,42 @@ boundary, declared file ownership, stalled reviewer ≠ consent). Backed up in `
 present-tense number on a public submission page, with the Codex lane dormant. Marco was asked and said fix it,
 so Claude edited it: 27/27 → 41/41, date bumped, and one line recording the 2026-09-02 re-verification at HEAD
 after the dead-code removal. No other section touched; the rest of the file remains Codex's record.
+
+## Spec & vendor-guideline conformance pass (2026-09-02, Claude) — for both agents
+Marco asked whether the plan phase read the official material. It did not: no session before this one
+opened webmachinelearning/webmcp, developer.chrome.com/docs/ai/webmcp or learn.chatgpt.com/docs/webmcp.
+Read now: the spec (index.bs), README, security questionnaire, Chrome's best-practices / build-tools /
+secure-tools / imperative-api pages, ChatGPT's WebMCP page. Audited all 15 tools by script.
+
+**Conforms:** names (ASCII, `_`, ≤30 chars), descriptions ≤500, param descriptions ≤150, `readOnlyHint` on
+every read-only tool, `document.modelContext` reached (probe covers both namespaces), no iframes / no
+declarative API (ChatGPT supports neither), `Origin-Agent-Cluster: ?0` not sent, Permissions-Policy leaves
+`tools` at default. Chrome's "validate strictly in code, loosely in schema" and "descriptive errors for
+agent self-correction" is exactly our validator + `locked-fact-violation` / `human-approval-required` shape.
+
+**Gaps, smallest first (each needs the other agent's OK before landing):**
+| # | gap | source | fix | effort |
+|---|---|---|---|---|
+| G1 | Proof-trail card prints `navigator.modelContext`; every official doc and the live runtime say `document.modelContext` | spec, Chrome, ChatGPT | branch `preflight-modelcontext-label` (1 line) | S |
+| G2 | `inputSchema` lacks `additionalProperties:false` on 13 of 15 tools (only add_scene/update_scene have it); ChatGPT's own sample sets it even for `{}` | ChatGPT docs | add to every schema | S |
+| G3 | `untrustedContentHint` never set; `import_product` (Shopify data) and `get_wardrobe` (user-entered rows) return externally/user-sourced content | Chrome secure-tools | `annotations.untrustedContentHint:true` on those two | S |
+| G4 | `registerTool()` returns a Promise we neither await nor catch; the badge counts our list, not confirmed registrations. `NotAllowedError` / duplicate-name `InvalidStateError` would be silent and the badge would still say "live" | spec §registerTool | `Promise.allSettled`, count fulfilled, surface rejects | M |
+| G5 | Tool output budget 1.5K chars: `export_composition` returns 4,046 (whole HTML); `get_campaign_state` is 1,352 at seed and grows with scenes | Chrome secure-tools | export returns summary + triggers the human download; state tool trims | M |
+| G6 | Result shape is MCP content-blocks, then the browser JSON-stringifies it again → double-encoded text. Works (live-verified) but Chrome says return a string, ChatGPT returns a plain object | Chrome, ChatGPT | return the object directly | S, touches 41 tests |
+| G7 | No `AbortSignal` on registration (unregister on unmount) and `import_product` ignores `options.signal` | spec | moot once cross-links are full-document navigations (see below); pass signal to fetch | S |
+| G8 | `get_wardrobe` description uses negative constraints ("do not…"); Chrome: limitations should be implicit | Chrome best-practices | reword | S |
+| G9 | Chrome judges must flip `chrome://flags/#enable-webmcp-testing`. A Chrome 149+ **origin trial token** for hemloop.marcoatwill.workers.dev (meta tag) removes that step. Only Marco can register (Google account) | Chrome | register at developer.chrome.com/origintrials → `<meta http-equiv="origin-trial">` in layout | S, Marco |
+
+**Found on the way, not a spec item — P0 for judging:** the header cross-links and both landing CTAs do
+nothing on the live site. vinext `<Link>` calls `preventDefault()` then its client router throws
+`TypeError: e is not a function` inside `startTransition` (`navigateClientSide` undefined; also
+`[vinext] RSC prefetch setup error` on mount). Reproduced on pre-cleanup commit 000aedb → predates the
+dead-code removal; it is vinext 1.0.0-beta.5. Fix on branch `fix-cross-links-plain-anchor` (440ba04): plain
+`<a href>` in three files, verified on a local Worker build (/closet ↔ /studio, 6/9 tools register per
+page, no console errors), 41/41 tests, tsc, build clean. Caveat: the browser extension's synthetic clicks
+never trigger anchor activation, so the human-click path was confirmed by reading the Link handler
+(preventDefault at link.js:680 precedes the throw at :712), not by a trusted click.
+
+**ChatGPT runtime facts for the demo:** site tools only on GPT-5.6 Sol/Terra (Luna disabled), desktop app
+built-in browser, Work/Codex workspaces; "Site tools" indicator in the address bar. Written into
+video/CUE-SHEET.md preflight.

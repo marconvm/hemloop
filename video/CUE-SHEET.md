@@ -28,6 +28,11 @@ Chrome 151 with `chrome://flags/#enable-webmcp-testing`, after the dead-code rem
 | proof trail | "All claims trace to locked facts · 4 scenes checked · safe to export" |
 | runtime namespace | `document.modelContext` defined, `navigator.modelContext` **undefined** |
 
+ChatGPT preflight (from learn.chatgpt.com/docs/webmcp, read 2026-09-02): site tools run only on
+**GPT-5.6 Sol or Terra** — Luna has WebMCP disabled — in the ChatGPT desktop app's built-in
+browser, latest version, ChatGPT Work or Codex (not Enterprise/Edu). The address bar shows a
+**Site tools** indicator when the page's tools are discovered: get it in frame in the cold open.
+
 Three things to know before you roll:
 
 1. **The proof-trail card still prints `navigator.modelContext`** — the one namespace
