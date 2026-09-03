@@ -21,6 +21,8 @@ import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
 import { BRAND } from '@/lib/proofframe/brand';
+
+import '@/app/studio.css';
 import { exportComposition } from '@/lib/proofframe/exporter';
 import {
   demandInsight,
@@ -1649,7 +1651,11 @@ export function ProofFrameStudio() {
                               {offer.marginCheck.ok ? 'above the floor' : 'below the floor'}
                             </p>
                             <div className="offer-actions">
-                              <Button size="sm" onClick={() => approveOffer(offer)}>
+                              <Button
+                                size="sm"
+                                className="approve-offer-button"
+                                onClick={() => approveOffer(offer)}
+                              >
                                 Approve
                               </Button>
                               <Button

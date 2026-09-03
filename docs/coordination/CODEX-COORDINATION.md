@@ -403,3 +403,29 @@ docs files belong to Claude and will not be staged or edited. One narrow additio
 to make the assigned Manrope + DM Sans change real rather than a fallback-only CSS declaration:
 `app/layout.tsx` will load those two fonts and attach their variables to `<body>`. No metadata,
 origin-trial token, bridge, tool, page composition, or callback code will change there.
+
+### Cursor reskin: closet + studio on Loop Room tokens (2026-09-03)
+
+Branch: `cursor/reskin` (worktree `../hemloop-cursor`). Lane: presentation only.
+
+Shipped:
+- `app/closet.css` imported by `components/closet-studio.tsx`
+- `app/studio.css` imported by `components/proofframe-studio.tsx`
+- One presentation hook: `approve-offer-button` class on the studio Approve offer Button (coral human gate)
+- Tokens scoped under `.studio-shell` as a bridge (main's `:root` still has the old dark `--ink`/`--acid`); values match hemloop-loop-site. Codex may delete the scoped aliases once `:root` carries `--ink #17211c`, `--moss`, `--loop`, `--cream`, `--paper`, `--coral #ee6f4d`, `--forest`, `--muted`, `--line`, `--radius`
+- Fonts: Manrope display + DM Sans body via Google Fonts `@import` in the two new files (until Codex wires them in layout/globals)
+- Verified desktop 1440 + 820px with `getBoundingClientRect`: wardrobe widest column; garment `56px minmax(0,1fr)` thumb-in-col-1 preserved; Harborview Basics single-line at 820 after minmax(220px); coral on Approve next request / Lock facts / Bought / Approve offer
+- Gates: 138/138, tsc clean, oxlint 0, build "Build complete." No deploy.
+
+**`globals.css` blocks now dead for `/closet` and `/studio`** (Codex can delete or stop maintaining once this branch merges; landing and any other consumers of the same selectors still need a pass):
+
+Surface shell / chrome (overridden under `.studio-shell`):
+- `.studio-shell`, `.studio-header`, `.brand-mark`, `.closet-mark`, `.eyebrow` (surface uses), `.campaign-title`, `.status-dot`, `.status-badge`, `.webmcp-badge`, `.export-button`, `.cross-link`, `.surface-nav`, `.loop-rail` (+ `.loop-step` / `.loop-dot` / `.loop-next`)
+
+Closet:
+- `.closet-grid`, `.garment-list`, `.garment-card` (+ thumb grid rules), `.garment-cat`, `.garment-meta`, `.garment-icon-button`, `.garment-edit-*`, `.gap-card`, `.gap-due-tag`, `.share-approval`, `.outcome-button` / `.outcome-label`, `.clear-all-button`, `.import-*`, `.purchase-row`, `.source-badge`, `.preferences` / `.profile-tab` surface rules
+
+Studio:
+- `.panel` / `.truth-panel` / `.proof-panel` / `.canvas-panel`, `.truth-row`, `.brief-button`, `.placement-*`, `.preview-stage`, `.demand-item`, `.demand-use`, `.propose-offer-button`, `.offer-proposal` / `.offer-actions` / `.offer-badge`, `.aggregate-row`, `.auto-propose-toggle`, `.asset-card`, `.validation-card`, `.scene-card`, `.activity-item`
+
+Do **not** delete from globals until Codex confirms no other route still depends on the dark variants. Cursor did not edit `app/globals.css`.

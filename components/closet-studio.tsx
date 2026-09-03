@@ -20,6 +20,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { BRAND } from '@/lib/proofframe/brand';
+
+import '@/app/closet.css';
 import {
   consentFieldsForRequest,
   findGaps,
