@@ -1,6 +1,6 @@
 # Hemloop Verification Record
 
-Last updated: 2026-09-02 evening (America/Toronto). UI labels were renamed during the revamp: the evidence below quotes the labels as they were at the time (Approve next signal is now Approve next request; Live Demand is now Incoming requests; the studio registers 10 tools, the closet 7).
+Last updated: 2026-09-03 (America/Toronto), after wave 3. Older entries quote the labels and tool counts as they stood at the time (Approve next signal is now Approve next request; Live Demand is now Incoming requests; wave 3 took the studio from 10 tools to 11 and the closet from 7 to 9).
 
 This file separates verified behaviour from the remaining ChatGPT natural-language pairing check.
 
@@ -30,6 +30,32 @@ Evidence chain on the live routes:
 - `/studio` showed `9 WebMCP tools live` and its Live Demand panel received the event across the same-origin bridge.
 
 The approval-gate and signal-bridge design therefore passed the real runtime test. Keep these labels evidence-based; do not infer ChatGPT pairing from the Chrome test.
+
+## Wave 3 gates and live smoke, 2026-09-03
+
+Recorded by Claude, pending Codex's independent re-verification (this file is Codex's record under coordination rule 4; the entry is here so the evidence is not lost, and the ask is logged in `docs/coordination/CODEX-COORDINATION.md`).
+
+Merged `worktree-agent-a141f49e3736a882c` (docs and landing sync to wave 3) into `main`, then re-ran every gate at the merge commit:
+
+- `npm test`: 101/101 pass, including the two `purchaseFromOffer` cases (offerId and promoCode carry through; unknown handle falls back to the demo brand and a keyword-guessed category, and a null size becomes `OS`).
+- `npx tsc --noEmit`: clean. `oxlint`: clean. `npm run build`: clean, all three routes present.
+- Documentation mirror: `public/docs/*` byte-identical to `docs/*` and `README.md`.
+- Deployed with Wrangler 4.127.0 as Worker version `a89e3f91-8d14-48b2-8b69-adcd04b504bb`.
+- Live smoke: `/`, `/closet`, `/studio`, `/docs/README.md` and `www.hemloop.app` all 200. Security headers unchanged (`X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, HSTS; still no CSP by the round-2 decision). The landing reads "twenty typed tools" and lists `import_receipt`, `get_offers` and `propose_offer`; the live `/docs/README.md` mirror says 101 tests.
+- Live badges on hemloop.app: `/closet` shows **9 WebMCP tools live**, `/studio` shows **11 WebMCP tools live**.
+
+### Offer-card **Bought** creates an attributable purchase (live, hemloop.app)
+
+Seeded one sent request and one merchant-approved `PersonalOffer` for it into this browser's own storage, reloaded `/closet`, and clicked **Bought** on the offer card. Result read back from `hemloop.purchases`:
+
+```json
+{ "id": "offer-mtl5w7qo-1", "merchant": "Northlight Apparel online store", "brand": "Northlight Apparel",
+  "handle": "northlight-hoodie", "title": "Northlight Hoodie", "category": "hoodie", "size": "L",
+  "price": 90, "currency": "CAD", "promoCode": "NORTHLIGHT25",
+  "offerId": "offer-smoke-abcdef01", "source": "offer" }
+```
+
+The purchase count went 10 to 11, the matching `SignalOutcome` (`bought`) was recorded against the request id, the garment was inserted into the wardrobe, and the card's buttons collapsed to a **Bought** label. Attribution holds end to end: the offer that won the sale is on the purchase row. Seeded keys were cleared afterwards.
 
 ## Remaining ChatGPT pairing check
 
