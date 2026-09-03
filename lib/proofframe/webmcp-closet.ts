@@ -98,7 +98,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'get_wardrobe',
       description:
-        "Read the shopper's wardrobe for this task as compact rows: id, category, brand, size, colour and who it is for. Optional category filter. Returns at most 12 rows plus the total count, so page by category when the wardrobe is large. Rows stay on this page; only an approved request can reach a merchant.",
+        "Read the shopper's wardrobe as compact rows (id, category, brand, size, colour, for), optional category filter, at most 12 rows plus the total. Rows stay on this page.",
       inputSchema: {
         type: 'object',
         properties: { category: { type: 'string', enum: [...GARMENT_CATEGORIES] } },
@@ -163,7 +163,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'find_gaps',
       description:
-        "Wardrobe categories that are missing or thin, plus categories whose oldest garment is past its typical replacement life. A row with a `due` block is a lifecycle gap: report it with report_demand_gap kind 'replace'. Carries only the date, the months elapsed and the size to buy again - no merchant, price or purchase row.",
+        "Categories missing or thin, plus categories whose oldest garment is past its replacement life (a `due` block: report it with report_demand_gap kind 'replace'). Carries only the date, months elapsed and size.",
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () =>
@@ -196,7 +196,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'get_preferences',
       description:
-        "Read the shopper's stated preferences for this task: fit, colour family, materials to avoid, price ceiling, liked brands. Stays on this page unless the shopper's sharing level allows a field to travel with a request.",
+        "Read the shopper's stated preferences: fit, colour family, materials to avoid, price ceiling, liked brands. Stays on this page unless the sharing level lets a field travel.",
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: () => {
@@ -272,7 +272,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'report_demand_gap',
       description:
-        "Send one data-minimized demand signal after the human approves the next share in the UI. Use kind 'replace' when find_gaps returns a `due` block: the shopper owns the category and it is worn out. The sharing level sets which fields travel (0 blocks everything, 1 category/size/need-or-want, 2 adds occasion and fit, 3 adds colour/materials/price). Never a shopper id or wardrobe rows. Returns the exact payload sent.",
+        "Send one data-minimized demand signal. The shopper must press Approve next request on the page first; one press releases one signal. Use kind 'replace' for a `due` gap. The sharing level sets which fields travel (0 blocks everything). Never a shopper id or wardrobe rows. Returns the exact payload sent.",
       inputSchema: {
         type: 'object',
         properties: {
@@ -339,8 +339,8 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
 
         if (!cb.consumeShareApproval()) {
           return fail(
-            'Human approval required. Ask the shopper to press “Approve next request” in the closet UI, then retry.',
-            'Ask the shopper to press Approve next request on the closet page, then call report_demand_gap again with the same arguments. One approval releases one event.',
+            'Human approval required. Ask the shopper to press “Approve next request” on the page and say when done, then retry.',
+            'Ask the shopper to press Approve next request on the page and tell you when done, then call report_demand_gap again with the same arguments. One press releases one event.',
             'human-approval-required',
           );
         }
@@ -393,7 +393,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'import_receipt',
       description:
-        'Import a pasted receipt or order-confirmation email (no OCR, no network, just the text). Adds each item to the purchase log, and to the wardrobe for items whose category is recognised. Everything stays on this page; nothing is sent to a merchant.',
+        'Import pasted receipt or order-email text (no OCR, no network). Adds each item to the purchase log and recognised items to the wardrobe. Nothing is sent to a merchant.',
       inputSchema: {
         type: 'object',
         properties: { text: { type: 'string', maxLength: 4000 } },
@@ -466,14 +466,14 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
           itemsAdded: parsed.items.length,
           garmentsAdded,
           purchasesAdded: purchases.length,
-          next: 'Call get_wardrobe or find_gaps to see what changed.',
+          next: 'Done. No further call is needed; tell the shopper what was added.',
         });
       },
     },
     {
       name: 'get_offers',
       description:
-        "Read approved personal offers addressed to requests this closet already sent (matched by request id): size, price, code, validity, and a purchase link. Read-only; a human already approved these on the merchant side. The shopper decides Bought or Passed on this page, no tool can buy for them.",
+        'Read approved personal offers for requests this closet sent: size, price, code, validity, purchase link. Read-only; the shopper decides Bought or Passed on the page, no tool can buy.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: () => {

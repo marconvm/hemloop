@@ -336,7 +336,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'get_campaign_state',
       description:
-        'Read the full campaign: human-locked facts (price, discount, code, dates, disclaimer), brief, scenes, format. Locked facts are immutable to agents, write copy that matches them.',
+        'Read the campaign: human-locked facts (price, discount, code, dates, disclaimer), brief, scenes, format. Locked facts are immutable to agents; write copy that matches them.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () => ok({ state: cb.getState() }),
@@ -358,7 +358,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'add_scene',
       description:
-        'Append a scene. heading/body are rendered copy and are claim-validated against locked facts before anything is applied.',
+        'Append a scene. heading/body are rendered copy, claim-validated against locked facts before anything is applied.',
       inputSchema: {
         type: 'object',
         properties: sceneProps,
@@ -527,7 +527,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'export_composition',
       description:
-        'Export the campaign as a standalone HyperFrames HTML composition (renderable to video). The page receives the file as a download; the result carries its size and scene count. Fails if any claim violation remains.',
+        'Export the campaign as a standalone HyperFrames HTML composition; the page receives the download and the result carries size and scene count. Fails while any claim violation remains.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () => {
@@ -552,7 +552,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'get_offer',
       description:
-        'Read the current offer as structured data a shopping agent can act on: product, prices, promo code, validity dates, the disclaimer that must accompany any claim, and the purchase link. Values come from facts a human locked; nothing an agent writes can change them. Pass requestId to read the approved personal offer for one incoming request instead of the general offer.',
+        'Read the locked offer as data a shopping agent can act on: product, prices, promo code, validity dates, disclaimer, purchase link, sizes in stock. Pass requestId for the approved personal offer on one request.',
       inputSchema: { type: 'object', properties: { requestId: { type: 'string' } } },
       annotations: { readOnlyHint: true },
       execute: (args) => {
@@ -635,7 +635,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     tools.push({
       name: 'get_demand',
       description:
-        'Consented demand grouped by category and size, with request ids to hand to propose_offer and, per group, whether the locked offer can answer it (can-offer, size-not-in-stock, category-mismatch). Counts are exact; at most 3 ids are listed per group and low-priority groups are omitted to fit the output budget, so read `total`, `groups` and `omitted` rather than counting ids. No shopper identifier travels; `replace` counts shoppers who already own one.',
+        'Consented demand grouped by category and size, with request ids for propose_offer and a verdict per group (can-offer, size-not-in-stock, category-mismatch). Counts are exact; at most 3 ids per group, so read total, groups and omitted. No shopper identifier travels.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: () => {
@@ -698,7 +698,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     tools.push({
       name: 'propose_offer',
       description:
-        'Propose a personal offer for one incoming request, inside the locked offer rules (cost, margin floor, max discount). The proposal is staged; a human approves it before the shopper can see it. Returns the proposal and its margin check.',
+        'Propose a personal offer for one request inside the locked offer rules (cost, margin floor, max discount). Staged only; a human approves it before the shopper sees it. Returns the proposal and its margin check.',
       inputSchema: {
         type: 'object',
         properties: { requestId: { type: 'string' } },

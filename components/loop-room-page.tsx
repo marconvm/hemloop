@@ -20,20 +20,27 @@ import { SiteHeader } from '@/components/site-header';
 import { BRAND } from '@/lib/proofframe/brand';
 import {
   buyingPattern,
+  consentFieldsForRequest,
   findGaps,
   garmentsForProfile,
   guessCategory,
+  randomGarments,
   readPreferences,
   readPurchases,
+  readWardrobe,
   seedPreferences,
   seedPurchases,
   seedWardrobe,
   writePurchases,
+  writeWardrobe,
+  GARMENT_CATEGORIES,
+  MAX_CLOSET_ROWS,
   type DemandSignal,
   type Garment,
   type GarmentCategory,
   type Preferences,
   type Purchase,
+  type ShopperProfile,
   type Wardrobe,
 } from '@/lib/proofframe/closet';
 import {
@@ -42,6 +49,7 @@ import {
   patternLabel,
   stationOrder,
   stationStates,
+  type ClosetRow,
   type LoopRoomView,
   type StationCard,
   type StationKey,
@@ -89,6 +97,14 @@ const STATION_OF: Partial<Record<string, StationKey>> = {
 /** The acts no tool can perform. Shown in the manifest as absent by design. */
 const HUMAN_ONLY = ['approve_next_request', 'approve_offer', 'mark_bought', 'lock_facts', 'set_sharing_level'];
 
+const PROFILES: { key: ShopperProfile; label: string }[] = [
+  { key: 'self', label: 'Me' },
+  { key: 'partner', label: 'Partner' },
+  { key: 'kid', label: 'Kid' },
+];
+
+const CONSENT_LABEL: Record<0 | 1 | 2 | 3, string> = { 0: 'Private', 1: 'Basics', 2: 'Context', 3: 'Taste' };
+
 type Ran = Record<StationKey, string[]>;
 
 function emptyRan(): Ran {
@@ -96,6 +112,7 @@ function emptyRan(): Ran {
 }
 
 type LastCall = { name: string; ok: boolean; message: string | null };
+type LastRan = { station: StationKey; tools: string[] } | null;
 
 function money(amount: number, currency: string): string {
   return `${currency} ${amount.toFixed(2)}`;
@@ -111,8 +128,8 @@ function catalogProductFor(facts: CampaignFacts) {
   };
 }
 
-/** A photo for an imported item: the catalog product in the same category,
- * from the same vendor when the catalog has one. */
+/** A photo for a garment that has none (receipt imports, Bought): the catalog
+ * product in the same category, from the same vendor when there is one. */
 function imageForCategory(category: GarmentCategory, vendor?: string): string | undefined {
   const same = demoCatalog.products.filter((p) => guessCategory(p) === category);
   return (same.find((p) => p.vendor === vendor) ?? same[0])?.image;
@@ -138,7 +155,12 @@ export function LoopRoomPage() {
   const consentRef = useRef<0 | 1 | 2 | 3>(1);
   const [shareArmed, setShareArmed] = useState(false);
   const shareArmedRef = useRef(false);
+  const [activeProfile, setActiveProfile] = useState<ShopperProfile>('self');
+  const activeProfileRef = useRef<ShopperProfile>('self');
   const seqRef = useRef(0);
+  const hydratedRef = useRef(false);
+  // Garment ids added during this session, so the stack can flag them new.
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
 
   // ----- Merchant side: locked campaign -----
   const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
@@ -152,6 +174,7 @@ export function LoopRoomPage() {
 
   // ----- This session's loop -----
   const [ran, setRan] = useState<Ran>(emptyRan);
+  const [lastRan, setLastRan] = useState<LastRan>(null);
   const [loop, setLoop] = useState<{ number: number; startedAt: string | null }>({ number: 1, startedAt: null });
   const [lastCall, setLastCall] = useState<LastCall | null>(null);
   const [processing, setProcessing] = useState<ProcessingView | null>(null);
@@ -171,6 +194,10 @@ export function LoopRoomPage() {
     };
     queueMicrotask(() => {
       if (!active) return;
+      const storedWardrobe = readWardrobe();
+      wardrobeRef.current = storedWardrobe;
+      setWardrobe(storedWardrobe);
+      hydratedRef.current = true;
       const storedPurchases = readPurchases();
       purchasesRef.current = storedPurchases;
       setPurchases(storedPurchases);
@@ -187,14 +214,37 @@ export function LoopRoomPage() {
     };
   }, []);
 
-  const insertGarment = useCallback((input: GarmentInput): Garment => {
-    seqRef.current += 1;
-    const garment: Garment = { id: `g-${Date.now().toString(36)}-${seqRef.current}`, ...input, for: 'self' };
-    const next = { ...wardrobeRef.current, garments: [...wardrobeRef.current.garments, garment] };
+  // One wardrobe for every page: written after the stored one is read, so
+  // the seed never overwrites what /closet already holds.
+  useEffect(() => {
+    if (hydratedRef.current) writeWardrobe(wardrobe);
+  }, [wardrobe]);
+
+  const addGarments = useCallback((rows: Garment[]) => {
+    if (rows.length === 0) return;
+    const next = { ...wardrobeRef.current, garments: [...wardrobeRef.current.garments, ...rows] };
     wardrobeRef.current = next;
     setWardrobe(next);
-    return garment;
+    setNewIds((current) => {
+      const out = new Set(current);
+      for (const g of rows) out.add(g.id);
+      return out;
+    });
   }, []);
+
+  const insertGarment = useCallback(
+    (input: GarmentInput): Garment => {
+      seqRef.current += 1;
+      const garment: Garment = {
+        id: `g-${Date.now().toString(36)}-${seqRef.current}`,
+        ...input,
+        for: activeProfileRef.current,
+      };
+      addGarments([garment]);
+      return garment;
+    },
+    [addGarments],
+  );
 
   const addPurchases = useCallback((rows: Purchase[]) => {
     if (rows.length === 0) return;
@@ -217,7 +267,7 @@ export function LoopRoomPage() {
         return true;
       },
       emitSignal: appendSignal,
-      getActiveProfile: () => 'self',
+      getActiveProfile: () => activeProfileRef.current,
       getConsentLevel: () => consentRef.current,
       getPreferences: () => preferencesRef.current,
       getPurchases: () => purchasesRef.current,
@@ -294,10 +344,15 @@ export function LoopRoomPage() {
       closedRef.current = false;
       setLoop((l) => ({ number: l.number + 1, startedAt: new Date().toISOString() }));
       setRan({ ...emptyRan(), item: ['import_receipt'], again: ['import_receipt'] });
+      setLastRan({ station: 'item', tools: ['import_receipt'] });
       return;
     }
     const station = STATION_OF[name] ?? currentRef.current;
-    setRan((r) => (r[station].includes(name) ? r : { ...r, [station]: [...r[station], name] }));
+    setRan((r) => {
+      const tools = r[station].includes(name) ? r[station] : [...r[station], name];
+      setLastRan({ station, tools });
+      return { ...r, [station]: tools };
+    });
   }, []);
 
   // Built in the effect, not during render: the callbacks close over refs.
@@ -362,8 +417,9 @@ export function LoopRoomPage() {
   const attributedPurchase =
     purchases.find((p) => p.offerId != null && loopOffers.some((o) => o.offerId === p.offerId)) ?? null;
   const latestImport = purchases.find((p) => p.id.startsWith('import-')) ?? null;
-  const gaps = useMemo(() => findGaps(garmentsForProfile(wardrobe, 'self')), [wardrobe]);
-  const garmentCount = garmentsForProfile(wardrobe, 'self').garments.length;
+  const profileWardrobe = useMemo(() => garmentsForProfile(wardrobe, activeProfile), [wardrobe, activeProfile]);
+  const gaps = useMemo(() => findGaps(profileWardrobe), [profileWardrobe]);
+  const garmentCount = profileWardrobe.garments.length;
   const lastSignal = loopSignals[0] ?? null;
   const groups = useMemo(
     () =>
@@ -406,8 +462,17 @@ export function LoopRoomPage() {
 
   const gapForRequest = gaps.find((g) => g.due) ?? gaps[0] ?? null;
   const importSample = SAMPLE_RECEIPTS[loop.number > 1 ? 1 : 0];
-
-  const stations: StationCard[] = stationOrder().map((key) => {
+  const profileLabel = PROFILES.find((p) => p.key === activeProfile)?.label ?? 'Me';
+  const facts = campaign.facts;
+  const lastPurchase = [...purchases].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
+  const previewFields = consentFieldsForRequest(consentLevel, { hasSize: true, hasHandle: false, hasOccasion: false });
+  const ownedByCategory = GARMENT_CATEGORIES.map(
+    (c) => `${c} ${profileWardrobe.garments.filter((g) => g.category === c).length}`,
+  ).join(' · ');
+  const request = gapForRequest
+    ? `${gapForRequest.category}${gapForRequest.due ? `, size ${gapForRequest.due.size}` : ''}`
+    : 'hoodie, size M';
+  const stationCards: StationCard[] = stationOrder().map((key) => {
     const state = states[key];
     const base = { key, state, toolsRan: ran[key] };
     switch (key) {
@@ -415,17 +480,20 @@ export function LoopRoomPage() {
         return {
           ...base,
           label: 'New item',
+          eyebrow: 'A purchase, privately',
           title: loop.number > 1 ? 'A rival receipt lands in the closet' : 'A purchase lands in the closet',
           say: sayImport(importSample),
-          updated: [
-            ...(latestImport
-              ? [
-                  { label: 'Purchase logged', value: `${latestImport.title} · ${latestImport.merchant} · ${latestImport.size}` },
-                  { label: 'Pattern', value: `${latestImport.category}: ${patternLabel(buyingPattern(purchases, latestImport.category))}` },
-                ]
-              : []),
-            { label: 'Wardrobe', value: `${garmentCount} garments, private to this page` },
+          facts: [
+            { label: 'Closet', value: `${garmentCount} garments for ${profileLabel}, private to this page` },
+            { label: 'Purchases logged', value: `${purchases.length} across every store` },
+            ...(lastPurchase ? [{ label: 'Last purchase', value: `${lastPurchase.title} · ${lastPurchase.merchant}` }] : []),
           ],
+          updated: latestImport
+            ? [
+                { label: 'Purchase logged', value: `${latestImport.title} · ${latestImport.merchant} · ${latestImport.size}` },
+                { label: 'Pattern', value: `${latestImport.category}: ${patternLabel(buyingPattern(purchases, latestImport.category))}` },
+              ]
+            : [],
           shopperSees: 'The receipt parsed here: a purchase row and a garment appeared. Nothing was sent anywhere.',
           merchantSees: 'Nothing. A purchase is private until the shopper approves a request.',
           humanGate: null,
@@ -433,12 +501,19 @@ export function LoopRoomPage() {
       case 'gap':
         return {
           ...base,
-          label: 'Gap',
-          title: 'The agent finds what is missing or worn out',
-          say: 'Find the gaps in my closet',
+          label: 'Local demand',
+          eyebrow: 'What is true in the closet',
+          title: 'What the closet has, then what it is missing',
+          say: 'What should I buy next?',
+          facts: [
+            { label: 'Owned', value: ownedByCategory },
+            ...(gaps.find((g) => g.due)
+              ? [{ label: 'Oldest', value: `${gaps.find((g) => g.due)!.category} bought ${gaps.find((g) => g.due)!.due!.lastBoughtAt}, size ${gaps.find((g) => g.due)!.due!.size}` }]
+              : []),
+          ],
           updated:
             state === 'done'
-              ? gaps.slice(0, 3).map((g) => ({ label: g.due ? `${g.category} · due` : g.category, value: g.reason }))
+              ? gaps.slice(0, 3).map((g) => ({ label: g.due ? `${g.category} · worn out` : `${g.category} · missing`, value: g.reason }))
               : [],
           shopperSees: 'Gaps computed from wardrobe rows and purchase dates. The dates never leave.',
           merchantSees: 'Nothing yet. A gap is a private fact until one request is approved.',
@@ -449,8 +524,14 @@ export function LoopRoomPage() {
         return {
           ...base,
           label: 'Approved request',
+          eyebrow: 'One human gate',
           title: 'Refused, one human press, then exactly one packet leaves',
-          say: `Tell the store I need ${gapForRequest?.category ?? 'hoodie'}${gapForRequest?.due ? `, size ${gapForRequest.due.size}` : ''}`,
+          say: shareArmed ? `Yes, send it. Tell the store I need ${request}` : `Tell the store I need ${request}`,
+          facts: [
+            { label: 'Sharing level', value: `${consentLevel} · ${CONSENT_LABEL[consentLevel]}` },
+            { label: 'Would travel', value: previewFields.length ? previewFields.join(', ') : 'nothing' },
+            { label: 'Would not', value: 'shopper id, wardrobe rows, purchase log, household profile' },
+          ],
           updated: [
             ...(refused ? [{ label: 'Refused', value: refused.message ?? 'Human approval required' }] : []),
             ...(lastSignal
@@ -464,7 +545,7 @@ export function LoopRoomPage() {
             consentLevel === 0
               ? 'Sharing is set to Private on the closet page. Nothing can leave until it is raised.'
               : shareArmed
-                ? 'One approved request may leave. The next report_demand_gap call sends exactly the packet shown.'
+                ? 'Approved. The agent is waiting for your go-ahead in the chat: reply "Yes, send it".'
                 : 'The agent is refused until you press Approve. One press releases one event.',
           merchantSees: lastSignal
             ? 'One event: category, size, need or want. No shopper id, no wardrobe row.'
@@ -473,7 +554,7 @@ export function LoopRoomPage() {
             state === 'done' || consentLevel === 0
               ? null
               : {
-                  label: shareArmed ? 'Approved · waiting for the call' : 'Approve next request',
+                  label: shareArmed ? 'Approved · now reply "Yes, send it"' : 'Approve next request',
                   hint: `One press releases one event at sharing level ${consentLevel}. No tool can press it.`,
                 },
         };
@@ -482,8 +563,14 @@ export function LoopRoomPage() {
         return {
           ...base,
           label: 'Matched offer',
+          eyebrow: 'Inside locked rules',
           title: 'Grouped demand, a proposal inside locked rules, one human approval',
           say: 'What demand came in, and what can we fill? Then propose an offer inside our rules for the newest request.',
+          facts: [
+            { label: 'Locked offer', value: `${facts.productName} · ${money(facts.regularPrice, facts.currency)}${facts.discountPercent ? ` · ${facts.discountPercent}% off` : ''}` },
+            { label: 'Rules', value: `margin floor ${facts.marginFloorPercent ?? '?'}% · max discount ${facts.maxDiscountPercent ?? '?'}%` },
+            { label: 'Sizes in stock', value: facts.sizesInStock?.join(', ') ?? 'not locked yet' },
+          ],
           updated: [
             ...(groups.length > 0
               ? [{ label: 'Demand', value: `${groups.length} group${groups.length === 1 ? '' : 's'} · ${groups[0].category} ${groups[0].size} · ${groups[0].verdict}` }]
@@ -509,18 +596,17 @@ export function LoopRoomPage() {
         return {
           ...base,
           label: 'Bought',
+          eyebrow: 'The shopper decides',
           title: 'The offer returns to the request; a human buys',
           say: 'Any offers for me?',
-          updated: [
-            ...(approvedOffer
-              ? [
-                  { label: 'Offer', value: `${approvedOffer.title} · ${approvedOffer.size ?? 'any size'} · ${money(approvedOffer.price, approvedOffer.currency)}` },
-                  { label: 'Code', value: approvedOffer.promoCode ?? 'none, price already applied' },
-                  { label: 'Valid to', value: approvedOffer.validTo },
-                ]
-              : []),
-            ...(boughtOutcome ? [{ label: 'Outcome', value: `bought · ${new Date(boughtOutcome.at).toLocaleTimeString()}` }] : []),
-          ],
+          facts: approvedOffer
+            ? [
+                { label: 'Offer', value: `${approvedOffer.title} · ${approvedOffer.size ?? 'any size'} · ${money(approvedOffer.price, approvedOffer.currency)}` },
+                { label: 'Code', value: approvedOffer.promoCode ?? 'none, price already applied' },
+                { label: 'Valid to', value: approvedOffer.validTo },
+              ]
+            : [],
+          updated: boughtOutcome ? [{ label: 'Outcome', value: `bought · ${new Date(boughtOutcome.at).toLocaleTimeString()}` }] : [],
           shopperSees: approvedOffer ? 'Price, code, validity and a checkout link. Bought or Passed is yours alone.' : 'No offer yet.',
           merchantSees: boughtOutcome ? 'One request came back bought. Still no shopper id.' : 'Waiting on the shopper.',
           humanGate:
@@ -532,12 +618,14 @@ export function LoopRoomPage() {
         return {
           ...base,
           label: 'Learned',
+          eyebrow: 'Both sides gained',
           title: 'Both sides gained. Nobody gained a profile.',
           say: null,
+          facts: [{ label: 'Pattern before', value: `${patternCategory}: ${patternBefore}` }],
           updated: attributedPurchase
             ? [
                 { label: 'Purchase', value: `${attributedPurchase.title} · offer #${shortOfferId(attributedPurchase.offerId)}` },
-                { label: 'Pattern', value: `${patternBefore} → ${patternAfter}` },
+                { label: 'Pattern after', value: `${patternCategory}: ${patternAfter}` },
               ]
             : [],
           shopperSees: 'The purchase carries the offer that won it. The next offer is shaped by a sharper pattern.',
@@ -548,8 +636,10 @@ export function LoopRoomPage() {
         return {
           ...base,
           label: 'Again',
+          eyebrow: 'The loop runs again',
           title: 'A rival receipt starts the next loop',
           say: sayImport(SAMPLE_RECEIPTS[1]),
+          facts: [{ label: 'Cycle', value: `${loop.number} · ${purchases.length} purchases logged` }],
           updated: loop.number > 1 ? [{ label: 'Loop', value: `cycle ${loop.number} started` }] : [],
           shopperSees: 'A rival purchase lands in the same closet. The pattern sharpens; nothing about it leaves.',
           merchantSees: 'Nothing, until the next approved request.',
@@ -558,10 +648,22 @@ export function LoopRoomPage() {
     }
   });
 
+  const closet: ClosetRow[] = [...profileWardrobe.garments].reverse().map((g) => ({
+    id: g.id,
+    category: g.category,
+    brand: g.brand,
+    size: g.size,
+    image: g.image ?? imageForCategory(g.category, g.brand),
+    isNew: newIds.has(g.id),
+  }));
+
   const view: LoopRoomView = {
-    stations,
+    stations: stationCards,
     current,
-    progress: stations.filter((s) => s.state === 'done').length,
+    closet,
+    profiles: { active: activeProfile, options: PROFILES },
+    lastRan,
+    progress: stationCards.filter((s) => s.state === 'done').length,
     loopNumber: loop.number,
     packet: lastSignal
       ? {
@@ -691,6 +793,15 @@ export function LoopRoomPage() {
     [addPurchases, approvedOffer, boughtOutcome, insertGarment, proposedOffer],
   );
 
+  const onAddGarments = useCallback(() => {
+    addGarments(randomGarments(5, wardrobeRef.current, activeProfileRef.current));
+  }, [addGarments]);
+
+  const onSelectProfile = useCallback((profile: ShopperProfile) => {
+    activeProfileRef.current = profile;
+    setActiveProfile(profile);
+  }, []);
+
   const onCopySay = useCallback((prompt: string) => {
     navigator.clipboard?.writeText(prompt).catch(() => {});
   }, []);
@@ -708,6 +819,8 @@ export function LoopRoomPage() {
         creative={creative}
         onCopySay={onCopySay}
         onHumanGate={onHumanGate}
+        onAddGarments={garmentCount < MAX_CLOSET_ROWS ? onAddGarments : undefined}
+        onSelectProfile={onSelectProfile}
       />
     </>
   );

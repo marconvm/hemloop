@@ -8,12 +8,15 @@ import {
   garmentsForProfile,
   makeSignal,
   monthsBetween,
+  randomGarments,
+  GARMENT_CATEGORIES,
   seedPreferences,
   seedPurchases,
   seedWardrobe,
   sizesOwned,
   type ConsentField,
   type Purchase,
+  type Wardrobe,
 } from '../lib/proofframe/closet';
 import {
   buildClosetTools,
@@ -1367,4 +1370,34 @@ void test('every seeded image path resolves to a file in public/', async () => {
     assert.ok(p.startsWith('/'), `${p} should be a root-relative path`);
     assert.ok(existsSync(`${publicDir}${p}`), `${p} is referenced but missing from public/`);
   }
+});
+
+// ---------- Random garments for the Loop Room's + control ----------
+
+void test('randomGarments: every row carries a catalog photo and brand, and the profile never passes twenty', () => {
+  let seed = 7;
+  const rand = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  const wardrobe = seedWardrobe();
+  const selfBefore = garmentsForProfile(wardrobe, 'self').garments.length;
+  assert.equal(selfBefore, 10, 'self opens at ten rows');
+
+  const five = randomGarments(5, wardrobe, 'self', rand, undefined, NOW);
+  assert.equal(five.length, 5);
+  for (const g of five) {
+    assert.ok(g.image && g.image.startsWith('/products/'), `${g.id} has a photo`);
+    assert.ok(g.brand.length > 0 && g.brand !== 'Unknown', `${g.id} has a brand`);
+    assert.equal(g.for, 'self');
+    assert.ok(GARMENT_CATEGORIES.includes(g.category));
+    // Never older than six months, so a draw cannot invent a worn-out garment.
+    assert.ok(monthsBetween(g.purchasedAt!, NOW) < 7, `${g.id} bought recently`);
+  }
+  const ids = new Set(five.map((g) => g.id));
+  assert.equal(ids.size, 5, 'ids are unique');
+
+  // Cap: 10 + 5 + 5 = 20, the next draw returns nothing.
+  const full: Wardrobe = { garments: [...wardrobe.garments, ...five, ...randomGarments(5, { garments: [...wardrobe.garments, ...five] }, 'self', rand, undefined, NOW)] };
+  assert.equal(garmentsForProfile(full, 'self').garments.length, 20);
+  assert.deepEqual(randomGarments(5, full, 'self', rand, undefined, NOW), []);
+  // Another profile still has room.
+  assert.equal(randomGarments(5, full, 'kid', rand, undefined, NOW).length, 5);
 });

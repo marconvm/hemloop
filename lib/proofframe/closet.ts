@@ -228,6 +228,35 @@ export function seedWardrobe(): Wardrobe {
         material: 'Sherpa-lined cotton twill',
         purchasedAt: '2025-12-24',
       },
+      // Two more so 'self' opens at ten rows. Same categories the closet
+      // already covers, so the seed's three gaps (hoodie, thin jacket, worn
+      // footwear) are unchanged.
+      {
+        id: 'g12',
+        category: 'denim',
+        brand: 'Denim Supply Co.',
+        size: '32',
+        colour: 'indigo',
+        image: '/products/east-side-straight-jean.jpg',
+        price: 79.0,
+        currency: 'CAD',
+        retailer: 'Denim Supply Co. online store',
+        material: '13oz rigid denim',
+        purchasedAt: '2026-03-14',
+      },
+      {
+        id: 'g13',
+        category: 'accessory',
+        brand: 'Overland Trading Co.',
+        size: 'OS',
+        colour: 'olive',
+        image: '/products/fieldhouse-cap.jpg',
+        price: 24.0,
+        currency: 'CAD',
+        retailer: 'Overland Trading Co.',
+        material: 'Cotton twill',
+        purchasedAt: '2026-06-02',
+      },
       {
         id: 'g9',
         category: 'tee',
@@ -284,6 +313,51 @@ export function garmentsForProfile(
   return {
     garments: wardrobe.garments.filter((g) => (g.for ?? 'self') === profile),
   };
+}
+
+/** Most rows one profile's closet will hold; add_garment and randomGarments
+ * both stop here. */
+export const MAX_CLOSET_ROWS = 20;
+
+/** Draw `count` garments for one profile from the catalog snapshot, so every
+ * row has a real brand, photo and size, as if they came from a variety of
+ * stores or were added by the Hemloop layer. Pure given `rand` (0..1); never
+ * pushes the profile past MAX_CLOSET_ROWS. Dates land inside the last six
+ * months so a random draw cannot invent a worn-out garment. */
+export function randomGarments(
+  count: number,
+  wardrobe: Wardrobe,
+  profile: ShopperProfile,
+  rand: () => number = Math.random,
+  catalog: Catalog = demoCatalog,
+  now: Date = new Date(),
+): Garment[] {
+  const owned = garmentsForProfile(wardrobe, profile).garments.length;
+  const room = Math.max(0, Math.min(count, MAX_CLOSET_ROWS - owned));
+  const pool = catalog.products.filter((p) => guessCategory(p) !== null);
+  const out: Garment[] = [];
+  const stamp = now.getTime().toString(36);
+  for (let i = 0; i < room && pool.length > 0; i++) {
+    const product = pool[Math.floor(rand() * pool.length)];
+    const sizes = product.options?.find((o) => o.name === 'Size')?.values ?? ['OS'];
+    const colours = product.options?.find((o) => o.name === 'Colour')?.values ?? ['unspecified'];
+    const daysAgo = Math.floor(rand() * 180);
+    const purchasedAt = new Date(now.getTime() - daysAgo * 86_400_000).toISOString().slice(0, 10);
+    out.push({
+      id: `r-${stamp}-${i}`,
+      category: guessCategory(product)!,
+      brand: product.vendor ?? 'Unknown',
+      size: sizes[Math.floor(rand() * sizes.length)],
+      colour: colours[Math.floor(rand() * colours.length)].toLowerCase(),
+      image: product.image,
+      price: product.price,
+      currency: product.currency,
+      retailer: `${product.vendor ?? 'Unknown'} online store`,
+      purchasedAt,
+      for: profile,
+    });
+  }
+  return out;
 }
 
 const ESSENTIALS: GarmentCategory[] = ['hoodie', 'tee', 'denim', 'jacket'];
@@ -735,6 +809,42 @@ export function writePurchases(purchases: Purchase[]): void {
   if (!hasStorage()) return;
   try {
     window.localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+  } catch {
+    /* ignore */
+  }
+}
+
+// ---------- Wardrobe persistence: one closet for every page ----------
+// The Loop Room and /closet used to seed their own in-memory wardrobe, so a
+// garment added on one never showed on the other. Same browser-only pattern
+// as purchases; the seed is what a fresh browser sees on both.
+
+const WARDROBE_KEY = 'hemloop.wardrobe';
+
+export function readWardrobe(): Wardrobe {
+  if (!hasStorage()) return seedWardrobe();
+  try {
+    const raw = window.localStorage.getItem(WARDROBE_KEY);
+    if (!raw) return seedWardrobe();
+    const parsed: unknown = JSON.parse(raw);
+    const garments = (parsed as { garments?: unknown })?.garments;
+    if (!Array.isArray(garments)) return seedWardrobe();
+    return {
+      garments: garments.filter(
+        (g): g is Garment =>
+          typeof g === 'object' && g !== null && typeof (g as Garment).id === 'string' &&
+          GARMENT_CATEGORIES.includes((g as Garment).category),
+      ),
+    };
+  } catch {
+    return seedWardrobe();
+  }
+}
+
+export function writeWardrobe(wardrobe: Wardrobe): void {
+  if (!hasStorage()) return;
+  try {
+    window.localStorage.setItem(WARDROBE_KEY, JSON.stringify(wardrobe));
   } catch {
     /* ignore */
   }

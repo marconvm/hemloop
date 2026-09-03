@@ -31,11 +31,17 @@ export interface StationCard {
   label: string;
   /** Headline above the card. */
   title: string;
+  /** Kicker for the room's hero, per station: what this step is about. */
+  eyebrow: string;
   /** The exact words to give the agent. Shown as a copy button. Null for
    * stations that are a human act, not an agent one. */
   say: string | null;
   /** Tool names that ran, in order, once they have. Empty until then. */
   toolsRan: string[];
+  /** What is true right now, before anything runs: owned, last bought,
+   * sizes, sharing level. Rendered BEFORE `updated`: facts first, then
+   * what is missing or what changed. */
+  facts: { label: string; value: string }[];
   /** What changed on the bridge or the page, as short labelled facts. */
   updated: { label: string; value: string }[];
   /** What each party can see at this station. */
@@ -47,10 +53,33 @@ export interface StationCard {
   state: StationState;
 }
 
+/** One row of the shopper's closet as the room shows it. Rows never leave
+ * the page; this is the same data the wardrobe grid on /closet renders. */
+export interface ClosetRow {
+  id: string;
+  category: string;
+  brand: string;
+  size: string;
+  image?: string;
+  /** Added during this session (import, Bought, or the + control). */
+  isNew: boolean;
+}
+
+export type ShopperProfileKey = 'self' | 'partner' | 'kid';
+
 /** Everything the room renders. */
 export interface LoopRoomView {
   stations: StationCard[];
   current: StationKey;
+  /** The active profile's closet, newest first. `closet.length` is the real
+   * count; the stack shows "+N" only when it holds more rows than it shows. */
+  closet: ClosetRow[];
+  /** Who the shopper is shopping for. The page scopes closet, gaps and
+   * prompts to `active`; the component renders the switch. */
+  profiles: { active: ShopperProfileKey; options: { key: ShopperProfileKey; label: string }[] };
+  /** The most recent station that ran tools, kept until the next call lands,
+   * so "tool that ran" does not vanish the moment a station flips to done. */
+  lastRan: { station: StationKey; tools: string[] } | null;
   /** 0..7, how many stations are done. */
   progress: number;
   /** Which loop this is. Goes up on restart; the outcome panel compares. */

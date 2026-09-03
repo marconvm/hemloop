@@ -30,10 +30,12 @@ import {
   readPurchases,
   seedPreferences,
   seedPurchases,
+  readWardrobe,
   seedWardrobe,
   sizesOwned,
   writePreferences,
   writePurchases,
+  writeWardrobe,
   type ConsentField,
   type DemandSignal,
   type Garment,
@@ -164,12 +166,32 @@ const FIT_PREFERENCES: Preferences['fitPreference'][] = [
 export function ClosetStudio() {
   const [wardrobe, setWardrobe] = useState<Wardrobe>(seedWardrobe);
   const wardrobeRef = useRef(wardrobe);
+  // One wardrobe for every page (Loop Room and closet): read the stored one
+  // once mounted, write on every change after that. The seed only lands in a
+  // browser that has nothing stored.
+  const wardrobeHydratedRef = useRef(false);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const stored = readWardrobe();
+      wardrobeRef.current = stored;
+      setWardrobe(stored);
+      wardrobeHydratedRef.current = true;
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (wardrobeHydratedRef.current) writeWardrobe(wardrobe);
+  }, [wardrobe]);
   const [trail, setTrail] = useState<Trail[]>([
     {
       id: 1,
       actor: 'ME',
       title: 'Wardrobe seeded',
-      detail: '8 garments, private to this page.',
+      detail: 'Private to this page, stored in this browser only.',
     },
   ]);
   const [signals, setSignals] = useState<DemandSignal[]>([]);

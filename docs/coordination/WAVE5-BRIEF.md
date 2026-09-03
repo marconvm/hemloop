@@ -82,3 +82,33 @@ refusal text pointing at the reply, not a new tool.
 - Ours to shrink: manifest size, result verbosity, nudges that cause extra calls, and anything that
   makes the agent re-read the DOM. Not ours: model thinking time and the confirmation prompt ChatGPT
   adds before a non-read-only tool.
+
+## Batch 2 (Marco, same day)
+
+Naming is locked, no variants anywhere on the room: **Shopper · Closet** on the left, **Merchant ·
+Demand** on the right. Codex:
+
+1. The two party boxes have the same height and alignment; today the merchant box is taller.
+2. One status vocabulary. On arrival nothing is "working" or "current": the card shows no state chip
+   until a tool is actually running (`processing`), then "Processing", then "Done". Drop "Working now",
+   "Now", "current" as words.
+3. "+N" on the closet stack only when the closet holds more rows than the stack shows; never "+28"
+   on a 10-row closet. Count comes from `view.closet.length`.
+4. Family closet: `view.profiles = { active, options }` (self, partner, kid) with `onSelectProfile`;
+   the stack, gaps and prompts scope to the active profile, the way a parent shops for the household.
+
+## Batch 3 (Marco, same day): the other surfaces must read as the same product
+
+A tester may land on `/closet` or `/studio` directly. Today they carry their own headers ("Private
+shopper surface · Your Closet", "Agent-native campaign studio · Hemloop"), their own five-step rail and
+their own seed, so they read as a different prototype.
+
+- **Cursor**: `/closet`, `/studio`, `/merchant` use the shared `SiteHeader` (active section set) and the
+  shared footer; drop the per-page `studio-header` lockups and the `surface-nav`. Keep each page's own
+  panels and behaviour; only the chrome changes. Layout must not break at 1440 and 820.
+- **Codex**: publish `components/site-footer.tsx` (presentational, no bridge access) and render it on the
+  Loop Room, so every page ends the same way.
+- **Claude**: one wardrobe for every page. Today `/` and `/closet` each seed their own in-memory
+  wardrobe, so a garment added on one never shows on the other. `closet.ts` gets `readWardrobe` /
+  `writeWardrobe` (same pattern as purchases, key `hemloop.wardrobe`); the Loop Room and the closet
+  page both read it on mount and write on change. The ten-row seed is what a fresh browser sees on both.

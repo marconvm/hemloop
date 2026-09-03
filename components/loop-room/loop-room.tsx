@@ -8,7 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-import type { LoopRoomView, StationKey } from '@/lib/proofframe/loop-room';
+import type { LoopRoomView, ShopperProfileKey, StationKey } from '@/lib/proofframe/loop-room';
 
 import { LoopRoomRail } from './loop-room-rail';
 import { OutcomePanel } from './outcome-panel';
@@ -24,6 +24,11 @@ export interface LoopRoomProps {
   creative?: LoopCreative | null;
   onCopySay?: (prompt: string) => void;
   onHumanGate?: (station: StationKey) => void;
+  /** The "+" on the closet stack: the page adds five random garments, capped
+   * at twenty for the active profile. (Claude added the prop; Codex wires it.) */
+  onAddGarments?: () => void;
+  /** The Me / Partner / Kid switch on the shopper side. (Same note.) */
+  onSelectProfile?: (profile: ShopperProfileKey) => void;
 }
 
 export function LoopRoom({
