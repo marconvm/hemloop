@@ -911,6 +911,11 @@ export function ProofFrameStudio() {
             <Shirt data-icon="inline-start" aria-hidden="true" />
             Shopper closet
           </a>
+          {/* See the note in closet-studio.tsx: one nav on every surface. */}
+          <nav className="surface-nav" aria-label="Hemloop surfaces">
+            <a href="/">Home</a>
+            <a href="/docs/">Docs</a>
+          </nav>
           <Badge
             variant="outline"
             className={`webmcp-badge status-${webMcpStatus}`}

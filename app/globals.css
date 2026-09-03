@@ -212,6 +212,18 @@ select {
   padding: 10px;
 }
 
+/* The closet is not the studio. The studio's widest column is its canvas, so
+   .studio-grid puts the weight in the middle; the closet's most important
+   column is the wardrobe, which sits first and was inheriting the NARROWEST
+   track - 142px cards with three-line brand names (wave-4 review, Codex).
+   The class was already on the element and simply had no rule. */
+.closet-grid {
+  grid-template-columns:
+    minmax(340px, 1.3fr)
+    minmax(300px, 1fr)
+    minmax(300px, 1.05fr);
+}
+
 .panel {
   min-width: 0;
   border: 1px solid var(--border);
@@ -1141,6 +1153,9 @@ select {
 .cross-link {
   display: inline-flex;
   align-items: center;
+  /* "Shopper closet" wrapped to two lines once the surface nav joined the
+     header row; a pill-shaped link should never wrap. */
+  white-space: nowrap;
   gap: 8px;
   padding: 8px 14px;
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
@@ -1154,17 +1169,46 @@ select {
 }
 .garment-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* auto-fill rather than a fixed 2, so a card drops to one per row when the
+     column is genuinely narrow instead of wrapping every word. No media query
+     needed: the track count follows the space it actually has. */
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 10px;
 }
 .garment-card {
   display: grid;
-  gap: 2px;
+  /* The 56px thumbnail was defining an implicit first column, and everything
+     that followed it in source order landed there too - which is why a brand
+     name read "Denim / Supply / Co." and the Edit/Delete pair was crushed
+     (wave-4 review). The image now spans the card's full height in column 1
+     and every other child is pinned to column 2. */
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: start;
+  gap: 2px 10px;
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
   border-radius: 12px;
   font-size: 13px;
 }
+.garment-card > .garment-thumb {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: start;
+}
+.garment-card > :not(.garment-thumb) {
+  grid-column: 2;
+}
+/* A garment added by hand or from a receipt has no image; don't leave it a
+   56px gutter. Falls back to the two-column card where :has() is missing,
+   which only costs an empty column. */
+.garment-card:not(:has(.garment-thumb)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.garment-card:not(:has(.garment-thumb)) > * {
+  grid-column: 1;
+}
+
 .garment-cat {
   font-size: 11px;
   text-transform: uppercase;
@@ -2649,4 +2693,28 @@ select {
 .verdict-size-not-in-stock .aggregate-verdict,
 .verdict-category-mismatch .aggregate-verdict {
   color: #ffd166;
+}
+
+/* One navigation on every surface. Quieter than .cross-link, which stays the
+   primary move between the two app pages. */
+.surface-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 4px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.surface-nav a {
+  color: inherit;
+  opacity: 0.6;
+  text-decoration: none;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+}
+.surface-nav a:hover,
+.surface-nav a:focus-visible {
+  opacity: 1;
+  border-bottom-color: currentColor;
 }

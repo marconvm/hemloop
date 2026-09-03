@@ -753,6 +753,13 @@ export function ClosetStudio() {
             <Store data-icon="inline-start" aria-hidden="true" />
             Merchant studio
           </a>
+          {/* Every surface reaches every other one. Before this the closet
+              could only reach the studio and the studio only the closet, so
+              the two pages read as separate prototypes (wave-4 review). */}
+          <nav className="surface-nav" aria-label="Hemloop surfaces">
+            <a href="/">Home</a>
+            <a href="/docs/">Docs</a>
+          </nav>
         </div>
       </header>
 
@@ -804,6 +811,13 @@ export function ClosetStudio() {
                       alt={`${g.category} ${g.brand}`}
                       className="garment-thumb"
                       loading="lazy"
+                      // A card with no image is a normal state here (anything
+                      // added by hand or from a receipt has none), so a broken
+                      // path degrades into that state instead of showing the
+                      // browser's broken-image icon.
+                      onError={(e) => {
+                        e.currentTarget.hidden = true;
+                      }}
                     />
                   ) : null}
                   <span className="garment-cat">

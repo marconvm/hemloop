@@ -262,7 +262,7 @@ export function seedWardrobe(): Wardrobe {
         brand: 'Northlight Apparel',
         size: 'L',
         colour: 'charcoal',
-        image: '/products/black-hoodie.jpg',
+        image: '/products/northlight-hoodie.jpg',
         price: 58.0,
         currency: 'CAD',
         retailer: 'Northlight Apparel online store',

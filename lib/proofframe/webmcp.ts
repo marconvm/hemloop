@@ -662,7 +662,14 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
         for (const g of groups) {
           const row = {
             category: g.category,
-            size: g.size,
+            // category is a closed enum minted in code, so it needs no fence.
+            // size is shopper-written free text that only length bounds ever
+            // touched: a 20-char value is enough to carry "</closet_data>" and
+            // close a fence some OTHER tool opened in the same agent context.
+            // fence() strips markers to a fixpoint and drops control/bidi
+            // characters, which is the repo's standing policy for user text.
+            // (wave-4 review, Codex second replay.)
+            size: fence(g.size, 'closet_data'),
             total: g.total,
             need: g.need,
             want: g.want,

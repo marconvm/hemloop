@@ -21,6 +21,7 @@ import {
 } from '../lib/proofframe/webmcp-closet';
 import { fence, type ToolContent } from '../lib/proofframe/webmcp';
 import { parseReceipt, SAMPLE_RECEIPTS } from '../lib/proofframe/receipts';
+import { demoCatalog } from '../lib/proofframe/shopify';
 import {
   purchaseFromOffer,
   toOffer,
@@ -1347,4 +1348,23 @@ void test("toSignal accepts 'replace' from storage and still rejects junk kinds"
   };
   assert.equal(toSignal({ ...base, kind: 'replace' })?.kind, 'replace');
   assert.equal(toSignal({ ...base, kind: 'refund' }), null);
+});
+
+// ---------- Every image the seed points at must exist ----------
+
+void test('every seeded image path resolves to a file in public/', async () => {
+  // g11 shipped pointing at /products/black-hoodie.jpg, which was never in the
+  // repo: live 404, broken image on the demo page (wave-4 review, Codex). A
+  // path is not a promise, so check the promise.
+  const { existsSync } = await import('node:fs');
+  const { fileURLToPath } = await import('node:url');
+  const publicDir = fileURLToPath(new URL('../public', import.meta.url));
+  const paths = new Set<string>();
+  for (const g of seedWardrobe().garments) if (g.image) paths.add(g.image);
+  for (const p of demoCatalog.products) if (p.image) paths.add(p.image);
+  assert.ok(paths.size > 0, 'the seed should reference some images');
+  for (const p of paths) {
+    assert.ok(p.startsWith('/'), `${p} should be a root-relative path`);
+    assert.ok(existsSync(`${publicDir}${p}`), `${p} is referenced but missing from public/`);
+  }
 });
