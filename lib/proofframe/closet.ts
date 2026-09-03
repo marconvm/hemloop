@@ -11,6 +11,10 @@ export type GarmentCategory =
   | 'footwear'
   | 'accessory';
 
+/** Who a garment (or a shopping session) is for. Absent on a Garment means
+ * 'self' - the eight original seed rows never gained this field. */
+export type ShopperProfile = 'self' | 'partner' | 'kid';
+
 export interface Garment {
   id: string;
   category: GarmentCategory;
@@ -23,6 +27,7 @@ export interface Garment {
   retailer?: string;
   material?: string;
   purchasedAt?: string; // ISO yyyy-mm-dd
+  for?: ShopperProfile; // default 'self' when absent
 }
 
 export interface Wardrobe {
@@ -41,6 +46,28 @@ export interface FitNote {
   note: string;
 }
 
+/** A fixed enum minted in code - never a free string an agent can widen.
+ * Names exactly the fields a DemandSignal is carrying at the moment it is
+ * sent, so the merchant sees exactly what was granted. */
+export type ConsentField =
+  | 'category'
+  | 'size'
+  | 'level'
+  | 'handle'
+  | 'occasion'
+  | 'for'
+  | 'fitPreference'
+  | 'colourFamily'
+  | 'avoidMaterials'
+  | 'priceCeiling';
+
+export interface ConsentGrant {
+  level: 0 | 1 | 2 | 3;
+  fields: ConsentField[];
+}
+
+export type Occasion = 'everyday' | 'season' | 'gift' | 'event';
+
 export interface DemandSignal {
   signalId: string;
   kind: 'gap' | 'fit' | 'want';
@@ -48,6 +75,37 @@ export interface DemandSignal {
   size: string | null;
   handle: string | null;
   at: string; // ISO timestamp
+  /** Derived from kind: gap or fit -> 'need', want -> 'want'. */
+  level: 'need' | 'want';
+  occasion?: Occasion;
+  for?: ShopperProfile;
+  consent: ConsentGrant;
+  /** Only present at consent level >= 2. */
+  context?: { fitPreference?: string };
+  /** Only present at consent level 3. */
+  taste?: { colourFamily?: string; avoidMaterials?: string[]; priceCeiling?: number };
+}
+
+/** Exactly which fields would leave the page for report_demand_gap at a
+ * given consent level, given which optional arguments/context are present.
+ * Pure, and shared by the tool (to fill consent.fields) and the UI (the
+ * payload preview shown before Approve). Level 0 leaves nothing. */
+export function consentFieldsForRequest(
+  level: 0 | 1 | 2 | 3,
+  opts: { hasSize: boolean; hasHandle: boolean; hasOccasion: boolean },
+): ConsentField[] {
+  if (level === 0) return [];
+  const fields: ConsentField[] = ['category', 'level'];
+  if (opts.hasSize) fields.push('size');
+  if (opts.hasHandle) fields.push('handle');
+  if (level >= 2) {
+    fields.push('for', 'fitPreference');
+    if (opts.hasOccasion) fields.push('occasion');
+  }
+  if (level >= 3) {
+    fields.push('colourFamily', 'avoidMaterials', 'priceCeiling');
+  }
+  return fields;
 }
 
 export function seedWardrobe(): Wardrobe {
@@ -157,7 +215,61 @@ export function seedWardrobe(): Wardrobe {
         material: 'Nylon shell, sherpa-lined collar',
         purchasedAt: '2025-12-24',
       },
+      {
+        id: 'g9',
+        category: 'tee',
+        brand: 'Little Trailhead',
+        size: '8',
+        colour: 'red',
+        image: '/products/black-tee.jpg',
+        price: 14.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Cotton jersey',
+        purchasedAt: '2026-04-10',
+        for: 'kid',
+      },
+      {
+        id: 'g10',
+        category: 'footwear',
+        brand: 'Little Trailhead',
+        size: '2Y',
+        colour: 'blue',
+        image: '/products/white-sneaker.jpg',
+        price: 32.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Canvas upper, rubber sole',
+        purchasedAt: '2026-05-01',
+        for: 'kid',
+      },
+      {
+        id: 'g11',
+        category: 'hoodie',
+        brand: 'Northlight Apparel',
+        size: 'L',
+        colour: 'charcoal',
+        image: '/products/black-hoodie.jpg',
+        price: 58.0,
+        currency: 'CAD',
+        retailer: 'Northlight Apparel online store',
+        material: 'Cotton fleece',
+        purchasedAt: '2026-01-20',
+        for: 'partner',
+      },
     ],
+  };
+}
+
+/** The wardrobe rows for one shopping profile. Garments with no `for` are
+ * 'self'. Pure - used by both the WebMCP tools and the UI, so a profile
+ * switch changes exactly what a tool call and the wardrobe grid agree on. */
+export function garmentsForProfile(
+  wardrobe: Wardrobe,
+  profile: ShopperProfile,
+): Wardrobe {
+  return {
+    garments: wardrobe.garments.filter((g) => (g.for ?? 'self') === profile),
   };
 }
 
@@ -252,6 +364,15 @@ export function checkFit(
   };
 }
 
+/** The base signal shape, unchanged since wave 1: event id, kind, category,
+ * size, handle, time. Consent-gated fields (level, consent, occasion, for,
+ * context, taste) are layered on by the caller that knows the consent
+ * level and profile - report_demand_gap in webmcp-closet.ts. */
+export type BaseSignal = Pick<
+  DemandSignal,
+  'signalId' | 'kind' | 'category' | 'size' | 'handle' | 'at'
+>;
+
 /** Build the zero-ID signal that crosses the privacy bridge. The random id is
  * an event id, not a stable shopper id. Dependencies are injectable for tests. */
 export function makeSignal(
@@ -263,7 +384,7 @@ export function makeSignal(
   },
   now: () => string = () => new Date().toISOString(),
   makeId: () => string = () => crypto.randomUUID(),
-): DemandSignal {
+): BaseSignal {
   const at = now();
   return {
     signalId: makeId(),
@@ -283,3 +404,73 @@ export const GARMENT_CATEGORIES: GarmentCategory[] = [
   'footwear',
   'accessory',
 ];
+
+// ---------- Preferences ----------
+
+export interface Preferences {
+  fitPreference: 'slim' | 'regular' | 'relaxed' | 'oversized';
+  colourFamily: string;
+  avoidMaterials: string[];
+  priceCeiling: number;
+  likedBrands: string[];
+}
+
+export function seedPreferences(): Preferences {
+  return {
+    fitPreference: 'regular',
+    colourFamily: 'neutrals',
+    avoidMaterials: ['wool'],
+    priceCeiling: 120,
+    likedBrands: ['Northlight Apparel', 'Ridgeline Outdoor'],
+  };
+}
+
+const PREFERENCES_KEY = 'hemloop.preferences';
+
+function hasStorage(): boolean {
+  return typeof window !== 'undefined' && !!window.localStorage;
+}
+
+/** Read stored preferences, or the seed defaults when storage is empty,
+ * unavailable, or holds something malformed. Never throws. */
+export function readPreferences(): Preferences {
+  if (!hasStorage()) return seedPreferences();
+  try {
+    const raw = window.localStorage.getItem(PREFERENCES_KEY);
+    if (!raw) return seedPreferences();
+    const parsed = JSON.parse(raw) as Partial<Preferences>;
+    const seed = seedPreferences();
+    return {
+      fitPreference:
+        parsed.fitPreference === 'slim' ||
+        parsed.fitPreference === 'regular' ||
+        parsed.fitPreference === 'relaxed' ||
+        parsed.fitPreference === 'oversized'
+          ? parsed.fitPreference
+          : seed.fitPreference,
+      colourFamily:
+        typeof parsed.colourFamily === 'string' ? parsed.colourFamily : seed.colourFamily,
+      avoidMaterials: Array.isArray(parsed.avoidMaterials)
+        ? parsed.avoidMaterials.filter((m): m is string => typeof m === 'string')
+        : seed.avoidMaterials,
+      priceCeiling:
+        typeof parsed.priceCeiling === 'number' && Number.isFinite(parsed.priceCeiling)
+          ? parsed.priceCeiling
+          : seed.priceCeiling,
+      likedBrands: Array.isArray(parsed.likedBrands)
+        ? parsed.likedBrands.filter((b): b is string => typeof b === 'string')
+        : seed.likedBrands,
+    };
+  } catch {
+    return seedPreferences();
+  }
+}
+
+export function writePreferences(prefs: Preferences): void {
+  if (!hasStorage()) return;
+  try {
+    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
+  } catch {
+    /* ignore */
+  }
+}
