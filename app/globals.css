@@ -3722,6 +3722,7 @@ select {
   overflow: hidden;
   border-radius: 18px;
   background: #e4e1da;
+  animation: hlr-creative-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .hlr-creative img {
@@ -4126,6 +4127,10 @@ select {
   from { opacity: 0; transform: translateX(-20px); }
 }
 
+@keyframes hlr-creative-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+}
+
 @media (max-width: 1120px) {
   .hlr-room {
     grid-template-columns: 1fr 1.1fr;
@@ -4244,6 +4249,7 @@ select {
 @media (prefers-reduced-motion: reduce) {
   .hlr-station,
   .hlr-packet,
+  .hlr-creative,
   .is-spinning {
     animation: none;
   }

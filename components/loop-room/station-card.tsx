@@ -28,7 +28,7 @@ export function StationCard({
   const prompt = station.say;
 
   return (
-    <article className="hlr-station" key={station.key}>
+    <article className="hlr-station">
       <div className="hlr-station-heading">
         <div>
           <p>

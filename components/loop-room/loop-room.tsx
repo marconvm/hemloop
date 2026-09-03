@@ -113,6 +113,7 @@ export function LoopRoom({
             minimum necessary data <ArrowRight />
           </div>
           <StationCard
+            key={current.key}
             station={current}
             processing={processing}
             onCopySay={onCopySay}
@@ -145,7 +146,10 @@ export function LoopRoom({
           </div>
 
           {creative ? (
-            <article className={`hlr-creative is-${creative.kind}`}>
+            <article
+              className={`hlr-creative is-${creative.kind}`}
+              key={`${view.current}-${creative.kind}-${creative.title}`}
+            >
               {creative.image ? (
                 // oxlint-disable-next-line next/no-img-element -- static or validated bridge asset; no next/image loader configured
                 <img
