@@ -281,7 +281,7 @@ export function Landing() {
 
 
       <section className="landing-flow content" data-reveal aria-label="How a request travels">
-        <svg className="flow-diagram" viewBox="0 0 960 190" role="img" aria-labelledby="flow-title">
+        <svg className="flow-diagram" viewBox="0 0 960 190" aria-labelledby="flow-title">
           <title id="flow-title">Closet to studio to shopping agent, and back</title>
           <g fill="none" stroke="currentColor" strokeWidth="1.5">
             <rect x="12" y="30" width="250" height="90" rx="14" />
