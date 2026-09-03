@@ -15,8 +15,11 @@ import {
 } from './closet';
 import {
   closeSchemas,
+  fence,
   getModelContext,
   registerAll,
+  truncate,
+  UNTRUSTED_NOTE,
   type RegisterResult,
   type ModelContextLike,
   type ToolContent,
@@ -35,8 +38,8 @@ export interface ClosetCallbacks {
   addGarment(input: GarmentInput): Garment;
   /** Human-only, one-shot approval. No WebMCP tool may set it. */
   consumeShareApproval(): boolean;
-  /** Deliver a signal to the bridge. Returns false when storage rejected it
-   * — the tool must then report failure, never a false `ok`. */
+  /** Deliver a signal to the bridge. Returns false when storage rejected it,
+   * the tool must then report failure, never a false `ok`. */
   emitSignal(signal: DemandSignal): boolean;
 }
 
@@ -44,8 +47,10 @@ function ok(data: object = {}): ToolContent {
   return { ok: true, ...data };
 }
 
-function fail(message: string, error = 'invalid-input'): ToolContent {
-  return { ok: false, error, message };
+/** Every rejection tells the agent exactly what to do next (article:
+ * instructions instead of error codes). */
+function fail(message: string, next: string, error = 'invalid-input'): ToolContent {
+  return { ok: false, error, message, next };
 }
 
 export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
@@ -59,7 +64,12 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: () => {
         const wardrobe = cb.getWardrobe();
-        return ok({ garments: wardrobe.garments });
+        const garments = wardrobe.garments.map((g) => ({
+          ...g,
+          brand: fence(truncate(g.brand, 80)),
+          colour: fence(truncate(g.colour, 40)),
+        }));
+        return { ...ok({ garments }), note: UNTRUSTED_NOTE };
       },
     },
     {
@@ -122,6 +132,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
         if (!GARMENT_CATEGORIES.includes(category)) {
           return fail(
             `category must be one of: ${GARMENT_CATEGORIES.join(', ')}`,
+            `Choose one of: ${GARMENT_CATEGORIES.join(', ')}, then call add_garment again.`,
           );
         }
         for (const key of ['brand', 'size', 'colour'] as const) {
@@ -131,7 +142,10 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
             value.length === 0 ||
             value.length > 60
           ) {
-            return fail(`${key} must be a non-empty string (max 60 chars).`);
+            return fail(
+              `${key} must be a non-empty string (max 60 chars).`,
+              `Provide a non-empty ${key} of at most 60 characters, then call add_garment again.`,
+            );
           }
         }
         const garment = cb.addGarment({
@@ -162,24 +176,35 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
         if (!GARMENT_CATEGORIES.includes(category)) {
           return fail(
             `category must be one of: ${GARMENT_CATEGORIES.join(', ')}`,
+            `Choose one of: ${GARMENT_CATEGORIES.join(', ')}, then call report_demand_gap again.`,
           );
         }
         // PF4-6: a malformed kind must not burn the approval or send as 'want'.
         if (args.kind !== undefined && args.kind !== 'gap' && args.kind !== 'fit' && args.kind !== 'want') {
-          return fail('kind must be one of: gap, fit, want.');
+          return fail(
+            'kind must be one of: gap, fit, want.',
+            'Use kind gap, fit, or want, then call report_demand_gap again.',
+          );
         }
         const kind = (args.kind ?? 'want') as 'gap' | 'fit' | 'want';
-        // Bound optional strings BEFORE consuming the one-shot approval —
+        // Bound optional strings BEFORE consuming the one-shot approval:
         // invalid input must not burn the human's grant.
         if (args.size !== undefined && (typeof args.size !== 'string' || args.size.length > 20)) {
-          return fail('size must be a string of at most 20 characters.');
+          return fail(
+            'size must be a string of at most 20 characters.',
+            'Shorten size to 20 characters or fewer, then call report_demand_gap again.',
+          );
         }
         if (args.handle !== undefined && (typeof args.handle !== 'string' || args.handle.length > 80)) {
-          return fail('handle must be a string of at most 80 characters.');
+          return fail(
+            'handle must be a string of at most 80 characters.',
+            'Shorten handle to 80 characters or fewer, then call report_demand_gap again.',
+          );
         }
         if (!cb.consumeShareApproval()) {
           return fail(
-            'Human approval required. Ask the shopper to press “Approve next signal” in the closet UI, then retry.',
+            'Human approval required. Ask the shopper to press “Approve next request” in the closet UI, then retry.',
+            'Ask the shopper to press Approve next request on the closet page, then call report_demand_gap again with the same arguments. One approval releases one event.',
             'human-approval-required',
           );
         }
@@ -194,6 +219,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
           // Approval stays consumed (privacy fail-closed); report honestly.
           return fail(
             'Signal could not be stored (bridge unavailable). Nothing was delivered; ask the shopper to approve again after fixing storage.',
+            'Ask the shopper to press Approve next request again after reloading the page or checking browser storage, then retry report_demand_gap.',
             'bridge-unavailable',
           );
         }

@@ -85,10 +85,8 @@ void test('validator catches wrong discount, price, code, banned phrase', () => 
 
 void test('validator accepts copy matching locked facts', () => {
   const { facts } = seedCampaign();
-  assert.deepEqual(
-    validateText('25% off — $59.90 now $44.90 with code NORTHLIGHT25', facts),
-    [],
-  );
+  const copy = `${facts.discountPercent}% off, $${facts.regularPrice.toFixed(2)} now $${facts.salePrice!.toFixed(2)} with code ${facts.promoCode}`;
+  assert.deepEqual(validateText(copy, facts), []);
 });
 
 void test('validator catches evasion: no-$ price, codeless code, unicode digits', () => {
@@ -211,6 +209,7 @@ void test('adapter registers the agreed tool surface (no lock tool)', () => {
     'seek_preview',
     'validate_claims',
     'export_composition',
+    'get_offer',
   ]);
   assert.ok(
     !names.some((n) => /lock/.test(n)),
@@ -234,9 +233,41 @@ void test('read tools carry readOnlyHint', () => {
     'get_campaign_state',
     'validate_claims',
     'export_composition',
+    'get_offer',
   ]) {
     assert.equal(tool(tools, name).annotations?.readOnlyHint, true, name);
   }
+});
+
+void test('get_offer reads the current locked facts as agent-actionable offer data, under budget', async () => {
+  const { cb } = makeStore();
+  const { facts } = seedCampaign();
+  const tools = buildTools(cb);
+  const result = payload(await tool(tools, 'get_offer').execute({})) as ToolPayload & {
+    product?: string;
+    currency?: string;
+    regularPrice?: number;
+    salePrice?: number | null;
+    discountPercent?: number | null;
+    promoCode?: string | null;
+    validFrom?: string;
+    validTo?: string;
+    disclaimer?: string;
+    purchaseUrl?: string | null;
+    locked?: boolean;
+  };
+  assert.equal(result.ok, true);
+  assert.equal(result.product, facts.productName);
+  assert.equal(result.currency, facts.currency);
+  assert.equal(result.regularPrice, facts.regularPrice);
+  assert.equal(result.salePrice, facts.salePrice);
+  assert.equal(result.discountPercent, facts.discountPercent);
+  assert.equal(result.promoCode, facts.promoCode);
+  assert.equal(result.validFrom, facts.startDate);
+  assert.equal(result.validTo, facts.endDate);
+  assert.equal(result.disclaimer, facts.disclaimer);
+  assert.equal(result.locked, true);
+  assert.ok(JSON.stringify(result).length <= 1500);
 });
 
 void test('add_scene with violating copy is rejected and applies nothing', async () => {
@@ -254,6 +285,9 @@ void test('add_scene with violating copy is rejected and applies nothing', async
   assert.equal(result.error, 'locked-fact-violation');
   assert.equal(result.violations?.[0]?.rule, 'discount-mismatch');
   assert.equal(state.scenes.length, before, 'state unchanged');
+  const next = (result as unknown as { next?: string }).next;
+  assert.equal(typeof next, 'string');
+  assert.ok(next && next.length > 0, 'a locked-fact-violation rejection must say what to do next');
 });
 
 void test('clean add_scene and update_scene apply', async () => {
@@ -282,6 +316,7 @@ void test('clean add_scene and update_scene apply', async () => {
 
 void test('update_scene rejects a patch that breaks a locked fact', async () => {
   const { state, cb } = makeStore();
+  const originalBody = state.scenes[2].body;
   const result = payload(
     await tool(buildTools(cb), 'update_scene').execute({
       id: 'offer',
@@ -289,7 +324,7 @@ void test('update_scene rejects a patch that breaks a locked fact', async () => 
     }),
   );
   assert.equal(result.ok, false);
-  assert.equal(state.scenes[2].body, '$59.90 → $44.90 with code NORTHLIGHT25');
+  assert.equal(state.scenes[2].body, originalBody);
 });
 
 void test('reorder_scenes requires a permutation', async () => {
@@ -345,7 +380,7 @@ void test('registerProofFrameTools awaits every registration and reports rejecti
       return Promise.resolve();
     },
   });
-  assert.equal(registered.length, 8);
+  assert.equal(registered.length, 9);
   assert.deepEqual(seen, registered);
   assert.deepEqual(rejected, []);
 
@@ -357,13 +392,13 @@ void test('registerProofFrameTools awaits every registration and reports rejecti
         ? Promise.reject(new Error('InvalidStateError'))
         : (names.add(t.name), Promise.resolve()),
   });
-  assert.equal(dup.registered.length, 8);
+  assert.equal(dup.registered.length, 9);
   const again = await registerProofFrameTools(cb, {
     registerTool: (t) =>
       names.has(t.name) ? Promise.reject(new Error('InvalidStateError')) : Promise.resolve(),
   });
   assert.equal(again.registered.length, 0);
-  assert.equal(again.rejected.length, 8);
+  assert.equal(again.rejected.length, 9);
   assert.match(again.rejected[0].reason, /InvalidStateError/);
 });
 
