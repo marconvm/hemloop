@@ -68,23 +68,51 @@ function fail(message: string, next: string, error = 'invalid-input'): ToolConte
   return { ok: false, error, message, next };
 }
 
+/** Rows per get_wardrobe result; 12 compact rows fit Chrome's 1.5K output budget with the fence and note. */
+const MAX_WARDROBE_ROWS = 12;
+/** Garments per profile that add_garment will accept; the studio has MAX_SCENES for the same reason. */
+const MAX_GARMENTS = 40;
+
 export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
   return closeSchemas([
     {
       name: 'get_wardrobe',
       description:
-        "Read the shopper's wardrobe for this task: garments with category, brand, size and colour. These rows stay on this page; the merchant bridge carries only the zero-ID demand event.",
-      inputSchema: { type: 'object', properties: {} },
+        "Read the shopper's wardrobe for this task as compact rows: id, category, brand, size, colour and who it is for. Optional category filter. Returns at most 12 rows plus the total count, so page by category when the wardrobe is large. Rows stay on this page; only an approved request can reach a merchant.",
+      inputSchema: {
+        type: 'object',
+        properties: { category: { type: 'string', enum: [...GARMENT_CATEGORIES] } },
+      },
       // Shopper-entered rows are user content from the page author's perspective.
       annotations: { readOnlyHint: true, untrustedContentHint: true },
-      execute: () => {
-        const wardrobe = garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile());
-        const garments = wardrobe.garments.map((g) => ({
-          ...g,
-          brand: fence(truncate(g.brand, 80), 'closet_data'),
-          colour: fence(truncate(g.colour, 40), 'closet_data'),
-        }));
-        return { ...ok({ garments }), note: UNTRUSTED_NOTE };
+      execute: (args) => {
+        const all = garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile()).garments;
+        const filtered =
+          typeof args.category === 'string'
+            ? all.filter((g) => g.category === args.category)
+            : all;
+        // Explicit shape, every string bounded, row count capped: a hostile wardrobe row
+        // (80-char brand, long image path, material, retailer) once produced a 15K result
+        // against Chrome's 1.5K per-tool output budget. Codex round 3, finding A(f).
+        const rows = filtered.slice(0, MAX_WARDROBE_ROWS).map((g) =>
+          [
+            truncate(g.id, 12),
+            g.category,
+            truncate(g.brand, 28),
+            truncate(g.size, 12),
+            truncate(g.colour, 16),
+            g.for ?? 'self',
+          ].join(' | '),
+        );
+        return {
+          ...ok({
+            count: filtered.length,
+            truncated: Math.max(0, filtered.length - rows.length),
+            columns: 'id | category | brand | size | colour | for',
+            garments: fence(rows.join('\n'), 'closet_data'),
+          }),
+          note: UNTRUSTED_NOTE,
+        };
       },
     },
     {
@@ -94,14 +122,23 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
         type: 'object',
         properties: { brand: { type: 'string' } },
       },
-      annotations: { readOnlyHint: true },
-      execute: (args) =>
-        ok({
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: (args) => ({
+        ...ok({
+          // brand and size are shopper- or agent-written text: fence them. Claude round 3, A(d).
           sizes: sizesOwned(
             garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile()),
             typeof args.brand === 'string' ? args.brand : undefined,
-          ),
+          )
+            .slice(0, 20)
+            .map((r) => ({
+              brand: fence(truncate(r.brand, 28), 'closet_data'),
+              category: r.category,
+              size: fence(truncate(r.size, 12), 'closet_data'),
+            })),
         }),
+        note: UNTRUSTED_NOTE,
+      }),
     },
     {
       name: 'find_gaps',
@@ -123,14 +160,18 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
         properties: { handle: { type: 'string' } },
         required: ['handle'],
       },
-      annotations: { readOnlyHint: true },
-      execute: (args) =>
-        ok({
-          fit: checkFit(
-            garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile()),
-            typeof args.handle === 'string' ? args.handle : '',
-          ),
-        }),
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: (args) => {
+        const fit = checkFit(
+          garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile()),
+          typeof args.handle === 'string' ? args.handle : '',
+        );
+        // The note interpolates owned brand/size (shopper- or agent-written) into prose: fence it.
+        return {
+          ...ok({ fit: { ...fit, note: fence(truncate(fit.note, 240), 'closet_data') } }),
+          note: UNTRUSTED_NOTE,
+        };
+      },
     },
     {
       name: 'get_preferences',
@@ -191,6 +232,13 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
               `Provide a non-empty ${key} of at most 60 characters, then call add_garment again.`,
             );
           }
+        }
+        if (garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile()).garments.length >= MAX_GARMENTS) {
+          return fail(
+            `The wardrobe holds at most ${MAX_GARMENTS} garments for this profile.`,
+            'Ask the shopper to delete a garment on the closet page, or switch profile, then call add_garment again.',
+            'wardrobe-full',
+          );
         }
         const garment = cb.addGarment({
           category,
