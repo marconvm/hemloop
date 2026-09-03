@@ -11,7 +11,7 @@ Recording: ChatGPT (or Chrome + WebMCP flag) on the deployed URL. Two browser ta
 | 0:12-0:35 | The shopper closet | `/closet`: wardrobe grid, agent calls `find_gaps`, gap card shows "no hoodie" | "The agent reasons over the wardrobe through WebMCP and finds what is missing: no hoodie. The merchant-facing channel is a different, much narrower schema." |
 | 0:35-1:00 | Human-approved request (first climax) | Sharing level already set to **2 Context**; the payload preview lists exactly what would leave the page before anyone presses anything. Agent tries `report_demand_gap` and gets `human-approval-required`; shopper presses **Approve next request (level 2)**; retry succeeds and the full payload is visible | "The agent cannot decide to share. Before it even tries, the payload preview shows exactly what would leave: category, size, product, occasion, no account ID, stable hash or wardrobe rows. Its first call is rejected until the shopper approves one request. The retry sends only that, and the approval is consumed." |
 | 1:00-1:20 | Demand lands | Cut to `/studio`: Incoming requests shows "hoodie · M · northlight-hoodie · request #..." with its Occasion, For and "Shared at level 2" consent line visible. Human clicks **Unlock offer facts**, **Answer this request**, **Add sizes in stock** (meter 8 of 9 to 9 of 9), then **Lock offer facts** again | "That minimal request reaches the merchant, with exactly what was shared shown on the row. They pull in the product snapshot and lock the offer facts: price, offer, code, dates and disclaimer. Like the shopper's approval, locking is a human button, deliberately not a tool." |
-| 1:20-1:45 | Agent builds | Agent reads state, sets the brief, updates `hero` / `cta`, then calls `seek_preview`; human tweaks a heading by hand in the same canvas | "Now the merchant's agent produces: ten typed tools on the same live state the human is editing. Two editors, one canvas, every action on the record." |
+| 1:20-1:45 | Agent builds | Agent reads state, sets the brief, updates `hero` / `cta`, then calls `seek_preview`; human tweaks a heading by hand in the same canvas | "Now the merchant's agent produces: eleven typed tools on the same live state the human is editing. Two editors, one canvas, every action on the record." |
 | 1:45-2:10 | The block (second climax) | Chat: "Say 50% off, guaranteed." Agent activity log shows the red rejection with the exact reason; canvas unchanged; agent self-corrects to 25% | "And here is the trust boundary. The agent tries 50% off. Rejected before anything changes, with a machine-readable reason (the locked offer is 25) and the agent fixes its own copy. The wrong frame never existed." |
 | 2:10-2:35 | Export | Export button; downloaded composition plays with the disclaimer footer visible | "Export refuses while any claim is wrong. Out comes a deterministic motion composition, disclaimer baked into every frame as an element no tool can remove. The video is one output, the loop is the product." |
 | 2:35-2:50 | Close | Landing page, repo + docs flash, supporters line | "Shoppers keep their data. Merchants finally see demand. And everything produced in response is provably true. Hemloop, built on WebMCP." |
@@ -27,6 +27,8 @@ Recording notes
 
 **M4 (optional, if ahead of time):** ask the agent to call `get_offer` and read back the purchase link; this is the handoff to a shopping agent. Insert after M3, before the close, only if the take is comfortably under the 2:50 target.
 
+**M5 / C5 (optional, if ahead of time):** insert after M4, before the close, only if the take is still comfortably under target. In the studio, the merchant toggles **Auto-propose** or clicks **Propose offer** on the incoming request, then **Approve**. Cut to the closet: the offer appears in **Offers for your requests**, Maya clicks **Bought**, and the Purchases row shows the offer id it came from. This closes the loop on camera: a personal offer, matched inside the merchant's margin, approved by a human, bought, and attributed.
+
 ## One-take ChatGPT prompt sheet
 
 Paste these prompts exactly. They name the intended page tools and constrain the response so tool latency and chat prose do not consume the three-minute runtime.
@@ -35,7 +37,7 @@ Paste these prompts exactly. They name the intended page tools and constrain the
 
 1. Use the same ChatGPT browser session for both live routes so the same-origin bridge is available.
 2. Open `https://hemloop.app/closet` and `https://hemloop.app/studio` in separate tabs. Reload both after WebMCP is enabled.
-3. Confirm the badges say **7 WebMCP tools live** and **10 WebMCP tools live**.
+3. Confirm the badges say **9 WebMCP tools live** and **11 WebMCP tools live**.
 4. If previous rehearsal requests remain, clear site data before the final rehearsal, then reload both tabs. Confirm the studio says there are no requests yet.
 5. On the closet page, set the sharing level to **2 Context**, and set **Shopping for: Me**.
 6. Keep the closet's **Approve next request (level 2)** button and the studio's **Incoming requests** / **Agent activity log** panels visible. Start with offer facts locked.
@@ -104,6 +106,12 @@ Expected: valid campaign; the composition file downloads in the page (the same p
 > Call `get_offer`. Report the product, the price, the promo code and the purchase link exactly as returned.
 
 Expected: a read-only structured result (product, prices, promo code, validity dates, disclaimer, purchase link) straight from the locked offer facts. This is what a shopping agent would call to act on the offer directly.
+
+### Studio prompt M5 (optional): propose a personal offer for the loop to close
+
+> Call `propose_offer` with the current request's id. Report the price, the discount percent and whether the margin check passed.
+
+Expected: a staged `PersonalOffer` inside the locked offer rules, invisible to the shopper until approved. **Human action:** click **Approve** on the proposal in the studio, then switch to the closet tab, click **Bought** on the offer in Offers for your requests, and point out the offer id on the new Purchases row.
 
 ### Fast recovery lines
 

@@ -91,3 +91,38 @@ missing fact unlocks.
 
 Both sides log every consent change and every request in the activity log. Roadmap: consent
 receipts the shopper can export, and per-merchant levels.
+
+## Wave 3 (2026-09-03, owner): the roadmap becomes the MVP
+
+Owner's call: capture orders across brands (rivals included), record which offer a purchase came from as a
+shopper attribute, and let the merchant auto-match a personal offer inside a pre-set margin. Right product,
+right price, right time. The shopper only consents to send; the merchant only approves offers.
+
+Shopper side (stays in the browser): a purchase log across merchants (seeded across four brands plus a rival),
+imported from pasted receipts or order emails (local parser, no OCR), from catalog lookup, or automatically
+when the shopper marks an offer Bought (which records the offer id). From that log a coarse buying pattern is
+derived per category: discount sensitivity (code / percent / none), spend band, brand loyalty (loyal /
+switcher). At level 3 the pattern travels with a request; the raw purchases never do.
+
+Merchant side: locked offer rules (cost, margin floor, max discount) beside the offer facts. A pure matcher
+turns an incoming request plus its shared context into a proposed personal offer within the floor, with the
+validity window shaped by the occasion. The merchant's agent can propose (`propose_offer`), or auto-propose
+can be switched on; a human approves before anything becomes visible. Approved offers travel back over the
+bridge, addressed to the request id, never to a person; the shopper sees them in the closet and answers
+Bought or Passed, which closes the loop and feeds the pattern.
+
+## Shipped 2026-09-03 (wave 3)
+
+- [x] Purchase log across every merchant, rivals included: `Purchase`, seeded across five brands (Northlight Apparel, Denim Supply Co., Ridgeline Outdoor, Overland Trading Co., and the rival Harborview Basics), stored only in the browser (`hemloop.purchases`)
+- [x] Receipt / order-email import: pure local parser (`receipts.ts`, no OCR, no network), two recognised paste shapes, `import_receipt` tool, human textarea with two paste-ready samples
+- [x] Buying pattern per category: `buyingPattern(purchases, category, brand?)` derives discount sensitivity (code / percent / none), spend band, and brand loyalty (loyal / switcher); pure, deterministic
+- [x] `ConsentField` gained `buyingPattern`; `DemandSignal.pattern` carries the derived `BuyingPattern`, only at consent level 3; the raw purchases never leave the page
+- [x] Merchant offer rules locked beside the offer facts: cost price 24, margin floor 35%, max discount 30%, all human-only, no WebMCP tool reads or writes them
+- [x] `matchOffer`: pure matcher turning one request plus the locked rules into a `PersonalOffer` or a typed refusal; discount capped at 15 for `'none'` sensitivity, raised to the max for a `'switcher'`, trimmed in 5-point steps to hold the margin floor, validity shortened to 7 days for a gift or event occasion, category and in-stock size both enforced
+- [x] `propose_offer` tool: stages a proposal for one incoming request; a human approves or declines in the studio; an Auto-propose toggle (human-only, default off) proposes one automatically for every new request
+- [x] Approved offers travel over the bridge (`hemloop.offers`) addressed to the request id, never to a person; they appear in the closet's "Offers for your requests" with Bought / Passed
+- [x] Bought records a purchase with the offer's id attached (attribution) and adds the garment to the wardrobe; `get_offer(requestId)` and `get_offers` hand the approved offer to a shopping agent or the shopper
+- [x] 20 WebMCP tools total (9 closet, 11 studio), 101 unit tests
+- [x] Landing, README, PRD, User Guide, Tech Guide, Use Cases, Writeup, Test Plan, Demo Script and Cue Sheet synced to wave 3
+
+Roadmap items unchanged by this wave: receipt OCR, real order-email connectors, a browser extension surface, aggregation before disclosure (k-anonymity floor), the outcome written back into the merchant's own reporting, and the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam described in `docs/integrations/commerce-agents/README.md`.

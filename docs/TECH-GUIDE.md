@@ -10,17 +10,22 @@ app/studio/page.tsx                                app/closet/page.tsx
   └▶ components/proofframe-studio.tsx         └▶ components/closet-studio.tsx
         │ callbacks                                 │ callbacks
         ▼                                           ▼
-   lib/proofframe/webmcp.ts (10 tools)        lib/proofframe/webmcp-closet.ts (7 tools)
+   lib/proofframe/webmcp.ts (11 tools)        lib/proofframe/webmcp-closet.ts (9 tools)
         │ validates via                             │ pure logic in
         ▼                                           ▼
-   validator.ts · exporter.ts                 closet.ts (gaps, fit, preferences, makeSignal: no shopper id)
-   shopify.ts + catalog.json ◀────────────────┘ (check_fit reads the same catalog)
+   validator.ts · exporter.ts                 closet.ts (gaps, fit, preferences, purchases, buyingPattern, makeSignal: no shopper id)
+   shopify.ts + catalog.json ◀────────────────┘ (check_fit reads the same catalog; receipts.ts parses pasted text)
+        │
+        ▼
+   offers.ts (matchOffer: request + locked offer rules → PersonalOffer)
 
-              lib/proofframe/signal-bridge.ts (localStorage + events, consent level, outcomes)
-   studio incoming-requests panel ◀── DemandSignal (consent-gated) ◀── approved report_demand_gap
+              lib/proofframe/signal-bridge.ts (localStorage + events: signals, consent level,
+              outcomes, purchases, personal offers)
+   studio incoming-requests panel ◀── DemandSignal (consent-gated, may carry pattern) ◀── approved report_demand_gap
+   studio propose_offer / auto-propose ─── PersonalOffer (staged) ──▶ human Approve/Decline ──▶ closet get_offers / get_offer(requestId)
 ```
 
-Both surfaces register tools on `navigator.modelContext` (fallback `document.modelContext`). The bridge carries only `DemandSignal` objects: event id, kind, category, size, optional handle and time, plus a `consent` grant (level and the exact fields released at that level) and, above consent level 2, `occasion`, `for` and `context`/`taste`. There is no shopper identity field, and never a name, account, email, wardrobe row, purchase history or income at any level. `report_demand_gap` also requires and consumes a human-only one-shot approval, and rejects outright with `sharing-disabled` at consent level 0.
+Both surfaces register tools on `navigator.modelContext` (fallback `document.modelContext`). The bridge carries only `DemandSignal` objects: event id, kind, category, size, optional handle and time, plus a `consent` grant (level and the exact fields released at that level) and, above consent level 2, `occasion`, `for` and `context`/`taste`. At consent level 3 it may also carry `pattern`, a `BuyingPattern` derived from purchase history, never the raw `Purchase` rows. There is no shopper identity field, and never a name, account, email, wardrobe row, purchase history or income at any level. `report_demand_gap` also requires and consumes a human-only one-shot approval, and rejects outright with `sharing-disabled` at consent level 0. A second, independent bridge shape, `PersonalOffer`, carries a merchant's proposed or approved answer to one request, addressed to its `requestId`, never to a person; no WebMCP tool can approve one, only the studio's Approve button.
 
 Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at module scope). The studio owns all state and passes callbacks in; the adapter owns no state at all. This is what makes the whole tool surface unit-testable without a browser.
 
@@ -31,12 +36,14 @@ Design rule: `lib/proofframe/*` is pure and framework-free (no React, no DOM at 
 | `lib/proofframe/types.ts` | Domain types. `factsLocked` is UI-only by design. `PLACEMENTS` (story/feed/display presets), `formatForPlacement` |
 | `lib/proofframe/validator.ts` | Pure claim validator: % claims, $ prices, promo codes, banned phrases, durations. No DOM, network or clock |
 | `lib/proofframe/exporter.ts` | Emits a standalone HyperFrames composition. Throws on violations. Escapes all copy. Force-renders the disclaimer as a non-clip footer |
-| `lib/proofframe/webmcp.ts` | `buildTools(callbacks)` and `registerProofFrameTools(callbacks, mc?)`. Mutating tools validate before applying and return structured rejections. `computeCompleteness` backs both `get_offer` and the studio's completeness meter |
+| `lib/proofframe/webmcp.ts` | `buildTools(callbacks)` and `registerProofFrameTools(callbacks, mc?)`. Mutating tools validate before applying and return structured rejections. `computeCompleteness` backs both `get_offer` and the studio's completeness meter. `propose_offer` calls `matchOffer` and stages the result; `get_offer` accepts an optional `requestId` to read back one approved `PersonalOffer` instead of the general offer |
 | `lib/proofframe/shopify.ts` | `makeCatalogImporter` maps snapshot products to offer facts. Promo terms stay human-owned. The importer takes a `Catalog`, not a Shopify response: Shopify is the reference connector; any source that yields handle, title, price and compare-at price works unchanged |
 | `lib/proofframe/catalog.json` | Committed snapshot of the playground store catalog |
-| `lib/proofframe/closet.ts` | Shopper domain: wardrobe seed, findGaps, sizesOwned, checkFit (keyword category match against the catalog), preferences (seed/read/write), consentFieldsForRequest (the fixed field enum per level), garmentsForProfile (Me/Partner/Kid scoping), and makeSignal, which carries no shopper identifier. Pure |
-| `lib/proofframe/webmcp-closet.ts` | The 7 shopper tools. report_demand_gap is the only merchant-facing tool, requires human one-shot approval, blocks outright at consent level 0, and emits only the fields `consentFieldsForRequest` allows for the shopper's level |
-| `lib/proofframe/signal-bridge.ts` | localStorage demo transport for signals, outcomes (bought/passed) and the consent level: 'storage' event cross-tab, CustomEvent same-tab, try/catch everywhere, 50-entry caps. A production relay would keep the same minimized payload contract and add aggregation thresholds |
+| `lib/proofframe/closet.ts` | Shopper domain: wardrobe seed, findGaps, sizesOwned, checkFit (keyword category match against the catalog), preferences (seed/read/write), consentFieldsForRequest (the fixed field enum per level), garmentsForProfile (Me/Partner/Kid scoping), makeSignal, which carries no shopper identifier, plus wave-3 purchases across stores: `Purchase`, `seedPurchases`/`readPurchases`/`writePurchases`, and `buyingPattern(purchases, category, brand?)`, the pure function that derives a category-scoped `BuyingPattern` (discount sensitivity, spend band, brand loyalty) and never returns the raw rows. Pure |
+| `lib/proofframe/receipts.ts` | Pure receipt/order-email parser, `parseReceipt(text)`: no OCR, no network, two recognised shapes (till receipt, order-confirmation email), bounded to 4000 chars and 20 items, returns `null` on unrecognised input instead of throwing. `SAMPLE_RECEIPTS` holds the two paste-ready samples the studio's UI and `import_receipt` tests share |
+| `lib/proofframe/offers.ts` | The personal-offer matcher. `matchOffer({ request, facts, catalogProduct?, now? })` is pure, deterministic given `now`, and turns one request plus the merchant's locked offer rules (`costPrice`, `marginFloorPercent`, `maxDiscountPercent` on `CampaignFacts`) into a `PersonalOffer` or a typed `{ ok: false, reason }` refusal. Deliberately decoupled from `closet.ts`: its own `DemandSignalLike`/`BuyingPattern` types are structurally compatible, not imported, so the file compiles independent of the sibling module. `toDemandSignalLike` defensively rebuilds a request from an unknown object |
+| `lib/proofframe/webmcp-closet.ts` | The 9 shopper tools. report_demand_gap is the only tool that can send anything to a merchant, requires human one-shot approval, blocks outright at consent level 0, and emits only the fields `consentFieldsForRequest` allows for the shopper's level, including `pattern` (via `buyingPattern`) at level 3. `import_receipt` parses pasted text with `parseReceipt` and adds purchases/garments; `get_offers` reads back approved offers addressed to this closet's own sent requests |
+| `lib/proofframe/signal-bridge.ts` | localStorage demo transport for signals, outcomes (bought/passed), the consent level, purchases (`hemloop.purchases`), and personal offers (`hemloop.offers`): 'storage' event cross-tab, CustomEvent same-tab, try/catch everywhere, 50-entry caps, exact-key rebuild on every readback (`toSignal`, `toOffer`). `purchaseFromOffer(offer, id, at)` builds the `Purchase` a shopper's own Bought action creates, carrying the offer's id for attribution. `hemloop.autoPropose` (the Auto-propose toggle) is read and written directly by the studio component, not through this module |
 
 ## The WebMCP contract
 
@@ -94,6 +101,88 @@ A successful `report_demand_gap` at consent level 2 (Context), shopping for a pa
 }
 ```
 
+At consent level 3 (Taste), the same call also carries `taste` and a `pattern` derived from purchase history, never the raw purchases:
+
+```json
+{
+  "ok": true,
+  "sent": {
+    "signalId": "9f0d3b2a-...",
+    "kind": "want",
+    "category": "denim",
+    "size": "32x30",
+    "handle": "camden-chino",
+    "at": "2026-09-03T14:10:02.000Z",
+    "level": "want",
+    "for": "self",
+    "consent": {
+      "level": 3,
+      "fields": ["category", "level", "size", "handle", "for", "fitPreference", "colourFamily", "avoidMaterials", "priceCeiling", "buyingPattern"]
+    },
+    "context": { "fitPreference": "regular" },
+    "taste": { "colourFamily": "neutrals", "avoidMaterials": ["wool"], "priceCeiling": 120 },
+    "pattern": { "discountSensitivity": "code", "spendBand": "50-100", "brandLoyalty": "switcher" }
+  }
+}
+```
+
+`propose_offer` matches one incoming request against the locked offer rules and stages a `PersonalOffer`; it is not visible to the shopper until a human approves it:
+
+```json
+{
+  "ok": true,
+  "offer": {
+    "offerId": "camden-chino:none:2026-09-07:9f0d3b2a",
+    "requestId": "9f0d3b2a-...",
+    "handle": "camden-chino",
+    "title": "Camden Chino",
+    "size": "32x30",
+    "currency": "CAD",
+    "regularPrice": 58,
+    "price": 40.6,
+    "discountPercent": 30,
+    "promoCode": null,
+    "validFrom": "2026-09-03",
+    "validTo": "2026-09-07",
+    "disclaimer": "Offer valid until Sep 7, 2026. While supplies last.",
+    "purchaseUrl": "https://hemloop.app/products/camden-chino",
+    "status": "proposed",
+    "proposedBy": "agent",
+    "proposedAt": "2026-09-03T14:10:05.000Z",
+    "reasons": ["Offered a stronger discount to win you over from another brand.", "Matches the denim you're shopping for."],
+    "marginCheck": { "floorPercent": 35, "resultingMarginPercent": 40.9, "ok": true }
+  },
+  "next": "Tell the merchant the proposal is waiting for their approval in the studio."
+}
+```
+
+`get_offer` called with a `requestId` returns the approved `PersonalOffer` for that one request instead of the general offer (same full shape as the `propose_offer` result above, abbreviated here):
+
+```json
+{
+  "ok": true,
+  "offer": {
+    "offerId": "camden-chino:none:2026-09-07:9f0d3b2a",
+    "requestId": "9f0d3b2a-...",
+    "status": "approved",
+    "approvedAt": "2026-09-03T14:12:00.000Z",
+    "price": 40.6,
+    "discountPercent": 30,
+    "validTo": "2026-09-07"
+  }
+}
+```
+
+With no matching approved offer, `get_offer(requestId)` returns a structured refusal instead of the general offer:
+
+```json
+{
+  "ok": false,
+  "error": "no-approved-offer",
+  "next": "Ask the merchant to approve a proposal for this request in the studio, or call get_offer without requestId for the general offer."
+}
+```
+
 `get_offer` reads the same locked facts a human owns and adds `sizesInStock` and a `completeness` object (`locked`, `total`, `missing`) computed by the same `computeCompleteness` function the studio's completeness meter renders, so the two never drift:
 
 ```json
@@ -122,8 +211,16 @@ Guarantees the adapter enforces:
 - `get_campaign_state`, `validate_claims`, `export_composition` and `get_offer` carry `readOnlyHint: true`. `get_wardrobe`/`get_preferences` (shopper-entered rows) and `import_product` (storefront data) carry `untrustedContentHint: true`, and the third-party text they return is wrapped in source-labelled fences (`<closet_data>` for shopper-entered rows, `<storefront_data>` for catalog text, the labels Anthropic's commerce-agents harness already reads) with a one-line preamble telling the agent not to follow instructions inside them. This fence-label convention is deliberate: a harness that already knows `closet_data`/`storefront_data` from Anthropic's commerce-agents article can consume Hemloop's results unchanged.
 - Every `inputSchema` is closed with `additionalProperties: false`; `registerTool()` promises are awaited via `Promise.allSettled`, so the header badge counts confirmed registrations and a duplicate-name `InvalidStateError` or a `NotAllowedError` surfaces as `WebMCP registration rejected` instead of a silent "tools live".
 - `export_composition` hands the HTML to the page through the `deliverExport` callback (the studio downloads it, same as the human Export button) and returns a summary, keeping every tool result inside Chrome's 1.5K-character output budget. `get_offer` reads the same locked facts and returns them as structured data (product, prices, promo code, validity dates, disclaimer, sizesInStock, purchaseUrl, completeness) instead of rendered copy, so a shopping agent can act on it directly.
-- On the closet surface, no tool can arm sharing or raise the consent level. `report_demand_gap` rejects outright with `sharing-disabled` at consent level 0, otherwise rejects with `human-approval-required` until the human presses "Approve next request (level N)", then consumes that approval after one event, emitting only the fields `consentFieldsForRequest` allows for that level.
+- On the closet surface, no tool can arm sharing or raise the consent level. `report_demand_gap` rejects outright with `sharing-disabled` at consent level 0, otherwise rejects with `human-approval-required` until the human presses "Approve next request (level N)", then consumes that approval after one event, emitting only the fields `consentFieldsForRequest` allows for that level, including `pattern` at level 3.
 - Placement (`PLACEMENTS.story`/`.feed`/`.display`, 9:16/4:5/16:9) is a human-only choice in the studio UI; no WebMCP tool reads or writes `campaign.format.placement`.
+- `import_receipt` never sends the pasted text anywhere off the page and never echoes it back verbatim; an unrecognised paste returns a structured `unparsed-receipt` result rather than throwing. `get_offers` carries `readOnlyHint: true` and `untrustedContentHint: true`, wraps `title` in a `<storefront_data>` fence, and only ever returns offers a human has already approved.
+- `propose_offer` is registered only when the page passes `getRequests` and `stageOffer` callbacks. It stages the matcher's result via `stageOffer`; there is no tool that can move a staged offer to `approved`, only the studio's Approve button. `matchOffer` itself never writes anything: it is pure, called by both the tool and the studio's Auto-propose effect, and its offer rules are:
+  - Category must match the campaign product; a mismatch refuses with `category mismatch`.
+  - If the request names a size and `facts.sizesInStock` is set, the size must be in that list, or the match refuses with `size not in stock`.
+  - The discount starts at `facts.discountPercent`. A `discountSensitivity: 'none'` pattern caps it at 15; a `brandLoyalty: 'switcher'` pattern raises it to `facts.maxDiscountPercent` (a win-back discount); either way it is then clamped to `facts.maxDiscountPercent`.
+  - The resulting price must clear `facts.marginFloorPercent` against `facts.costPrice`; if it does not, the discount is trimmed in 5-point steps (never below 0) until the floor holds.
+  - `occasion: 'gift'` or `'event'` shortens `validTo` to at most 7 days from `now`, if that is earlier than the campaign's own end date.
+  - The result carries up to three human-readable `reasons` for the numbers it chose, and a `marginCheck` naming the floor, the resulting margin, and whether it holds.
 
 ## Spec and vendor guidance this build follows
 
@@ -170,13 +267,13 @@ then map into the `Catalog` shape in `lib/proofframe/shopify.ts` (fields: handle
 ## Verification
 
 ```sh
-npx tsx --test tests/*.test.ts   # 63 unit tests
+npx tsx --test tests/*.test.ts   # 101 unit tests
 npx tsc --noEmit                 # typecheck
 npx oxlint                       # lint (vendored components/ui excluded)
 npm run dev                      # studio on localhost:3000/3001
 ```
 
-Manual checks: the "Try a false claim" button exercises the full rejection path in-browser; the WebMCP badge shows "preview mode" without the browser flag, "7 WebMCP tools live" on `/closet`, and "10 WebMCP tools live" on `/studio`.
+Manual checks: the "Try a false claim" button exercises the full rejection path in-browser; the WebMCP badge shows "preview mode" without the browser flag, "9 WebMCP tools live" on `/closet`, and "11 WebMCP tools live" on `/studio`.
 
 Verified runtime behaviour (Chrome 151, `chrome://flags/#enable-webmcp-testing`, live deployment):
 

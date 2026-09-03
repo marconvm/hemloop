@@ -71,6 +71,19 @@ Concrete scenarios showing where the loop earns its place. Personas are syntheti
 **Outcome:** the one missing fact was named in the tool's own output before the merchant went looking for it, and filling it is what turns "agents can skip sizes you cannot fill" from a locked-out action into a live one.
 **Why WebMCP:** `get_offer` and the studio's completeness meter share one `computeCompleteness` function, so what an agent sees as missing and what a human sees as missing can never drift apart.
 
+### UC-4c: the gift hoodie that closes the loop, auto-proposed, approved, bought, attributed
+
+**Actors:** Priya, shopping for her partner; a Hemloop merchant, with Auto-propose switched on.
+**Trigger:** "My partner needs a hoodie for a trip next week." Same request as UC-2b, but this time the merchant has already turned on Auto-propose, and the offer rules (cost 24, margin floor 35%, max discount 30%) are locked.
+**Flow:**
+1. Priya's agent confirms the gap and her sharing level is 2 Context; she sets occasion to "gift" and approves once. `report_demand_gap` sends category, size, occasion and the `for: "partner"` field, no colour, no price ceiling, no purchase history.
+2. The request lands in the studio's Incoming requests. Because Auto-propose is on, `matchOffer` runs automatically: category matches, the size is in stock, and because the occasion is "gift" the offer's `validTo` shortens to 7 days out. The margin holds at the full discount, so nothing is trimmed. The proposal appears under the request, status `proposed`, `proposedBy: "auto"`.
+3. The merchant reads the proposal's price, reasons and margin check, and presses **Approve**. The offer's status becomes `approved`; no WebMCP tool could have done this step.
+4. Back on the closet page, the approved offer appears in **Offers for your requests** (the same thing `get_offers` would return to Priya's agent). Priya presses **Bought**.
+5. The purchase is recorded in the **Purchases across stores** panel with `source: "offer"` and `offerId` set to the offer's id, so the row that answered the request and the row it produced are linked.
+**Outcome:** a gift-occasion request became a personal offer inside the merchant's margin, without a human writing a single number by hand, and a human still made both consequential decisions, approving the offer and buying it. The next `buyingPattern` computed for hoodies now includes this purchase.
+**Why WebMCP:** every step an agent could take (matching, proposing, reading the approved offer back) is a typed tool; the two decisions that matter, approve and buy, stay off the tool surface entirely.
+
 ## Secondary and edge
 
 - **UC-5 Plain-editor fallback:** with no WebMCP runtime, both surfaces work as ordinary single-user editors (preview mode). No agent, no dead app.

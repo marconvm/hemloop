@@ -10,17 +10,17 @@ In one sentence each, the before/after: a shopper's agent can surface an anonymo
 
 ## What it does
 
-Two web pages register 17 WebMCP tools. The shopper's agent shops a private closet and can send a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after the person presses Approve. The merchant's agent answers inside offer facts a human locked first; copy that contradicts them is rejected before it renders. The guarantees are structural: there is no tool that can unlock facts or arm sharing.
+Two web pages register 20 WebMCP tools. The shopper's agent shops a private closet and can send a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after the person presses Approve. The merchant's agent answers inside offer facts a human locked first; copy that contradicts them is rejected before it renders. The guarantees are structural: there is no tool that can unlock facts, arm sharing, or approve an offer.
 
 Maya has a closet. Northlight Apparel (a demo brand) has a campaign. The agent is the only thing that touches both.
 
 The loop, in three steps:
 
-1. **The shopper's agent finds the gap.** On `/closet`, seven WebMCP tools let the agent read wardrobe rows, find what is missing and check fit against a product catalog snapshot. The only merchant-facing tool, `report_demand_gap`, rejects until the shopper presses **Approve next request**, a human-only control deliberately absent from WebMCP. One approval releases one event with no shopper identifier: category, size, optional product, kind, time and a random event id. The tool returns the exact payload sent, so the boundary is inspectable.
-2. **The merchant answers it, inside locked facts.** On `/studio`, consented demand arrives in a live panel, grouped by category and size with counts, and labelled Need or Want. The merchant locks the offer facts (prices, offer, code, dates, disclaimer), then their agent produces through ten WebMCP tools. Every rendered-copy mutation is claim-validated before it applies; "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason the agent self-corrects from.
-3. **The offer becomes something a shopping agent can act on.** `get_offer` reads the locked facts back out as structured data: product, prices, promo code, validity dates, disclaimer and a purchase link. It is read-only and it is the handoff out of Hemloop toward whatever agent is doing the actual buying.
+1. **The shopper's agent finds the gap.** On `/closet`, nine WebMCP tools let the agent read wardrobe rows, find what is missing, check fit against a product catalog snapshot, and read (or import from a pasted receipt) a purchase log spanning every store, rivals included. The only tool that can send anything to a merchant, `report_demand_gap`, rejects until the shopper presses **Approve next request**, a human-only control deliberately absent from WebMCP. One approval releases one event with no shopper identifier: category, size, optional product, kind, time and a random event id; at the shopper's highest sharing level it may also carry a coarse buying pattern derived from that purchase log, never the raw purchases. The tool returns the exact payload sent, so the boundary is inspectable.
+2. **The merchant answers it, inside locked facts and locked offer rules.** On `/studio`, consented demand arrives in a live panel, grouped by category and size with counts, and labelled Need or Want. The merchant locks the offer facts (prices, offer, code, dates, disclaimer) and the offer rules (cost, margin floor, max discount), then their agent produces through eleven WebMCP tools. Every rendered-copy mutation is claim-validated before it applies; "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason the agent self-corrects from. One of those tools, `propose_offer`, matches a single incoming request against the locked rules and stages a personal offer; the offer stays invisible to the shopper until a human approves it.
+3. **The offer becomes something a shopping agent can act on, and the loop closes.** `get_offer` reads the locked facts back out as structured data: product, prices, promo code, validity dates, disclaimer and a purchase link, or, called with a request id, the one approved personal offer answering that request. It is read-only and it is the handoff out of Hemloop toward whatever agent is doing the actual buying. On the closet side, the shopper reads the same approved offer with `get_offers` and answers Bought or Passed by hand; Bought records a purchase carrying the offer's id, so the offer that won the sale stays traceable and the next buying pattern reflects it.
 
-An agent video editor alone would be one of a thousand on GitHub. The product is the loop: private data stays private, demand becomes visible, and the response is provably compliant, then handed off in a shape another agent can use.
+An agent video editor alone would be one of a thousand on GitHub. The product is the loop: private data stays private, demand becomes visible, the response is provably compliant and provably inside the merchant's margin, and a human closes it on both ends.
 
 ## Why WebMCP fits
 
@@ -38,7 +38,7 @@ The tool surface went through six review passes (two independent reviewers, then
 
 ## How we built it
 
-TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, two WebMCP adapters) with 63 unit tests (including adversarial tool-boundary replays: extra-property XSS, malformed input, unicode claim evasion), wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a synthetic apparel catalog shaped like a Shopify store export (this demo's connector), with a generic Catalog interface underneath so any source with handle, title, price and compare-at works unchanged. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The live app is deployed on Cloudflare Workers.
+TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, receipt parser, personal-offer matcher, two WebMCP adapters) with 101 unit tests (including adversarial tool-boundary replays: extra-property XSS, malformed input, unicode claim evasion), wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a synthetic apparel catalog shaped like a Shopify store export (this demo's connector), with a generic Catalog interface underneath so any source with handle, title, price and compare-at works unchanged. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The live app is deployed on Cloudflare Workers.
 
 ## Challenges
 
@@ -46,12 +46,13 @@ Making the data boundary checkable rather than promised: the demand-event type h
 
 ## What's next
 
-Four real threads, in the order they compound:
+Purchase capture, buying pattern, auto-matched personal offers and the Bought/Passed attribution loop shipped this wave. What is still real roadmap:
 
-1. **The profile layer.** Preferences (fit, colour family, materials, price ceiling) as a first-class read tool, alongside sizes, occasions, and family sub-profiles (Me / Partner / Kid), plus a purchase-capture path (receipts, order-email parsing) so the wardrobe fills itself instead of being typed in by hand.
+1. **Real purchase capture.** `import_receipt` parses two pasted text shapes today, no OCR, no network. Next is receipt OCR for a photographed receipt and real order-email connectors (Gmail, a merchant's own confirmation webhook), so the log fills without the shopper pasting anything.
 2. **Aggregation before disclosure.** A merchant should see a pattern, not a single event: a k-anonymity floor so a demand cell only becomes visible once enough distinct shoppers have contributed to it. This is the article's cap on resulting state, applied to the privacy boundary instead of to the campaign.
 3. **Creatives for every placement.** Image and GIF exports first, matched to real ad placements (Story 9:16, Feed 4:5, Display 16:9), then short video once the still and motion pipelines share one validator.
-4. **Offers a shopping agent can act on, both ways.** `get_offer` is step one: locked facts as structured data with a purchase link. Next is the purchase-or-not feedback loop, bought or passed on each demand event, written back so both sides learn. The merchant already answers demand at two levels, Need and Want; the feedback loop makes both levels more accurate over time instead of adding a third.
+4. **A browser extension surface**, so the closet and the purchase log travel with the shopper instead of living on one origin.
+5. **The seam behind the WebMCP adapters.** Three interfaces, `ToolContract`, `ApprovalReceipt` and `PresentationEvent`, so a future authenticated backend can add server-side identity and revalidation without weakening the no-identifier bridge; sketched in `docs/integrations/commerce-agents/README.md`, not built.
 
 The first artefacts of that plan are in the repo: `docs/integrations/commerce-agents/` holds a SKILL.md a commerce-agents shopping agent would load to use the closet, and a snapshot eval case in that harness's format that drives our tool boundary instead of a model.
 

@@ -56,9 +56,9 @@ To connect an agent in a challenge-supported Chrome build: Chrome 149+ carries a
 
 ## Tool surfaces
 
-**Closet (shopper, 7 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit`, `get_preferences` (all read-only), `add_garment`, and `report_demand_gap`, the single merchant-facing tool. It rejects until the human arms one share, can emit only the no-shopper-identifier `DemandSignal` schema, consumes the approval, and returns the exact payload sent.
+**Closet (shopper, 9 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit`, `get_preferences`, `get_offers` (all read-only), `add_garment`, `import_receipt`, and `report_demand_gap`, the single tool that can send anything to a merchant. It rejects until the human arms one share, can emit only the no-shopper-identifier `DemandSignal` schema, consumes the approval, and returns the exact payload sent.
 
-**Studio (merchant, 10 tools):** `get_campaign_state`, `validate_claims`, `export_composition` (read-only; hands the HTML to the page as a download and returns its size), `get_offer` (read-only; returns the locked offer as structured data for a shopping agent, including sizes in stock, purchase link and offer completeness), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`. Mutations validate against locked facts before applying. There is deliberately no lock/unlock tool on either surface: the merchant locks the offer, the agent works inside it.
+**Studio (merchant, 11 tools):** `get_campaign_state`, `validate_claims`, `export_composition` (read-only; hands the HTML to the page as a download and returns its size), `get_offer` (read-only; returns the locked offer as structured data for a shopping agent, including sizes in stock, purchase link and offer completeness, or one approved personal offer when called with `requestId`), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`, `propose_offer` (stages a personal offer for one incoming request inside the locked offer rules; a human approves or declines it). Mutations validate against locked facts before applying. There is deliberately no lock/unlock tool on either surface, and no tool that can approve an offer: the merchant locks the offer, the agent works inside it, and a human decides what the shopper sees.
 
 ## Consent is the dial
 
@@ -69,11 +69,15 @@ Sharing is not a checkbox in front of the loop, it is a dial the shopper sets, s
 | 0 Private | nothing | fit checks and gap finding stay local |
 | 1 Basics (default) | category, size, need or want, optional product handle | offers in the right size |
 | 2 Context | + occasion (season, gift, event), fit preference, who you are shopping for | offers timed and cut for the occasion |
-| 3 Taste | + colour family, materials to avoid, price ceiling | creatives that match, no wasted offers |
+| 3 Taste | + colour family, materials to avoid, price ceiling, buying pattern (discount sensitivity, spend band, brand loyalty) | creatives that match, no wasted offers |
 
 Name, account, email, wardrobe rows, purchase history and income are never shared with a merchant, at any level. At level 0, `report_demand_gap` returns `sharing-disabled` and nothing crosses the bridge; the Approve button itself reads "Approve next request (level N)" so the level is visible at the moment of the grant.
 
 A few more pieces of the shopper side worth knowing about: **Shopping for** lets the shopper switch between Me, Partner and Kid, scoping the wardrobe and every closet tool to that profile. **Bought / Passed** records, in the browser, whether a sent request turned into a purchase, and the studio shows that outcome next to the request. On the merchant side, the studio's **placement** control (Story 9:16, Feed 4:5, Display 16:9) is a human-only choice, never a WebMCP tool, and the **offer completeness meter** counts how many of nine offer facts are locked, naming exactly what each missing fact unlocks for a shopping agent.
+
+## The loop closes
+
+Purchases across every store, rivals included, stay with the shopper: a private log in their own browser, filled by hand, by pasting a receipt or order email, or automatically whenever an offer is marked Bought. At sharing level 3, a coarse buying pattern derived from that log, discount sensitivity, spend band, brand loyalty, travels with a request; the raw purchases never do. On the merchant side, the locked offer rules (cost, margin floor, max discount) let the merchant's agent auto-match a personal offer to that request, inside the margin, with `propose_offer` or the Auto-propose toggle. A human still approves or declines before anything reaches the shopper. The shopper answers Bought or Passed on the approved offer, and Bought records the purchase with the offer it came from, so the pattern that shaped the offer improves the next one.
 
 ## Documentation
 

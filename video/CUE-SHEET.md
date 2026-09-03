@@ -19,10 +19,10 @@ Chrome 151 with `chrome://flags/#enable-webmcp-testing`, after the dead-code rem
 
 | check | result |
 |---|---|
-| `/closet` badge | **7 WebMCP tools live** |
-| closet tools registered | `add_garment`, `check_fit`, `find_gaps`, `get_my_sizes`, `get_preferences`, `get_wardrobe`, `report_demand_gap` |
-| `/studio` badge | **10 WebMCP tools live** |
-| studio tools registered | `add_scene`, `export_composition`, `get_campaign_state`, `get_offer`, `import_product`, `reorder_scenes`, `seek_preview`, `set_brief`, `update_scene`, `validate_claims` |
+| `/closet` badge | **9 WebMCP tools live** |
+| closet tools registered | `add_garment`, `check_fit`, `find_gaps`, `get_my_sizes`, `get_offers`, `get_preferences`, `get_wardrobe`, `import_receipt`, `report_demand_gap` |
+| `/studio` badge | **11 WebMCP tools live** |
+| studio tools registered | `add_scene`, `export_composition`, `get_campaign_state`, `get_offer`, `import_product`, `propose_offer`, `reorder_scenes`, `seek_preview`, `set_brief`, `update_scene`, `validate_claims` |
 | clean state | `localStorage` empty · closet "Nothing sent yet" · studio "No signals yet" |
 | sharing level | set to **2 Context**, **Shopping for: Me** |
 | gates | campaign truth **locked** · **Approve next request (level 2)** armed and visible |
@@ -67,6 +67,10 @@ live: paste, and cut the wait.
 
 Hard cap 3:00. VO-08 is 13.7 s inside a 15 s slot, so the close has almost no slack: start the landing cut exactly at 2:35. If you reach 2:35 behind, skip opening the downloaded HTML and cut
 straight to the close: the export *result* already proved the point at 2:10.
+
+## Optional beat, only if ahead of time
+
+**M5 / C5**, inserted after M4 (the `get_offer` handoff), before the close: no VO track exists for this beat, so it only runs silent or ad-libbed, and only when the take is comfortably ahead of the clock above. In the studio, the merchant either toggles **Auto-propose** or clicks **Propose offer** on the incoming request, then **Approve**. Cut to the closet: the offer appears in **Offers for your requests**, Maya clicks **Bought**, and the Purchases panel row shows the offer id it came from. Skip entirely rather than push into the 3:00 hard cap.
 
 ## If the take goes wrong
 

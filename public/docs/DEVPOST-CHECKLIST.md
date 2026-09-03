@@ -19,10 +19,10 @@ already reviewed.
 
 - [ ] Repo is public (task 5) and a fresh-clone scan is clean
 - [ ] Live smoke: `for p in / /closet /studio /docs/; do curl -s -o /dev/null -w "%{http_code}\n" https://hemloop.app$p; done` all 200
-- [ ] Badges read 7 and 10 WebMCP tools live in ChatGPT desktop (GPT-5.6 Sol or Terra) and in Chrome 149+ without a flag
+- [ ] Badges read 9 and 11 WebMCP tools live in ChatGPT desktop (GPT-5.6 Sol or Terra) and in Chrome 149+ without a flag
 - [ ] One real ChatGPT desktop pass of C1 to C3 on live (task 10)
 - [ ] Video under 3:00, plays with sound, link is unlisted not private
-- [ ] WRITEUP.md has no em dash, no stale tool count (7 closet, 10 studio, 17 total), test count matches `npm test`
+- [ ] WRITEUP.md has no em dash, no stale tool count (9 closet, 11 studio, 20 total), test count matches `npm test`
 - [ ] Judge can reach docs from the landing CTA "Read the docs"
 
 ## After 13:00 PT
