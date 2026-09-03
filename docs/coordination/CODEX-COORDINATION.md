@@ -468,3 +468,16 @@ Smoke on the local Worker with a Chrome build that exposes `document.modelContex
 whole loop ran on real calls (import_receipt → find_gaps → report_demand_gap refused → Approve → sent →
 refused again → get_demand → propose_offer → Approve offer → get_offers → Bought → outcome panel), then
 the rival receipt opened cycle 2 with the rail reset. Gates: 139/139, tsc clean, oxlint 0, build complete.
+
+### Cursor wave 5: assets + shared chrome (2026-09-03)
+
+Branch: `cursor/wave5` (worktree `../hemloop-cursor`).
+
+Landed:
+1. `public/favicon.ico` (16/32/48 from `favicon.svg`) + `<link rel="icon" href="/favicon.ico" sizes="any" />` in `app/layout.tsx` only.
+2. `public/receipts/northlight-till-receipt.png` + `harborview-order-email.png` from `SAMPLE_RECEIPTS`; download links under the closet import textarea.
+3. `/closet`, `/studio`, `/merchant` render shared `SiteHeader` (`active` set); dropped per-page `studio-header` / `merchant-header` / `surface-nav`. Verified 1440 + 820 with getBoundingClientRect.
+4. `components/site-footer.tsx` not on main yet (Codex wave5 branch not published) — pushed without footer.
+5. Closet trail copy now says ten garments shared with the Loop Room; UI already showed `Wardrobe · 10`. No leftover user-facing "eight garments" on closet/docs.
+
+Gates: 140/140, tsc, lint, build. No deploy.

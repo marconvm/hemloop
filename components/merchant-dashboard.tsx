@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { BRAND } from '@/lib/proofframe/brand';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import {
   demandInsight,
@@ -22,6 +21,7 @@ import {
   type SignalOutcome,
 } from '@/lib/proofframe/signal-bridge';
 import type { CampaignFacts } from '@/lib/proofframe/types';
+import { SiteHeader } from '@/components/site-header';
 
 import '@/app/merchant.css';
 
@@ -192,38 +192,25 @@ export function MerchantDashboard() {
 
   return (
     <main className="merchant-shell">
-      <header className="merchant-header">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            HE
-          </div>
-          <div>
-            <p className="eyebrow">Merchant demand</p>
-            <h1>{BRAND.name} dashboard</h1>
-          </div>
-        </div>
-
-        <div className="merchant-product">
-          <span className="status-dot" aria-hidden="true" />
-          <span>
-            Locked facts · {facts.productName}
-            {facts.sizesInStock?.length
-              ? ` · sizes ${facts.sizesInStock.join(', ')}`
-              : ''}
+      <SiteHeader
+        active="merchant"
+        status={
+          <span className="merchant-product">
+            <span className="status-dot" aria-hidden="true" />
+            <span>
+              Locked facts · {facts.productName}
+              {facts.sizesInStock?.length
+                ? ` · sizes ${facts.sizesInStock.join(', ')}`
+                : ''}
+            </span>
           </span>
-        </div>
-
-        <div className="header-actions">
+        }
+        actions={
           <a className="cross-link" href="/studio">
             Campaign studio
           </a>
-          <nav className="surface-nav" aria-label="Hemloop surfaces">
-            <a href="/">Home</a>
-            <a href="/closet">Closet</a>
-            <a href="/docs/">Docs</a>
-          </nav>
-        </div>
-      </header>
+        }
+      />
 
       <div className="merchant-body">
         <section className="stat-strip" aria-label="Demand summary">
