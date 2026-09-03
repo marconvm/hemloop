@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  Store,
   Tag,
   ThumbsDown,
   ThumbsUp,
@@ -20,6 +19,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { SiteHeader } from '@/components/site-header';
+import { SurfaceTabs } from '@/components/surface-tabs';
+import { useSurfaceTab } from '@/components/use-surface-tab';
 
 import '@/app/closet.css';
 import {
@@ -94,6 +95,27 @@ type Trail = {
 
 type WebMcpStatus = 'checking' | 'active' | 'preview' | 'error';
 
+const CLOSET_TABS = [
+  { id: 'wardrobe', label: 'Wardrobe' },
+  { id: 'requests', label: 'Requests and offers' },
+] as const;
+
+type ClosetTab = (typeof CLOSET_TABS)[number]['id'];
+
+const CLOSET_TAB_IDS: readonly ClosetTab[] = CLOSET_TABS.map((t) => t.id);
+
+const WARDROBE_TOOLS = new Set([
+  'get_wardrobe',
+  'get_my_sizes',
+  'find_gaps',
+  'check_fit',
+  'get_preferences',
+  'add_garment',
+  'import_receipt',
+]);
+
+const REQUEST_TOOLS = new Set(['report_demand_gap', 'get_offers']);
+
 function demandLabel(kind: DemandSignal['kind']): 'Need' | 'Want' {
   return kind === 'want' ? 'Want' : 'Need';
 }
@@ -164,6 +186,7 @@ const FIT_PREFERENCES: Preferences['fitPreference'][] = [
 ];
 
 export function ClosetStudio() {
+  const [tab, setTab] = useSurfaceTab<ClosetTab>(CLOSET_TAB_IDS, 'wardrobe');
   const [wardrobe, setWardrobe] = useState<Wardrobe>(seedWardrobe);
   const wardrobeRef = useRef(wardrobe);
   // One wardrobe for every page (Loop Room and closet): read the stored one
@@ -375,7 +398,9 @@ export function ClosetStudio() {
     if (okValue === true && name === 'report_demand_gap') {
       setSentCount((n) => n + 1);
     }
-  }, []);
+    if (WARDROBE_TOOLS.has(name)) setTab('wardrobe');
+    else if (REQUEST_TOOLS.has(name)) setTab('requests');
+  }, [setTab]);
 
   useEffect(() => {
     let active = true;
@@ -775,19 +800,24 @@ export function ClosetStudio() {
             {statusLabel}
           </Badge>
         }
-        actions={
-          <a className="cross-link" href="/studio">
-            <Store data-icon="inline-start" aria-hidden="true" />
-            Merchant studio
-          </a>
-        }
       />
 
       <LoopRail surface="closet" flags={loopFlags} />
 
+      <SurfaceTabs
+        tabs={[...CLOSET_TABS]}
+        active={tab}
+        onChange={setTab}
+        label="Closet sections"
+      />
+
       <section
-        className="studio-grid closet-grid"
-        aria-label="Closet workspace"
+        id="panel-wardrobe"
+        role="tabpanel"
+        aria-labelledby="tab-wardrobe"
+        hidden={tab !== 'wardrobe'}
+        className="tab-panel studio-grid closet-grid"
+        aria-label="Closet wardrobe"
       >
         <aside className="panel">
           <div className="panel-heading">
@@ -1134,7 +1164,16 @@ export function ClosetStudio() {
             ))}
           </div>
         </section>
+      </section>
 
+      <section
+        id="panel-requests"
+        role="tabpanel"
+        aria-labelledby="tab-requests"
+        hidden={tab !== 'requests'}
+        className="tab-panel studio-grid closet-requests-grid"
+        aria-label="Requests and offers"
+      >
         <aside className="panel">
           <div className="panel-heading">
             <div>

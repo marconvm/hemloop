@@ -1,5 +1,7 @@
-import { MerchantDashboard } from '@/components/merchant-dashboard';
+import { redirect } from 'next/navigation';
 
+/** /merchant folded into the studio Demand tab (SITEMAP.md). Keep the path
+ * so shared links still resolve. */
 export default function MerchantPage() {
-  return <MerchantDashboard />;
+  redirect('/studio?tab=demand');
 }

@@ -10,7 +10,6 @@ import {
   Play,
   Radio,
   ShieldCheck,
-  Shirt,
   Sparkles,
   UnlockKeyhole,
   WandSparkles,
@@ -20,7 +19,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
+import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
 import { SiteHeader } from '@/components/site-header';
+import { SurfaceTabs } from '@/components/surface-tabs';
+import { useSurfaceTab } from '@/components/use-surface-tab';
 import { BRAND } from '@/lib/proofframe/brand';
 
 import '@/app/studio.css';
@@ -80,6 +82,33 @@ type SignalView = DemandSignal & {
     brandLoyalty: 'loyal' | 'switcher';
   };
 };
+
+const STUDIO_TABS = [
+  { id: 'demand', label: 'Demand' },
+  { id: 'offer', label: 'Offer and rules' },
+  { id: 'composition', label: 'Composition' },
+] as const;
+
+type StudioTab = (typeof STUDIO_TABS)[number]['id'];
+
+const STUDIO_TAB_IDS: readonly StudioTab[] = STUDIO_TABS.map((t) => t.id);
+
+const DEMAND_TOOLS = new Set(['get_demand']);
+const OFFER_TOOLS = new Set([
+  'get_offer',
+  'propose_offer',
+  'import_product',
+  'get_campaign_state',
+]);
+const COMPOSITION_TOOLS = new Set([
+  'set_brief',
+  'add_scene',
+  'update_scene',
+  'reorder_scenes',
+  'seek_preview',
+  'validate_claims',
+  'export_composition',
+]);
 
 const SENSITIVITY_LABEL: Record<string, string> = {
   code: 'code-sensitive',
@@ -277,6 +306,7 @@ function sortNeedsFirst(signals: DemandSignal[]): DemandSignal[] {
 }
 
 export function ProofFrameStudio() {
+  const [tab, setTab] = useSurfaceTab<StudioTab>(STUDIO_TAB_IDS, 'demand');
   const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
   const campaignRef = useRef(campaign);
   const [activity, setActivity] = useState<Activity[]>(initialActivity);
@@ -307,12 +337,15 @@ export function ProofFrameStudio() {
   const [newSignalIds, setNewSignalIds] = useState<Set<string>>(new Set());
   const [newActivityIds, setNewActivityIds] = useState<Set<number>>(new Set());
 
-  const handleToolCall = useCallback((_name: string, result: ToolContent) => {
+  const handleToolCall = useCallback((name: string, result: ToolContent) => {
     setToolCallCount((n) => n + 1);
     if ((result as { ok?: boolean }).ok === false) {
       setBlockedCount((n) => n + 1);
     }
-  }, []);
+    if (DEMAND_TOOLS.has(name)) setTab('demand');
+    else if (OFFER_TOOLS.has(name)) setTab('offer');
+    else if (COMPOSITION_TOOLS.has(name)) setTab('composition');
+  }, [setTab]);
 
   const applySignals = useCallback((next: DemandSignal[]) => {
     const prev = prevSignalIdsRef.current;
@@ -928,28 +961,43 @@ export function ProofFrameStudio() {
           </Badge>
         }
         actions={
-          <>
-            <a className="cross-link" href="/closet">
-              <Shirt data-icon="inline-start" aria-hidden="true" />
-              Shopper closet
-            </a>
-            <Button
-              className="export-button"
-              onClick={downloadComposition}
-              disabled={violations.length > 0}
-            >
-              <Download data-icon="inline-start" />
-              Export
-            </Button>
-          </>
+          <Button
+            className="export-button"
+            onClick={downloadComposition}
+            disabled={violations.length > 0}
+          >
+            <Download data-icon="inline-start" />
+            Export
+          </Button>
         }
       />
 
       <LoopRail surface="studio" flags={loopFlags} />
 
+      <SurfaceTabs
+        tabs={[...STUDIO_TABS]}
+        active={tab}
+        onChange={setTab}
+        label="Studio sections"
+      />
+
+      <div
+        id="panel-demand"
+        role="tabpanel"
+        aria-labelledby="tab-demand"
+        hidden={tab !== 'demand'}
+        className="tab-panel"
+      >
+        <MerchantDemandPanel facts={campaign.facts} />
+      </div>
+
       <section
-        className="studio-grid"
-        aria-label={`${BRAND.name} campaign workspace`}
+        id="panel-offer"
+        role="tabpanel"
+        aria-labelledby="tab-offer"
+        hidden={tab !== 'offer'}
+        className="tab-panel studio-grid offer-grid"
+        aria-label={`${BRAND.name} offer and rules`}
       >
         <aside className="truth-panel panel">
           <div className="panel-heading">
@@ -1214,218 +1262,6 @@ export function ProofFrameStudio() {
             Human-only control · deliberately absent from WebMCP
           </p>
         </aside>
-
-        <section className="canvas-panel panel" aria-label="Campaign preview">
-          <fieldset
-            className="placement-control"
-            title="Placement is a human choice, not a WebMCP tool. No agent can set it."
-          >
-            <legend className="placement-control-label">Placement</legend>
-            {(Object.keys(PLACEMENTS) as Placement[]).map((placement) => (
-              <button
-                key={placement}
-                type="button"
-                className={`placement-option ${campaign.format.placement === placement ? 'active' : ''}`}
-                aria-pressed={campaign.format.placement === placement}
-                onClick={() => setPlacement(placement)}
-              >
-                {PLACEMENTS[placement].label} {PLACEMENTS[placement].ratio}
-              </button>
-            ))}
-          </fieldset>
-
-          <div className="canvas-toolbar">
-            <div>
-              <p className="eyebrow">Live composition</p>
-              <h2>
-                {PLACEMENTS[campaign.format.placement].ratio} ·{' '}
-                {totalDuration.toFixed(1)} seconds
-              </h2>
-            </div>
-            <div className="toolbar-controls">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={playing ? 'Pause preview' : 'Play preview'}
-                onClick={() => setPlaying((current) => !current)}
-              >
-                {playing ? <Pause /> : <Play />}
-              </Button>
-              <span>{playhead.toFixed(1).padStart(4, '0')}s</span>
-            </div>
-          </div>
-
-          <div className="preview-stage">
-            {activeScene ? (
-              <div
-                className={`phone-preview dynamic-preview kind-${activeScene.kind} placement-${campaign.format.placement}`}
-                style={
-                  {
-                    background:
-                      activeScene.style?.background ??
-                      campaign.style.background,
-                    color: activeScene.style?.ink ?? campaign.style.ink,
-                    '--scene-accent':
-                      activeScene.style?.accent ?? campaign.style.accent,
-                  } as React.CSSProperties
-                }
-              >
-                <div className="preview-grain" aria-hidden="true" />
-                {facts.productImage &&
-                (activeScene.kind === 'hero' || activeScene.kind === 'product') ? (
-                  // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
-                  <img
-                    src={facts.productImage}
-                    alt={facts.productName}
-                    className="preview-product-photo"
-                    loading="lazy"
-                  />
-                ) : null}
-                <p className="preview-kicker">
-                  {activeScene.kind} / {campaign.facts.productName}
-                </p>
-                <div className="preview-signal" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div className="dynamic-copy">
-                  <span>
-                    Scene{' '}
-                    {String(campaign.scenes.indexOf(activeScene) + 1).padStart(
-                      2,
-                      '0',
-                    )}
-                  </span>
-                  <h3>{activeScene.heading}</h3>
-                  <p>{activeScene.body}</p>
-                </div>
-                <div className="preview-price">
-                  <strong>{campaign.facts.discountPercent}% off</strong>
-                  <span>
-                    {money(campaign.facts.salePrice, campaign.facts.currency)}
-                  </span>
-                </div>
-                <p className="preview-footnote">{campaign.facts.disclaimer}</p>
-              </div>
-            ) : (
-              <div className="empty-preview">Ask the agent to add a scene.</div>
-            )}
-          </div>
-
-          <div className="timeline" aria-label="Storyboard timeline">
-            <input
-              className="timeline-slider"
-              type="range"
-              min="0"
-              max={totalDuration || 1}
-              step="0.1"
-              value={Math.min(playhead, totalDuration)}
-              aria-label="Preview time"
-              onChange={(event) => {
-                const next = Number(event.target.value);
-                setPlayhead(next);
-                const scene = sceneAtTime(campaign.scenes, next);
-                if (scene) setSelectedId(scene.id);
-              }}
-            />
-            <div className="timeline-rail">
-              <span
-                className="timeline-progress"
-                style={{ width: `${progress * 100}%` }}
-              />
-              <span
-                className="timeline-playhead"
-                style={{ left: `${progress * 100}%` }}
-              />
-            </div>
-            <div
-              className="scene-grid"
-              style={{
-                gridTemplateColumns: `repeat(${Math.max(campaign.scenes.length, 1)}, minmax(112px, 1fr))`,
-              }}
-            >
-              {campaign.scenes.map((scene, index) => (
-                <button
-                  className={`scene-card ${scene.id === activeScene?.id ? 'active' : ''}`}
-                  type="button"
-                  key={scene.id}
-                  onClick={() => selectScene(scene)}
-                >
-                  <span className="scene-number">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span
-                    className="scene-swatch"
-                    style={{
-                      background:
-                        scene.style?.background ?? campaign.style.background,
-                    }}
-                  />
-                  <span>
-                    <small>{scene.kind}</small>
-                    <strong>{scene.heading}</strong>
-                  </span>
-                </button>
-              ))}
-            </div>
-            {activeScene && (
-              <>
-                <button
-                  type="button"
-                  className="inspector-toggle"
-                  onClick={() => setInspectorOpen((v) => !v)}
-                  aria-expanded={inspectorOpen}
-                >
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={inspectorOpen ? 'chevron-open' : 'chevron-closed'}
-                  />
-                  {inspectorOpen ? 'Hide scene details' : 'Show scene details'}
-                </button>
-                <div
-                  className={`scene-inspector ${inspectorOpen ? '' : 'collapsed'}`}
-                >
-                  <div className="scene-inspector-inner">
-                    <label>
-                      <span>Heading</span>
-                      <input
-                        value={activeScene.heading}
-                        onChange={(event) =>
-                          updateSceneAsHuman({ heading: event.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span>Body</span>
-                      <input
-                        value={activeScene.body}
-                        onChange={(event) =>
-                          updateSceneAsHuman({ body: event.target.value })
-                        }
-                      />
-                    </label>
-                    <label className="duration-input">
-                      <span>Seconds</span>
-                      <input
-                        type="number"
-                        min="0.5"
-                        max="30"
-                        step="0.5"
-                        value={activeScene.durationSec}
-                        onChange={(event) =>
-                          updateSceneAsHuman({
-                            durationSec: Number(event.target.value),
-                          })
-                        }
-                      />
-                    </label>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </section>
 
         <aside className="proof-panel panel">
           <div className="panel-heading">
@@ -1712,6 +1548,227 @@ export function ProofFrameStudio() {
             Any catalog connector (this demo: a Shopify-shaped snapshot) · Chrome and ChatGPT WebMCP · deployed on Cloudflare Workers
           </footer>
         </aside>
+      </section>
+
+      <section
+        id="panel-composition"
+        role="tabpanel"
+        aria-labelledby="tab-composition"
+        hidden={tab !== 'composition'}
+        className="tab-panel studio-grid composition-grid"
+        aria-label={`${BRAND.name} composition`}
+      >
+        <section className="canvas-panel panel" aria-label="Campaign preview">
+          <fieldset
+            className="placement-control"
+            title="Placement is a human choice, not a WebMCP tool. No agent can set it."
+          >
+            <legend className="placement-control-label">Placement</legend>
+            {(Object.keys(PLACEMENTS) as Placement[]).map((placement) => (
+              <button
+                key={placement}
+                type="button"
+                className={`placement-option ${campaign.format.placement === placement ? 'active' : ''}`}
+                aria-pressed={campaign.format.placement === placement}
+                onClick={() => setPlacement(placement)}
+              >
+                {PLACEMENTS[placement].label} {PLACEMENTS[placement].ratio}
+              </button>
+            ))}
+          </fieldset>
+
+          <div className="canvas-toolbar">
+            <div>
+              <p className="eyebrow">Live composition</p>
+              <h2>
+                {PLACEMENTS[campaign.format.placement].ratio} ·{' '}
+                {totalDuration.toFixed(1)} seconds
+              </h2>
+            </div>
+            <div className="toolbar-controls">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={playing ? 'Pause preview' : 'Play preview'}
+                onClick={() => setPlaying((current) => !current)}
+              >
+                {playing ? <Pause /> : <Play />}
+              </Button>
+              <span>{playhead.toFixed(1).padStart(4, '0')}s</span>
+            </div>
+          </div>
+
+          <div className="preview-stage">
+            {activeScene ? (
+              <div
+                className={`phone-preview dynamic-preview kind-${activeScene.kind} placement-${campaign.format.placement}`}
+                style={
+                  {
+                    background:
+                      activeScene.style?.background ??
+                      campaign.style.background,
+                    color: activeScene.style?.ink ?? campaign.style.ink,
+                    '--scene-accent':
+                      activeScene.style?.accent ?? campaign.style.accent,
+                  } as React.CSSProperties
+                }
+              >
+                <div className="preview-grain" aria-hidden="true" />
+                {facts.productImage &&
+                (activeScene.kind === 'hero' || activeScene.kind === 'product') ? (
+                  // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
+                  <img
+                    src={facts.productImage}
+                    alt={facts.productName}
+                    className="preview-product-photo"
+                    loading="lazy"
+                  />
+                ) : null}
+                <p className="preview-kicker">
+                  {activeScene.kind} / {campaign.facts.productName}
+                </p>
+                <div className="preview-signal" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <div className="dynamic-copy">
+                  <span>
+                    Scene{' '}
+                    {String(campaign.scenes.indexOf(activeScene) + 1).padStart(
+                      2,
+                      '0',
+                    )}
+                  </span>
+                  <h3>{activeScene.heading}</h3>
+                  <p>{activeScene.body}</p>
+                </div>
+                <div className="preview-price">
+                  <strong>{campaign.facts.discountPercent}% off</strong>
+                  <span>
+                    {money(campaign.facts.salePrice, campaign.facts.currency)}
+                  </span>
+                </div>
+                <p className="preview-footnote">{campaign.facts.disclaimer}</p>
+              </div>
+            ) : (
+              <div className="empty-preview">Ask the agent to add a scene.</div>
+            )}
+          </div>
+
+          <div className="timeline" aria-label="Storyboard timeline">
+            <input
+              className="timeline-slider"
+              type="range"
+              min="0"
+              max={totalDuration || 1}
+              step="0.1"
+              value={Math.min(playhead, totalDuration)}
+              aria-label="Preview time"
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                setPlayhead(next);
+                const scene = sceneAtTime(campaign.scenes, next);
+                if (scene) setSelectedId(scene.id);
+              }}
+            />
+            <div className="timeline-rail">
+              <span
+                className="timeline-progress"
+                style={{ width: `${progress * 100}%` }}
+              />
+              <span
+                className="timeline-playhead"
+                style={{ left: `${progress * 100}%` }}
+              />
+            </div>
+            <div
+              className="scene-grid"
+              style={{
+                gridTemplateColumns: `repeat(${Math.max(campaign.scenes.length, 1)}, minmax(112px, 1fr))`,
+              }}
+            >
+              {campaign.scenes.map((scene, index) => (
+                <button
+                  className={`scene-card ${scene.id === activeScene?.id ? 'active' : ''}`}
+                  type="button"
+                  key={scene.id}
+                  onClick={() => selectScene(scene)}
+                >
+                  <span className="scene-number">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span
+                    className="scene-swatch"
+                    style={{
+                      background:
+                        scene.style?.background ?? campaign.style.background,
+                    }}
+                  />
+                  <span>
+                    <small>{scene.kind}</small>
+                    <strong>{scene.heading}</strong>
+                  </span>
+                </button>
+              ))}
+            </div>
+            {activeScene && (
+              <>
+                <button
+                  type="button"
+                  className="inspector-toggle"
+                  onClick={() => setInspectorOpen((v) => !v)}
+                  aria-expanded={inspectorOpen}
+                >
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={inspectorOpen ? 'chevron-open' : 'chevron-closed'}
+                  />
+                  {inspectorOpen ? 'Hide scene details' : 'Show scene details'}
+                </button>
+                <div
+                  className={`scene-inspector ${inspectorOpen ? '' : 'collapsed'}`}
+                >
+                  <div className="scene-inspector-inner">
+                    <label>
+                      <span>Heading</span>
+                      <input
+                        value={activeScene.heading}
+                        onChange={(event) =>
+                          updateSceneAsHuman({ heading: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label>
+                      <span>Body</span>
+                      <input
+                        value={activeScene.body}
+                        onChange={(event) =>
+                          updateSceneAsHuman({ body: event.target.value })
+                        }
+                      />
+                    </label>
+                    <label className="duration-input">
+                      <span>Seconds</span>
+                      <input
+                        type="number"
+                        min="0.5"
+                        max="30"
+                        step="0.5"
+                        value={activeScene.durationSec}
+                        onChange={(event) =>
+                          updateSceneAsHuman({
+                            durationSec: Number(event.target.value),
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </section>
       </section>
     </main>
   );
