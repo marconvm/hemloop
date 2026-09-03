@@ -53,6 +53,8 @@ Four real threads, in the order they compound:
 3. **Creatives for every placement.** Image and GIF exports first, matched to real ad placements (Story 9:16, Feed 4:5, Display 16:9), then short video once the still and motion pipelines share one validator.
 4. **Offers a shopping agent can act on, both ways.** `get_offer` is step one: locked facts as structured data with a purchase link. Next is the purchase-or-not feedback loop, bought or passed on each demand event, written back so both sides learn. The merchant already answers demand at two levels, Need and Want; the feedback loop makes both levels more accurate over time instead of adding a third.
 
+The first artefacts of that plan are in the repo: `docs/integrations/commerce-agents/` holds a SKILL.md a commerce-agents shopping agent would load to use the closet, and a snapshot eval case in that harness's format that drives our tool boundary instead of a model.
+
 ## Built with
 
 TypeScript, React 19, WebMCP (`document.modelContext`, with `navigator.modelContext` fallback), a Shopify-shaped synthetic catalog, GSAP, Cloudflare Workers, HyperFrames composition format.

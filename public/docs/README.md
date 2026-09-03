@@ -79,6 +79,7 @@ A few more pieces of the shopper side worth knowing about: **Shopping for** lets
 - [User Guide](docs/USER-GUIDE.md): shopper and merchant walkthroughs
 - [Tech Guide](docs/TECH-GUIDE.md): architecture, tool contracts, signal bridge, export format
 - [Gap Analysis](docs/GAP-ANALYSIS.md): where the build stands against the product vision
+- [Plugging into a commerce-agents harness](docs/integrations/commerce-agents/README.md): a SKILL.md and a snapshot eval case in Anthropic's reference format
 - [Verification Record](docs/VERIFICATION.md): green gates and the remaining real-browser checklist
 
 ## Challenge supporters used
