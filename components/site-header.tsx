@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { BRAND } from '@/lib/proofframe/brand';
 
-export type SiteSection = 'loop' | 'closet' | 'studio' | 'merchant' | 'docs';
+export type SiteSection = 'loop' | 'closet' | 'studio' | 'docs';
 
 export interface SiteHeaderProps {
   active: SiteSection;
@@ -14,7 +14,6 @@ const LINKS: { key: SiteSection; label: string; href: string }[] = [
   { key: 'loop', label: 'Loop', href: '/' },
   { key: 'closet', label: 'Closet', href: '/closet' },
   { key: 'studio', label: 'Studio', href: '/studio' },
-  { key: 'merchant', label: 'Merchant', href: '/merchant' },
   { key: 'docs', label: 'Docs', href: '/docs/' },
 ];
 
@@ -22,6 +21,7 @@ const LINKS: { key: SiteSection; label: string; href: string }[] = [
  *
  * The page supplies runtime status and contextual actions. The header owns
  * only identity and navigation, so it never reaches into bridge or tool state.
+ * Four links are the sitemap (see docs/coordination/SITEMAP.md).
  */
 export function SiteHeader({ active, status, actions }: SiteHeaderProps) {
   return (

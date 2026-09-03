@@ -612,3 +612,33 @@
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
 }
+
+/* Surface tabs */
+.studio-shell .surface-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: min(1180px, calc(100% - 28px));
+  margin: 14px auto 0;
+  padding: 0 4px;
+}
+.studio-shell .surface-tab {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--muted);
+  padding: 8px 16px;
+  font: 650 13px/1 var(--font-body);
+  cursor: pointer;
+}
+.studio-shell .surface-tab.is-active {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
+.studio-shell .tab-panel[hidden] {
+  display: none !important;
+}
+.studio-shell .closet-requests-grid {
+  grid-template-columns: minmax(0, 1fr);
+}

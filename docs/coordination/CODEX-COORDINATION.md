@@ -481,3 +481,17 @@ Landed:
 5. Closet trail copy now says ten garments shared with the Loop Room; UI already showed `Wardrobe · 10`. No leftover user-facing "eight garments" on closet/docs.
 
 Gates: 140/140, tsc, lint, build. No deploy.
+
+### Cursor sitemap: one page per side, tabs inside (2026-09-03)
+
+Branch: `cursor/sitemap` (worktree `../hemloop-cursor`). Implements docs/coordination/SITEMAP.md.
+
+Landed:
+1. `/studio` tabs: Demand (folded merchant dashboard as `merchant-demand-panel.tsx`) · Offer and rules · Composition. Default `?tab=demand`.
+2. `/closet` tabs: Wardrobe · Requests and offers. Default wardrobe.
+3. Tab state in `?tab=` via `useSurfaceTab` (useSyncExternalStore); tools still register once; tool handlers switch to the panel they change.
+4. `/merchant` redirects to `/studio?tab=demand`; deleted `merchant-dashboard.tsx` + `merchant.css`.
+5. SiteHeader LINKS are Loop · Closet · Studio · Docs (Merchant removed); cross-link pills removed from closet/studio chrome.
+6. SiteFooter not on main — pushed without it.
+
+Verified 1440 + 820 with getBoundingClientRect. Gates: 140/140, tsc, lint, build. No deploy.
