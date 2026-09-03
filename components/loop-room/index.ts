@@ -1,3 +1,5 @@
+export { ClosetStack } from './closet-stack';
+export { CreativeCard } from './creative-card';
 export { GateButton } from './gate-button';
 export { LoopRoom, type LoopRoomProps } from './loop-room';
 export { LoopRoomRail } from './loop-room-rail';

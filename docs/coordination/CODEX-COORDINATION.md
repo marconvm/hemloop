@@ -496,13 +496,38 @@ Landed:
 
 Verified 1440 + 820 with getBoundingClientRect. Gates: 140/140, tsc, lint, build. No deploy.
 
+### Codex wave 5: Loop Room presentation (2026-09-03)
+
+Branch `codex/loop-room-wave5`; implementation commit `2fe1155`. Work stayed in the independent
+`proofframe-webmcp-codex-room` worktree. Landed against the eleven-item brief:
+
+1. Rail: compact labels for todo stations, full labels for current/done, with connectors behind nodes.
+2. Status vocabulary: only `Processing` during a call and `Done` after one; no status chip on arrival.
+3. Locked party names: `Shopper · Closet` and `Merchant · Demand`.
+4. Party geometry: equal-height aligned shopper and merchant cards.
+5. Closet: real active-profile rows, actual `+N`, new-item entry motion, family switch, and Add five.
+6. Creative placement: item/gap product creative stays shopper-side; merchant composition/checkout stays merchant-side.
+7. Last run: the latest completed tool activity remains visible below the current station.
+8. Station hierarchy: facts first, update second, human-only gate last.
+9. Hero: current eyebrow/title, with lighter weight, normal tracking, and more eyebrow breathing room.
+10. Cycle number: change pulse keyed to the real cycle number.
+11. Footer: brand plus exactly Loop, Closet, Studio, Docs and `Demo data, real brands`.
+
+Sitemap follow-up also landed: plain `Open the closet` and `Open the studio` anchors inside their
+respective party cards. `SiteHeader` and its link constant were not edited, leaving Cursor's sitemap
+change conflict-free. Not landed from the eleven-item brief: none. No extra task or deploy was started.
+
+Verification: desktop local browser smoke at 1440 px; 140/140 tests, TypeScript clean, oxlint clean,
+and production build complete.
+
 ### Cursor wave5b: docs chrome + shared campaign (2026-09-03)
 
 Branch: `cursor/wave5b` (worktree `../hemloop-cursor`).
 
 Landed:
-1. `public/docs/index.html` carries the same header chrome as `SiteHeader` (logo top-left, Loop · Closet · Studio · Docs with Docs active, Manrope/DM Sans + loop tokens, pill nav). Docs sections and reading order untouched. Static footer with the four links + "demo data, real brands" until Codex's `site-footer.tsx` lands; React surfaces still wait for that component.
-2. `readCampaign` / `writeCampaign` in `lib/proofframe/seed.ts` (`hemloop.campaign`): seed when empty/unavailable/corrupt JSON; validate facts + scenes (+ format/style/factsLocked) before trusting storage. Hydrate on mount in `loop-room-page.tsx` and `proofframe-studio.tsx`, write after hydration — same pattern as wardrobe. A human lock on `/studio` persists as `factsLocked` on `/`.
-3. Test in `tests/proofframe.test.ts` with the fake-window pattern from `tests/closet.test.ts`.
+1. `public/docs/index.html` carries the same header chrome as `SiteHeader` (logo top-left, Loop · Closet · Studio · Docs with Docs active, Manrope/DM Sans + loop tokens, pill nav). Docs sections and reading order untouched. Static footer mirrors Codex's `site-footer.tsx` markup (four links + "Demo data, real brands") because `/docs/` is static HTML.
+2. After merging Codex wave5: render `SiteFooter` on `/closet` and `/studio` (Loop Room already has it).
+3. `readCampaign` / `writeCampaign` in `lib/proofframe/seed.ts` (`hemloop.campaign`): seed when empty/unavailable/corrupt JSON; validate facts + scenes (+ format/style/factsLocked) before trusting storage. Hydrate on mount in `loop-room-page.tsx` and `proofframe-studio.tsx`, write after hydration — same pattern as wardrobe. A human lock on `/studio` persists as `factsLocked` on `/`.
+4. Test in `tests/proofframe.test.ts` with the fake-window pattern from `tests/closet.test.ts`.
 
 Verified docs chrome at 1440 (header 72px, nav centered) and 820 (wraps, no overflowX) via getBoundingClientRect. Gates: 141/141, tsc, lint, build. No deploy.

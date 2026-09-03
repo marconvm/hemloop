@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
+import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { SurfaceTabs } from '@/components/surface-tabs';
 import { useSurfaceTab } from '@/components/use-surface-tab';
@@ -1796,6 +1797,7 @@ export function ProofFrameStudio() {
           </div>
         </section>
       </section>
+      <SiteFooter />
     </main>
   );
 }

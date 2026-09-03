@@ -1,11 +1,26 @@
 import { Check } from 'lucide-react';
 
-import type { StationCard } from '@/lib/proofframe/loop-room';
+import type { StationCard, StationKey } from '@/lib/proofframe/loop-room';
 
-export function LoopRoomRail({ stations }: { stations: StationCard[] }) {
+const SHORT_LABEL: Record<StationKey, string> = {
+  item: 'Item',
+  gap: 'Gap',
+  approved: 'Approve',
+  offer: 'Offer',
+  bought: 'Bought',
+  learned: 'Learned',
+  again: 'Again',
+};
+
+export function LoopRoomRail({
+  stations,
+  processing,
+}: {
+  stations: StationCard[];
+  processing: boolean;
+}) {
   return (
     <nav className="hlr-rail" aria-label="Loop progress">
-      <div className="hlr-rail-line" aria-hidden="true" />
       <ol>
         {stations.map((station, index) => (
           <li
@@ -17,14 +32,15 @@ export function LoopRoomRail({ stations }: { stations: StationCard[] }) {
               {station.state === 'done' ? <Check /> : index + 1}
             </span>
             <span className="hlr-rail-copy">
-              <b>{station.label}</b>
-              <small>
-                {station.state === 'done'
-                  ? 'Updated'
-                  : station.state === 'current'
-                    ? 'Now'
-                    : 'Next'}
-              </small>
+              <b>
+                {station.state === 'todo'
+                  ? SHORT_LABEL[station.key]
+                  : station.label}
+              </b>
+              {station.state === 'done' ? <small>Done</small> : null}
+              {station.state === 'current' && processing ? (
+                <small>Processing</small>
+              ) : null}
             </span>
           </li>
         ))}
