@@ -1,6 +1,6 @@
 # Hemloop Test Plan and Results
 
-Last run: 2026-09-01 (America/Toronto). Scope: the Hemloop WebMCP prototype (Cloudflare Workers, synthetic data). Companion evidence in [VERIFICATION.md](./VERIFICATION.md); acceptance criteria in [PRD.md](./PRD.md).
+Last run: 2026-09-03 (America/Toronto). Scope: the Hemloop WebMCP prototype (Cloudflare Workers, synthetic data). Companion evidence in [VERIFICATION.md](./VERIFICATION.md); acceptance criteria in [PRD.md](./PRD.md).
 
 Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackathon prototype, with reason) / DEFERRED (needs a human step).
 
@@ -31,6 +31,14 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | F21 | Bought / Passed outcomes | `recordOutcome` appends and verifies against a readback, same pattern as `appendSignal`; `readOutcomes` drops malformed rows | PASS (unit) |
 | F22 | Placement presets | `formatForPlacement` maps `story`/`feed`/`display` to the correct width, height, fps and ratio; no WebMCP tool reads or writes `format.placement` | PASS (unit) |
 | F23 | Offer completeness | `computeCompleteness` counts locked vs. the fixed 9-check list and names the missing keys; `get_offer` returns the same object plus `sizesInStock` | PASS (unit) |
+| F24 | `parseReceipt` on both sample shapes | Till receipt and order-email text each parse to merchant, items (title, category, size, price), promo code and date; unrecognised text returns `null`, never throws | PASS (unit) |
+| F25 | `import_receipt` tool | Adds purchases and, for recognised categories, garments; bounded to 4000 chars; a failed parse returns `unparsed-receipt`, not a throw; the pasted text is never echoed back | PASS (unit) |
+| F26 | `buyingPattern` per category | Derives `discountSensitivity` (code/percent/none), `spendBand` and `brandLoyalty` from purchase history for one category, optionally scoped to one brand; an empty match returns a neutral default rather than throwing | PASS (unit) |
+| F27 | `get_offers` tool | Returns only offers with `status: 'approved'` whose `requestId` matches a signal this closet already sent; nothing else | PASS (unit) |
+| F28 | `matchOffer` rules | Category mismatch and out-of-stock size refuse with a typed reason; `discountSensitivity: 'none'` caps the discount at 15; `brandLoyalty: 'switcher'` raises it to `maxDiscountPercent`; the discount trims in 5-point steps until `marginFloorPercent` holds or reaches 0; `occasion: 'gift'`/`'event'` shortens `validTo` to at most 7 days | PASS (unit) |
+| F29 | `propose_offer` tool | Matches one incoming request against the locked offer rules and stages the result via `stageOffer`; a no-match request returns a structured `no-match` refusal, never a throw | PASS (unit) |
+| F30 | Offer approval visibility | A `PersonalOffer` with `status: 'proposed'` or `'declined'` is never returned by `get_offer(requestId)` or `get_offers`; only `status: 'approved'` is | PASS (unit) |
+| F31 | Purchase attribution | `purchaseFromOffer` builds a `Purchase` with `source: 'offer'` and `offerId` set to the offer it came from; the wave-3 seed purchase `p10` demonstrates the same shape | PASS (unit) |
 
 ## 2. Smoke Test: does the deployed thing come up at all
 
@@ -58,7 +66,7 @@ Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" h
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS (63/63 at HEAD) |
+| R1 | Full unit suite after every milestone | PASS (101/101 at HEAD) |
 | R2 | `tsc --noEmit` after each change | PASS (clean) |
 | R3 | `oxlint` after each change | PASS (clean) |
 | R4 | Production build after each change | PASS |
@@ -140,7 +148,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (63/63), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (101/101), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime

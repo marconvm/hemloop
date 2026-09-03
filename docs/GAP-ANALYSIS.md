@@ -110,3 +110,19 @@ validity window shaped by the occasion. The merchant's agent can propose (`propo
 can be switched on; a human approves before anything becomes visible. Approved offers travel back over the
 bridge, addressed to the request id, never to a person; the shopper sees them in the closet and answers
 Bought or Passed, which closes the loop and feeds the pattern.
+
+## Shipped 2026-09-03 (wave 3)
+
+- [x] Purchase log across every merchant, rivals included: `Purchase`, seeded across five brands (Northlight Apparel, Denim Supply Co., Ridgeline Outdoor, Overland Trading Co., and the rival Harborview Basics), stored only in the browser (`hemloop.purchases`)
+- [x] Receipt / order-email import: pure local parser (`receipts.ts`, no OCR, no network), two recognised paste shapes, `import_receipt` tool, human textarea with two paste-ready samples
+- [x] Buying pattern per category: `buyingPattern(purchases, category, brand?)` derives discount sensitivity (code / percent / none), spend band, and brand loyalty (loyal / switcher); pure, deterministic
+- [x] `ConsentField` gained `buyingPattern`; `DemandSignal.pattern` carries the derived `BuyingPattern`, only at consent level 3; the raw purchases never leave the page
+- [x] Merchant offer rules locked beside the offer facts: cost price 24, margin floor 35%, max discount 30%, all human-only, no WebMCP tool reads or writes them
+- [x] `matchOffer`: pure matcher turning one request plus the locked rules into a `PersonalOffer` or a typed refusal; discount capped at 15 for `'none'` sensitivity, raised to the max for a `'switcher'`, trimmed in 5-point steps to hold the margin floor, validity shortened to 7 days for a gift or event occasion, category and in-stock size both enforced
+- [x] `propose_offer` tool: stages a proposal for one incoming request; a human approves or declines in the studio; an Auto-propose toggle (human-only, default off) proposes one automatically for every new request
+- [x] Approved offers travel over the bridge (`hemloop.offers`) addressed to the request id, never to a person; they appear in the closet's "Offers for your requests" with Bought / Passed
+- [x] Bought records a purchase with the offer's id attached (attribution) and adds the garment to the wardrobe; `get_offer(requestId)` and `get_offers` hand the approved offer to a shopping agent or the shopper
+- [x] 20 WebMCP tools total (9 closet, 11 studio), 101 unit tests
+- [x] Landing, README, PRD, User Guide, Tech Guide, Use Cases, Writeup, Test Plan, Demo Script and Cue Sheet synced to wave 3
+
+Roadmap items unchanged by this wave: receipt OCR, real order-email connectors, a browser extension surface, aggregation before disclosure (k-anonymity floor), the outcome written back into the merchant's own reporting, and the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam described in `docs/integrations/commerce-agents/README.md`.

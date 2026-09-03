@@ -66,6 +66,20 @@ const CLOSET_ROWS: ToolRow[] = [
       'Rejects with human-approval-required until the person approves one request, consumes that approval after one event, can emit only the DemandSignal shape, returns the exact payload sent',
     strong: true,
   },
+  {
+    surface: 'Closet',
+    tool: 'import_receipt',
+    kind: 'write',
+    what: 'Parses a pasted receipt or order email into purchases and garments on this page',
+    guarantee: 'Bounded text, parsed locally, never echoed back; nothing leaves the page',
+  },
+  {
+    surface: 'Closet',
+    tool: 'get_offers',
+    kind: 'read',
+    what: "Approved personal offers addressed to this closet's own requests",
+    guarantee: 'readOnlyHint, storefront_data fence, the shopper decides Bought or Passed on the page',
+  },
 ];
 
 const STUDIO_ROWS: ToolRow[] = [
@@ -94,7 +108,7 @@ const STUDIO_ROWS: ToolRow[] = [
     surface: 'Studio',
     tool: 'get_offer',
     kind: 'read',
-    what: 'Returns the locked offer as structured data for a shopping agent: product, prices, code, dates, disclaimer, purchase link',
+    what: 'Returns the locked offer as structured data for a shopping agent: product, prices, code, dates, disclaimer, purchase link; pass requestId to read one approved personal offer instead',
     guarantee: 'readOnlyHint; returns the facts with whether a human has locked them, so an agent can tell a locked offer from a draft',
   },
   {
@@ -132,18 +146,25 @@ const STUDIO_ROWS: ToolRow[] = [
     what: 'Pulls a product into the facts',
     guarantee: 'untrustedContentHint, blocked while facts are locked',
   },
+  {
+    surface: 'Studio',
+    tool: 'propose_offer',
+    kind: 'write',
+    what: 'Proposes a personal offer for one incoming request inside the locked offer rules',
+    guarantee: 'Staged; a human approves before the shopper can see it; margin floor enforced in code',
+  },
 ];
 
 const ABSENT_ROW: ToolRow = {
   surface: 'Both',
   tool: '(absent by design)',
   kind: 'none',
-  what: 'There is no lock_facts, no unlock_facts, no approve_share, no set_sharing_level',
-  guarantee: 'Locking facts, releasing wardrobe data, and the consent dial are human-only acts. This row is the product.',
+  what: 'There is no lock_facts, no unlock_facts, no approve_share, no set_sharing_level, no approve_offer',
+  guarantee: 'Locking facts, releasing wardrobe data, the consent dial, and approving an offer are human-only acts. This row is the product.',
   strong: true,
 };
 
-const TOTAL_TOOL_COUNT = 17;
+const TOTAL_TOOL_COUNT = 20;
 
 function HemLoopMark({ size = 20, className }: { size?: number; className?: string }) {
   return (
@@ -252,7 +273,7 @@ export function Landing() {
         <p className="landing-sub" data-reveal>
           The store answers with an offer that cannot lie about the price. Hemloop is the loop
           between a shopper&apos;s private closet and a merchant&apos;s campaign studio, built on
-          WebMCP: seventeen typed tools on two web pages, running in the shopper&apos;s and
+          WebMCP: twenty typed tools on two web pages, running in the shopper&apos;s and
           merchant&apos;s own browsers.
         </p>
         <p className="landing-sub" data-reveal>
@@ -302,9 +323,9 @@ export function Landing() {
             <text x="823" y="62" textAnchor="middle">Shopping agent</text>
           </g>
           <g fill="currentColor" fontSize="12" opacity="0.75">
-            <text x="137" y="84" textAnchor="middle">7 tools, wardrobe stays here</text>
+            <text x="137" y="84" textAnchor="middle">9 tools, wardrobe stays here</text>
             <text x="137" y="103" textAnchor="middle">sharing dial 0 to 3</text>
-            <text x="480" y="84" textAnchor="middle">10 tools inside locked offer facts</text>
+            <text x="480" y="84" textAnchor="middle">11 tools inside locked offer facts</text>
             <text x="480" y="103" textAnchor="middle">false claims rejected before render</text>
             <text x="823" y="84" textAnchor="middle">reads get_offer</text>
             <text x="823" y="103" textAnchor="middle">buys on the store&apos;s own page</text>
@@ -326,7 +347,7 @@ export function Landing() {
           <h2>Maya has a closet</h2>
           <p>
             Her wardrobe, sizes and preferences stay in her own browser. Her agent can shop with
-            seven WebMCP tools, but only one of those tools can talk to a store.
+            nine WebMCP tools, but only one of those tools can talk to a store.
           </p>
         </div>
         <div className="loop-step" data-reveal>
@@ -346,9 +367,10 @@ export function Landing() {
           <h2>The store answers inside locked facts</h2>
           <p>
             The merchant locks price, offer, code, dates and disclaimer first. The
-            merchant&apos;s agent builds the response with ten tools, and copy that contradicts
+            merchant&apos;s agent builds the response with eleven tools, and copy that contradicts
             the facts is rejected before it renders. The offer is also readable by shopping
-            agents as structured data.
+            agents as structured data, and a personal offer can be proposed inside the
+            merchant&apos;s margin and approved by a human.
           </p>
         </div>
       </section>

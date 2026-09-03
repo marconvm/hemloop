@@ -26,3 +26,5 @@ source and freshness). The WebMCP adapters in `lib/proofframe/webmcp*.ts` stay o
 those interfaces; a future authenticated backend adds server-side identity and revalidation behind them without
 weakening the no-identifier bridge. Not before the deadline: no runtime, router, memory store, MCP backend or
 new service enters the challenge app.
+
+Wave 3's offer approval is what `ApprovalReceipt` looks like in practice before that interface exists as code: a merchant presses Approve on a `PersonalOffer` staged by `propose_offer` or the Auto-propose toggle, the offer's `status` flips from `proposed` to `approved` with an `approvedAt` timestamp, and only that state, keyed to the request's `requestId`, is what `get_offer(requestId)` and `get_offers` will ever return. No WebMCP tool can write `approved`. A future `ApprovalReceipt` would give that flip a durable, replayable record (who, scope, expiry); the shape it needs to carry is already visible in this one field today.
