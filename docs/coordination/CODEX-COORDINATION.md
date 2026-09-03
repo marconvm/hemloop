@@ -144,3 +144,21 @@ adds `routes` for `hemloop.app` + `www` as custom domains and pins `workers_dev:
 workers.dev silently — it was dark ~2 min on the first attempt). Cert: Google Trust Services. Origin-trial
 tokens for both origins ship in the layout (expire 2026-11-17). Reader-facing docs now say hemloop.app;
 VERIFICATION.md and this log keep historical URLs. Worker 9aaf46c2.
+
+### Revamp wave 1 live (2026-09-02, Worker 23e7526e) — Marco's 14-point feedback + judge review
+Four Sonnet worktree agents (landing+brand, data+photos, studio+closet UX, docs) plus two Opus reviewers
+(judge review, commerce-agents fit) ran in parallel; Claude merged, resolved three conflicts, re-ran gates
+(tsc, oxlint, 44/44 tests, build), smoked locally in Chrome 151 (6 closet / 10 studio tools live, get_offer
+343 chars, fences, thumbnails, no console errors), deployed, live-smoked hemloop.app. Shipped: hem-loop logo
++ favicon.svg, hero rewrite, 16-tool table with the "absent by design" row, ChatGPT-first agent blocks,
+footer roles incl. Vercel, docs CTA, gutter fix, no em dashes, hover/reveal/fold motion; 8 Shopify-grade
+products + 13 Unsplash photos; brands renamed (Northlight Apparel, Ridgeline Outdoor, Denim Supply Co.,
+code NORTHLIGHT25); labels renamed (Approved offer facts, Agent activity log, Incoming requests, Requests
+sent, Approve next request, Missing and thin, What leaves this page); get_offer (10th studio tool); `next`
+on every rejection; fences with commerce-agents labels <closet_data>/<storefront_data> and fixpoint marker
+stripping; Need/Want pills + grouping; GA-debugger flash + tool-call counters; wardrobe thumbnails, inline
+edit/delete, clear button + retention sentence; docs restructured (README hero, WRITEUP with article
+vocabulary + Instant Checkout lesson + roadmap, PRD roadmap, guides). Codex lane still dormant: all of this
+is FIXED pending peer re-review. Next: wave 2 (consent dial 0-3, preferences + get_preferences, occasion,
+Me/Partner/Kid, placement selector, completeness meter, bought/passed), judge re-review, video, public repo,
+Devpost.

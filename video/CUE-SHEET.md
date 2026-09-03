@@ -21,10 +21,10 @@ Chrome 151 with `chrome://flags/#enable-webmcp-testing`, after the dead-code rem
 |---|---|
 | `/closet` badge | **6 WebMCP tools live** |
 | closet tools registered | `add_garment`, `check_fit`, `find_gaps`, `get_my_sizes`, `get_wardrobe`, `report_demand_gap` |
-| `/studio` badge | **9 WebMCP tools live** |
+| `/studio` badge | **10 WebMCP tools live** |
 | studio tools registered | `add_scene`, `export_composition`, `get_campaign_state`, `import_product`, `reorder_scenes`, `seek_preview`, `set_brief`, `update_scene`, `validate_claims` |
 | clean state | `localStorage` empty · closet "Nothing sent yet" · studio "No signals yet" |
-| gates | campaign truth **locked** · **Approve next signal** armed and visible |
+| gates | campaign truth **locked** · **Approve next request** armed and visible |
 | proof trail | "All claims trace to locked facts · 4 scenes checked · safe to export" |
 | runtime namespace | `document.modelContext` defined, `navigator.modelContext` **undefined** |
 
@@ -55,8 +55,8 @@ live — paste, and cut the wait.
 |---|---|---|---|
 | 0:00 | VO-01 (7.3s) | Cold open **already on `/closet`**, live badge visible, first call firing. No title card. | C1 |
 | 0:12 | VO-02 (10.6s) | `find_gaps` result: hoodie absent. Wardrobe grid visible, never read aloud. | — |
-| 0:35 | VO-03 (22.6s) | `report_demand_gap` → `human-approval-required`. Human clicks **Approve next signal**. Retry succeeds; **hold on the payload** — this is the longest line, use it to let a judge read the fields and see no identity column. | C2, human click, C3 |
-| 1:00 | VO-04 (14.3s) | Cut to `/studio`. New event top of Live Demand. Human: **Unlock as human** → **Build campaign from this** → **Lock campaign truth**. Agent never clicks. | — |
+| 0:35 | VO-03 (22.6s) | `report_demand_gap` → `human-approval-required`. Human clicks **Approve next request**. Retry succeeds; **hold on the payload** — this is the longest line, use it to let a judge read the fields and see no identity column. | C2, human click, C3 |
+| 1:00 | VO-04 (14.3s) | Cut to `/studio`. New event top of Incoming requests. Human: **Unlock offer facts** → **Answer this request** → **Lock offer facts**. Agent never clicks. | — |
 | 1:20 | VO-05 (10.5s) | Agent runs the five-call chain; human edits the hero heading by hand in the same canvas. 14 s of headroom here — the widest beat, spend it on the two-editors shot. | M1 |
 | 1:45 | VO-06 (15.1s) | The block: 50% off rejected, red row in the proof trail with the reason, canvas unchanged, agent self-corrects to 25%. | M2 |
 | 2:10 | VO-07 (15.2s) | `validate_claims` → `export_composition`; the downloaded composition plays with the disclaimer footer visible. | M3 |
@@ -73,5 +73,5 @@ named page tool now."* — explaining burns runtime you cannot cut around, becau
 bed underneath it is fixed.
 
 Between takes: clear site data for the origin, reload both tabs, confirm the studio says
-no signals and the truth is locked again. A leftover rehearsal signal in Live Demand is
+no signals and the truth is locked again. A leftover rehearsal signal in Incoming requests is
 the one continuity error a judge would actually notice.
