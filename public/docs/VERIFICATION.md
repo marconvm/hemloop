@@ -6,7 +6,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 
 ## Green gates
 
-- `npm test`: 63/63 tests pass (2026-09-02 evening, after the revamp: consent gating, get_preferences, profile filtering, outcomes, placements, completeness added), including the no-shopper-identifier signal schema, human-approval rejection, one-shot approval consumption, exact returned/sent payload equality, claim rejection, tool registration, catalog mapping and export structure.
+- `npm test`: **120/120 tests pass** (2026-09-03, after wave 4), including the replacement lifecycle, `replace` demand kind, inventory insight, offer attribution, consent gating, no-shopper-identifier signal schema, human approval, claim rejection, tool registration, catalog mapping and export structure.
 - `npm exec -- tsc --noEmit`: clean.
 - `npm exec -- oxlint`: clean.
 - `npm run build`: clean; `/`, `/closet` and `/studio` are present in the Vinext output.
@@ -14,7 +14,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 - Chrome visual/interaction check on `http://localhost:3001`: all three routes render; the closet approval control arms and cancels visibly; the studio editor and proof trail render.
 - Cloudflare production check on `https://hemloop.marcoatwill.workers.dev`: `/`, `/closet` and `/studio` all load over HTTPS with the expected landing, closet and studio headings. The app was deployed with Wrangler 4.127.0.
 - HyperFrames exporter: previously checked with `npx hyperframes check` (0 errors, 0 warnings); exporter structure is also covered by unit tests.
-- Re-verified 2026-09-02 at HEAD after the dead-code removal (58 unused `components/ui/*`, `hooks/`, 8 unused dependencies): 41/41 tests, build and oxlint clean, local Worker smoke and live smoke on `/`, `/closet` and `/studio` all 200 with unchanged security headers. No runtime behaviour changed — only `badge` and `button` were ever reachable from the app.
+- Historical re-verification 2026-09-02 after dead-code removal: 41/41 tests, build and oxlint clean. The current present-tense gate is the 120/120 wave-4 run above.
 
 ## Real WebMCP runtime: verified on the live deployment
 
@@ -33,7 +33,7 @@ The approval-gate and signal-bridge design therefore passed the real runtime tes
 
 ## Wave 3 gates and live smoke, 2026-09-03
 
-Recorded by Claude, pending Codex's independent re-verification (this file is Codex's record under coordination rule 4; the entry is here so the evidence is not lost, and the ask is logged in `docs/coordination/CODEX-COORDINATION.md`).
+Recorded by Claude at wave 3; the current wave-4 gate and live smoke below independently re-verify the same route/header contract.
 
 Merged `worktree-agent-a141f49e3736a882c` (docs and landing sync to wave 3) into `main`, then re-ran every gate at the merge commit:
 
@@ -60,7 +60,7 @@ The purchase count went 10 to 11, the matching `SignalOutcome` (`bought`) was re
 
 ## Wave 4 gates and live smoke, 2026-09-03
 
-Recorded by Claude, pending Codex's independent re-verification (same standing as the wave-3 entry above).
+Recorded by Claude; independently re-verified by Codex on 2026-09-03 below.
 
 - `npm test`: 120/120 pass. New coverage: the replacement lifecycle (due block contents, an undated garment never flagged, oldest-garment wins, absence outranks wear, the seed closet actually ships one worn-out item), `report_demand_gap` kind `replace` (accepted at level `need`; an unknown kind still refused without burning the one-shot approval; `toSignal` accepts `replace` and still drops junk), `get_demand` (read-only, drops malformed rows, ids capped at 10 per group, registered by `getRequests` alone), `demandInsight` verdicts asserted against `matchOffer` itself, and one regression test for the `matchOffer` stock-source fix.
 - `npx tsc --noEmit`: clean. `oxlint`: clean. `npm run build`: clean.
@@ -68,6 +68,12 @@ Recorded by Claude, pending Codex's independent re-verification (same standing a
 - Deployed with Wrangler 4.127.0 as Worker version `0322742d-3f09-4660-9e98-3a6fac311518`.
 - Live smoke: `/`, `/closet`, `/studio`, `/docs/README.md` and `www.hemloop.app` all 200; security headers unchanged. The landing reads "twenty-one typed tools" and lists `get_demand`; the live `/docs/README.md` says 21 WebMCP tools.
 - Live badges on hemloop.app: `/closet` **9 WebMCP tools live**, `/studio` **12 WebMCP tools live**.
+
+### Codex independent re-verification (2026-09-03)
+
+- `npm test`: **120/120 pass**; `npx tsc --noEmit`, `npx oxlint`, and `npm run build` clean.
+- Read-only live smoke returned HTTP 200 for `/`, `/closet`, `/studio`, `/docs/README.md`, and `www.hemloop.app/`. The deployed security-header contract remained present (HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`; no CSP by decision).
+- The Wave 4 lifecycle, `replace` kind, inventory insight, and stock-source behavior are covered by the passing tests. I did not mutate production storage or deploy during this verification.
 
 ### The lifecycle is visible (live, hemloop.app)
 
