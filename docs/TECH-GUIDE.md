@@ -234,9 +234,11 @@ Read on 2026-09-02 (not during planning, recorded in the coordination log): the 
 | guideline | source | Hemloop |
 |---|---|---|
 | Namespace `document.modelContext`; tool names ASCII + `_ - .`, ≤128 chars | spec | yes |
-| Name ≤30, description ≤500, parameter description ≤150, output ≤1.5K chars | Chrome secure-tools | yes (unit-tested for names/descriptions/schema; output verified per tool) |
+| Name ≤30, description ≤500, parameter description ≤150, output ≤1.5K chars | Chrome secure-tools | yes, and asserted for **every** tool on both surfaces by one test that loops the whole surface rather than spot-checking. Wave 4 shipped `report_demand_gap` at 542 chars because the old check covered one tool incidentally; the loop is the fix |
 | `readOnlyHint` on read-only tools; `untrustedContentHint` on user/external content | spec, Chrome | yes |
-| `additionalProperties: false` on every schema | ChatGPT sample | yes |
+| `additionalProperties: false` on every schema | ChatGPT sample | yes, asserted by the same surface-wide loop |
+| A defensive re-parse must be no weaker than the parse it backs up | wave-4 review | `toDemandSignalLike` bounds signalId (charset + ≤64), category (enum), size (≤20) and handle (≤80) to match `toSignal`; a row that never came through storage is dropped outright, not truncated |
+| A tool result must fit the output budget on the worst legitimate input, not just the happy path | Chrome secure-tools | `get_demand` returns at most 6 groups and 3 ids per group and reports `groups` / `omitted` so truncation is visible; the 50-signal worst case is 1,377 chars, down from 19,291 |
 | Await `registerTool()`; handle `InvalidStateError` / `NotAllowedError` | spec | yes |
 | "Validate strictly in code, loosely in schema"; descriptive errors so the agent self-corrects | Chrome best-practices | the validator and `locked-fact-violation` / `human-approval-required` shapes |
 | Consequential actions need a human step | Chrome, ChatGPT | the closet approval button and studio lock are human-only; no tool can arm either |

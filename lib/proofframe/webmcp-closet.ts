@@ -272,7 +272,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'report_demand_gap',
       description:
-        "Send one data-minimized demand signal after the human explicitly approves the next share in the UI. Use kind 'replace' when find_gaps reports a `due` block: the shopper owns the category and is past its replacement life, which is timing the merchant cannot infer. Which fields travel is set by the shopper's sharing level (0 Private blocks everything, 1 Basics is category/size/need-or-want, 2 Context adds occasion and fit preference, 3 Taste adds colour/materials/price). Never a shopper id or wardrobe rows. Returns the exact payload sent.",
+        "Send one data-minimized demand signal after the human approves the next share in the UI. Use kind 'replace' when find_gaps returns a `due` block: the shopper owns the category and it is worn out. The sharing level sets which fields travel (0 blocks everything, 1 category/size/need-or-want, 2 adds occasion and fit, 3 adds colour/materials/price). Never a shopper id or wardrobe rows. Returns the exact payload sent.",
       inputSchema: {
         type: 'object',
         properties: {

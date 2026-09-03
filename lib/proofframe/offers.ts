@@ -244,23 +244,37 @@ export function matchOffer(input: MatchOfferInput): MatchOfferResult {
   return offer;
 }
 
+const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+// The garment categories, mirrored rather than imported: this file stays
+// decoupled from closet.ts (see the header note), the same way KINDS is.
+const CATEGORIES = new Set(['hoodie', 'tee', 'denim', 'jacket', 'footwear', 'accessory']);
 const OCCASIONS = new Set<Occasion>(['everyday', 'season', 'gift', 'event']);
 const SENSITIVITIES = new Set<DiscountSensitivity>(['code', 'percent', 'none']);
 const SPEND_BANDS = new Set<SpendBand>(['under-50', '50-100', '100-plus']);
 const LOYALTIES = new Set<BrandLoyalty>(['loyal', 'switcher']);
 
 /** Defensively rebuild a DemandSignalLike from an unknown object (the raw
- * rows a page's getRequests() callback hands the tool). Mirrors the
- * bounded, exact-key parsing signal-bridge.ts uses for storage readback:
- * unknown keys are dropped, enums enforced, nothing trusted by shape alone. */
+ * rows a page's getRequests() callback hands the tool). Mirrors the bounded,
+ * exact-key parsing signal-bridge.ts uses for storage readback: unknown keys
+ * are dropped, enums enforced, lengths capped, nothing trusted by shape alone.
+ *
+ * The bounds below are not decoration. `getRequests(): unknown[]` says the
+ * rows are untrusted, so this parse must be no weaker than the bridge's -
+ * a second parse looser than the first is a floor that is not there. Wave-4
+ * review (Codex) found exactly that: signalId, category, size and handle were
+ * unbounded here while `toSignal` capped all four, so a row that never came
+ * through storage could carry 5K of text, or a fence closing marker, straight
+ * into a tool result. */
 export function toDemandSignalLike(x: unknown): DemandInsightRequest | null {
   if (typeof x !== 'object' || x === null) return null;
   const s = x as Record<string, unknown>;
-  if (typeof s.signalId !== 'string' || s.signalId.length === 0) return null;
-  if (typeof s.category !== 'string') return null;
+  // Ids are minted with crypto.randomUUID(); anything outside that shape is
+  // not one of ours and has no business being echoed back to an agent.
+  if (typeof s.signalId !== 'string' || !ID_RE.test(s.signalId)) return null;
+  if (typeof s.category !== 'string' || !CATEGORIES.has(s.category)) return null;
 
-  const size = typeof s.size === 'string' ? s.size : null;
-  const handle = typeof s.handle === 'string' ? s.handle : null;
+  const size = typeof s.size === 'string' && s.size.length <= 20 ? s.size : null;
+  const handle = typeof s.handle === 'string' && s.handle.length <= 80 ? s.handle : null;
   const occasion =
     typeof s.occasion === 'string' && OCCASIONS.has(s.occasion as Occasion)
       ? (s.occasion as Occasion)
