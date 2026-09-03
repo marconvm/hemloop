@@ -20,7 +20,7 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | F10 | Disclaimer footer in export | Present for full duration, not a clip, not removable | PASS (unit) |
 | F11 | `get_offer` on a locked offer | Returns product, prices, promo code, validity dates, disclaimer and purchase link as structured data; `readOnlyHint` | manual (unit coverage to confirm) |
 | F12 | `next` field on a rejection | Every `human-approval-required` and `locked-fact-violation` rejection carries a `next` string naming the retry | manual (unit coverage to confirm) |
-| F13 | Untrusted-content fences | `get_wardrobe` and `import_product` wrap third-party text in `<<<untrusted-content>>>` fences with a do-not-follow preamble | manual (unit coverage to confirm) |
+| F13 | Untrusted-content fences | `get_wardrobe` and `import_product` wrap third-party text in source-labelled fences (`<closet_data>` for shopper-entered rows, `<storefront_data>` for catalog text, the labels Anthropic's commerce-agents harness already reads) with a do-not-follow preamble | manual (unit coverage to confirm) |
 | F14 | Need/Want labelling | `DemandSignal.kind` `gap`/`fit` render as **Need**, `want` renders as **Want**, on both the closet and studio surfaces | manual (UI-only) |
 | F15 | Tool-call counter | The studio panel heading ticks a count of tool calls, including blocked ones | manual (UI-only) |
 

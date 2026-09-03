@@ -66,8 +66,8 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
         const wardrobe = cb.getWardrobe();
         const garments = wardrobe.garments.map((g) => ({
           ...g,
-          brand: fence(truncate(g.brand, 80)),
-          colour: fence(truncate(g.colour, 40)),
+          brand: fence(truncate(g.brand, 80), 'closet_data'),
+          colour: fence(truncate(g.colour, 40), 'closet_data'),
         }));
         return { ...ok({ garments }), note: UNTRUSTED_NOTE };
       },
