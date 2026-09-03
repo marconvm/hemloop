@@ -3,6 +3,7 @@
 // tools own nothing. Privacy rule enforced here: report_demand_gap can only
 // send a zero-ID DemandSignal after a human arms one share.
 import {
+  buyingPattern,
   checkFit,
   consentFieldsForRequest,
   findGaps,
@@ -16,9 +17,12 @@ import {
   type GarmentCategory,
   type Occasion,
   type Preferences,
+  type Purchase,
   type ShopperProfile,
   type Wardrobe,
 } from './closet';
+import { parseReceipt } from './receipts';
+import { readOffers, readSignals } from './signal-bridge';
 import {
   closeSchemas,
   fence,
@@ -56,6 +60,14 @@ export interface ClosetCallbacks {
   /** The shopper's stated preferences (fit, colour, materials, price,
    * brands). Only leaves the page as far as the consent level allows. */
   getPreferences(): Preferences;
+  /** Purchases across every merchant (including rivals), newest first or
+   * not - order is the caller's choice. Only the derived BuyingPattern ever
+   * leaves the page, never these raw rows. */
+  getPurchases(): Purchase[];
+  /** Append purchases (from an imported receipt/order-email, or a Bought
+   * outcome on an offer). Never called by a WebMCP tool for the offer path -
+   * that one is human-only, via the UI. */
+  addPurchases(p: Purchase[]): void;
 }
 
 function ok(data: object = {}): ToolContent {
@@ -72,6 +84,9 @@ function fail(message: string, next: string, error = 'invalid-input'): ToolConte
 const MAX_WARDROBE_ROWS = 12;
 /** Garments per profile that add_garment will accept; the studio has MAX_SCENES for the same reason. */
 const MAX_GARMENTS = 40;
+/** Upper bound on rows get_offers will even attempt; the running JSON-size
+ * guard inside the tool is what actually keeps it under the 1.5K budget. */
+const MAX_OFFER_ROWS = 10;
 
 export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
   return closeSchemas([
@@ -354,6 +369,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
             avoidMaterials: prefs.avoidMaterials,
             priceCeiling: prefs.priceCeiling,
           };
+          signal.pattern = buyingPattern(cb.getPurchases(), category);
         }
 
         const delivered = cb.emitSignal(signal);
@@ -366,6 +382,130 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
           );
         }
         return ok({ sent: signal });
+      },
+    },
+    {
+      name: 'import_receipt',
+      description:
+        'Import a pasted receipt or order-confirmation email (no OCR, no network, just the text). Adds each item to the purchase log, and to the wardrobe for items whose category is recognised. Everything stays on this page; nothing is sent to a merchant.',
+      inputSchema: {
+        type: 'object',
+        properties: { text: { type: 'string', maxLength: 4000 } },
+        required: ['text'],
+      },
+      execute: (args) => {
+        if (
+          typeof args.text !== 'string' ||
+          args.text.length === 0 ||
+          args.text.length > 4000
+        ) {
+          return fail(
+            'text must be a non-empty string of at most 4000 characters.',
+            'Paste the receipt or order email text (up to 4000 characters), then call import_receipt again.',
+          );
+        }
+        const text = args.text;
+        const parsed = parseReceipt(text);
+        if (!parsed) {
+          return {
+            ok: false,
+            error: 'unparsed-receipt',
+            message: 'Could not recognise this as a receipt or order email.',
+            next: 'Paste the receipt or order email text as-is, including the merchant name and item lines.',
+          };
+        }
+
+        // ParsedReceipt does not distinguish which shape it came from -
+        // re-check the same heuristic receipts.ts uses, only to tag the
+        // Purchase source correctly.
+        const looksLikeEmail =
+          /^order\s*#/im.test(text) || /thank you for your order/i.test(text);
+        const source: Purchase['source'] = looksLikeEmail ? 'order-email' : 'receipt';
+        const stamp = Date.now().toString(36);
+        const purchases: Purchase[] = parsed.items.map((item, i) => ({
+          id: `import-${stamp}-${i}`,
+          at: parsed.at,
+          merchant: parsed.merchant,
+          brand: parsed.merchant,
+          title: item.title,
+          category: item.category ?? 'accessory',
+          size: item.size ?? 'OS',
+          price: item.price,
+          currency: parsed.currency,
+          promoCode: parsed.promoCode,
+          source,
+        }));
+        cb.addPurchases(purchases);
+
+        let garmentsAdded = 0;
+        for (const item of parsed.items) {
+          if (!item.category) continue;
+          if (
+            garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile()).garments
+              .length >= MAX_GARMENTS
+          ) {
+            break;
+          }
+          cb.addGarment({
+            category: item.category,
+            brand: parsed.merchant,
+            size: item.size ?? 'OS',
+            colour: 'unspecified',
+          });
+          garmentsAdded++;
+        }
+
+        return ok({
+          merchant: fence(truncate(parsed.merchant, 80), 'storefront_data'),
+          itemsAdded: parsed.items.length,
+          garmentsAdded,
+          purchasesAdded: purchases.length,
+          next: 'Call get_wardrobe or find_gaps to see what changed.',
+        });
+      },
+    },
+    {
+      name: 'get_offers',
+      description:
+        "Read approved personal offers addressed to requests this closet already sent (matched by request id): size, price, code, validity, and a purchase link. Read-only; a human already approved these on the merchant side. The shopper decides Bought or Passed on this page, no tool can buy for them.",
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: () => {
+        const sentIds = new Set(readSignals().map((s) => s.signalId));
+        const eligible = readOffers().filter(
+          (o) => o.status === 'approved' && sentIds.has(o.requestId),
+        );
+        const rows: Record<string, unknown>[] = [];
+        for (const o of eligible) {
+          if (rows.length >= MAX_OFFER_ROWS) break;
+          const row = {
+            offerId: o.offerId,
+            requestId: o.requestId,
+            title: fence(truncate(o.title, 60), 'storefront_data'),
+            size: o.size,
+            price: o.price,
+            regularPrice: o.regularPrice,
+            discountPercent: o.discountPercent,
+            promoCode: o.promoCode,
+            validTo: o.validTo,
+            purchaseUrl: truncate(o.purchaseUrl, 80),
+          };
+          // Budget guard: Chrome asks for <=1.5K per tool output. Stop before
+          // a run of large offers would blow it, rather than trusting a
+          // fixed row count - same discipline as get_wardrobe's cap
+          // (round 3, finding A(f)).
+          if (JSON.stringify([...rows, row]).length > 1150) break;
+          rows.push(row);
+        }
+        return {
+          ...ok({
+            offers: rows,
+            count: eligible.length,
+            truncated: eligible.length - rows.length,
+          }),
+          note: UNTRUSTED_NOTE,
+          next: 'Ask the shopper to choose Bought or Passed on the closet page; you cannot buy for them.',
+        };
       },
     },
   ]);

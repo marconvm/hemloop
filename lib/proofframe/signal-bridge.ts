@@ -7,12 +7,16 @@
 import {
   GARMENT_CATEGORIES,
   consentFieldsForRequest,
+  guessCategory,
+  type BuyingPattern,
   type ConsentField,
   type DemandSignal,
   type GarmentCategory,
   type Occasion,
+  type Purchase,
   type ShopperProfile,
 } from './closet';
+import { demoCatalog, type CatalogProduct } from './shopify';
 
 const KEY = 'proofframe-demand-signals';
 const EVENT = 'proofframe-signal';
@@ -39,7 +43,11 @@ const CONSENT_FIELDS = new Set<string>([
   'colourFamily',
   'avoidMaterials',
   'priceCeiling',
+  'buyingPattern',
 ]);
+const DISCOUNT_SENSITIVITIES = new Set(['code', 'percent', 'none']);
+const SPEND_BANDS = new Set(['under-50', '50-100', '100-plus']);
+const BRAND_LOYALTIES = new Set(['loyal', 'switcher']);
 
 /** Rebuild a bounded, exact-key DemandSignal from untrusted storage, or null.
  * Extra keys (e.g. an injected shopperId) are dropped, enums enforced,
@@ -108,6 +116,23 @@ export function toSignal(x: unknown): DemandSignal | null {
     }
     if (Object.keys(taste).length > 0) signal.taste = taste;
   }
+  if (typeof s.pattern === 'object' && s.pattern !== null) {
+    const p = s.pattern as Record<string, unknown>;
+    if (
+      typeof p.discountSensitivity === 'string' &&
+      DISCOUNT_SENSITIVITIES.has(p.discountSensitivity) &&
+      typeof p.spendBand === 'string' &&
+      SPEND_BANDS.has(p.spendBand) &&
+      typeof p.brandLoyalty === 'string' &&
+      BRAND_LOYALTIES.has(p.brandLoyalty)
+    ) {
+      signal.pattern = {
+        discountSensitivity: p.discountSensitivity as BuyingPattern['discountSensitivity'],
+        spendBand: p.spendBand as BuyingPattern['spendBand'],
+        brandLoyalty: p.brandLoyalty as BuyingPattern['brandLoyalty'],
+      };
+    }
+  }
 
   // Storage is a client-integrity boundary, not an authenticated one: a same-origin script can
   // write any record. Re-derive what the consent level permits and drop the rest, so a stored
@@ -127,6 +152,7 @@ export function toSignal(x: unknown): DemandSignal | null {
   }
   if (signal.consent.level < 3) {
     delete signal.taste;
+    delete signal.pattern;
   }
   return signal;
 }
@@ -287,4 +313,195 @@ export function writeConsentLevel(level: 0 | 1 | 2 | 3): void {
   } catch {
     /* ignore */
   }
+}
+
+// ---------- Personal offers: the merchant's proposed answer to one
+// DemandSignal, addressed to its requestId - never to a person. Same
+// same-origin bridge mechanism as signals. ----
+
+export interface PersonalOffer {
+  offerId: string;
+  requestId: string;
+  handle: string;
+  title: string;
+  image?: string;
+  size: string | null;
+  currency: string;
+  regularPrice: number;
+  price: number;
+  discountPercent: number;
+  promoCode: string | null;
+  validFrom: string;
+  validTo: string;
+  disclaimer: string;
+  purchaseUrl: string;
+  sizesInStock?: string[];
+  status: 'proposed' | 'approved' | 'declined' | 'expired';
+  proposedBy: 'agent' | 'auto' | 'human';
+  proposedAt: string;
+  approvedAt?: string;
+  reasons: string[];
+  marginCheck: { floorPercent: number; resultingMarginPercent: number; ok: boolean };
+}
+
+const OFFERS_KEY = 'hemloop.offers';
+const OFFERS_EVENT = 'hemloop-offer-signal';
+const MAX_OFFERS = 50;
+
+const OFFER_STATUSES = new Set(['proposed', 'approved', 'declined', 'expired']);
+const OFFER_PROPOSERS = new Set(['agent', 'auto', 'human']);
+
+/** Rebuild a bounded, exact-shape PersonalOffer from untrusted storage, or
+ * null. Mirrors toSignal: enums enforced, strings bounded, numbers finite,
+ * reasons capped at 3 items of at most 120 chars, junk dropped. */
+export function toOffer(x: unknown): PersonalOffer | null {
+  if (typeof x !== 'object' || x === null) return null;
+  const s = x as Record<string, unknown>;
+  if (typeof s.offerId !== 'string' || s.offerId.length === 0 || s.offerId.length > 64) return null;
+  if (typeof s.requestId !== 'string' || s.requestId.length === 0 || s.requestId.length > 64) return null;
+  if (typeof s.handle !== 'string' || s.handle.length === 0 || s.handle.length > 80) return null;
+  if (typeof s.title !== 'string' || s.title.length === 0 || s.title.length > 200) return null;
+  if (typeof s.size !== 'string' && s.size !== null) return null;
+  if (typeof s.size === 'string' && s.size.length > 20) return null;
+  if (typeof s.currency !== 'string' || s.currency.length === 0 || s.currency.length > 8) return null;
+  if (typeof s.regularPrice !== 'number' || !Number.isFinite(s.regularPrice) || s.regularPrice < 0) return null;
+  if (typeof s.price !== 'number' || !Number.isFinite(s.price) || s.price < 0) return null;
+  if (
+    typeof s.discountPercent !== 'number' ||
+    !Number.isFinite(s.discountPercent) ||
+    s.discountPercent < 0 ||
+    s.discountPercent > 100
+  )
+    return null;
+  if (typeof s.promoCode !== 'string' && s.promoCode !== null) return null;
+  if (typeof s.promoCode === 'string' && s.promoCode.length > 40) return null;
+  if (typeof s.validFrom !== 'string' || Number.isNaN(Date.parse(s.validFrom))) return null;
+  if (typeof s.validTo !== 'string' || Number.isNaN(Date.parse(s.validTo))) return null;
+  if (typeof s.disclaimer !== 'string' || s.disclaimer.length > 400) return null;
+  if (typeof s.purchaseUrl !== 'string' || s.purchaseUrl.length === 0 || s.purchaseUrl.length > 300) return null;
+  if (typeof s.status !== 'string' || !OFFER_STATUSES.has(s.status)) return null;
+  if (typeof s.proposedBy !== 'string' || !OFFER_PROPOSERS.has(s.proposedBy)) return null;
+  if (typeof s.proposedAt !== 'string' || Number.isNaN(Date.parse(s.proposedAt))) return null;
+  if (!Array.isArray(s.reasons) || !s.reasons.every((r) => typeof r === 'string')) return null;
+  const reasons = (s.reasons as string[]).slice(0, 3).filter((r) => r.length <= 120);
+  if (typeof s.marginCheck !== 'object' || s.marginCheck === null) return null;
+  const mc = s.marginCheck as Record<string, unknown>;
+  if (typeof mc.floorPercent !== 'number' || !Number.isFinite(mc.floorPercent)) return null;
+  if (typeof mc.resultingMarginPercent !== 'number' || !Number.isFinite(mc.resultingMarginPercent)) return null;
+  if (typeof mc.ok !== 'boolean') return null;
+
+  const offer: PersonalOffer = {
+    offerId: s.offerId,
+    requestId: s.requestId,
+    handle: s.handle,
+    title: s.title,
+    size: s.size as string | null,
+    currency: s.currency,
+    regularPrice: s.regularPrice,
+    price: s.price,
+    discountPercent: s.discountPercent,
+    promoCode: s.promoCode as string | null,
+    validFrom: s.validFrom,
+    validTo: s.validTo,
+    disclaimer: s.disclaimer,
+    purchaseUrl: s.purchaseUrl,
+    status: s.status as PersonalOffer['status'],
+    proposedBy: s.proposedBy as PersonalOffer['proposedBy'],
+    proposedAt: s.proposedAt,
+    reasons,
+    marginCheck: {
+      floorPercent: mc.floorPercent,
+      resultingMarginPercent: mc.resultingMarginPercent,
+      ok: mc.ok,
+    },
+  };
+  if (typeof s.image === 'string' && s.image.length <= 300) offer.image = s.image;
+  if (
+    Array.isArray(s.sizesInStock) &&
+    s.sizesInStock.every((v) => typeof v === 'string')
+  ) {
+    offer.sizesInStock = (s.sizesInStock as string[]).slice(0, 20).filter((v) => v.length <= 20);
+  }
+  if (typeof s.approvedAt === 'string' && !Number.isNaN(Date.parse(s.approvedAt))) {
+    offer.approvedAt = s.approvedAt;
+  }
+  return offer;
+}
+
+export function readOffers(): PersonalOffer[] {
+  if (!hasWindow()) return [];
+  try {
+    const raw = window.localStorage.getItem(OFFERS_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(toOffer).filter((o): o is PersonalOffer => o !== null);
+  } catch {
+    return [];
+  }
+}
+
+/** Insert or replace by offerId, cap at MAX_OFFERS, verify on readback -
+ * mirrors appendSignal. Returns true only when the offer is actually
+ * readable back from storage. */
+export function upsertOffer(o: PersonalOffer): boolean {
+  if (!hasWindow()) return false;
+  try {
+    const current = readOffers();
+    const next = [o, ...current.filter((x) => x.offerId !== o.offerId)].slice(0, MAX_OFFERS);
+    window.localStorage.setItem(OFFERS_KEY, JSON.stringify(next));
+    const delivered = readOffers().some((x) => x.offerId === o.offerId);
+    if (delivered) window.dispatchEvent(new CustomEvent(OFFERS_EVENT));
+    return delivered;
+  } catch {
+    return false;
+  }
+}
+
+export function subscribeOffers(onChange: () => void): () => void {
+  if (!hasWindow()) return () => {};
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === null || e.key === OFFERS_KEY) onChange();
+  };
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(OFFERS_EVENT, onChange);
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(OFFERS_EVENT, onChange);
+  };
+}
+
+const DEFAULT_OFFER_BRAND = 'Northlight Apparel';
+
+/** Pure: the Purchase a shopper's own "Bought" action on an approved
+ * PersonalOffer creates. offerId and promoCode carry through so the offer
+ * that won the sale is attributable later. Brand and category are guessed
+ * from the catalog by handle (falling back to the demo's own brand and a
+ * keyword guess), since a PersonalOffer carries neither field. */
+export function purchaseFromOffer(offer: PersonalOffer, id: string, at: string): Purchase {
+  const product = demoCatalog.products.find((p) => p.handle === offer.handle);
+  const brand = product?.vendor ?? DEFAULT_OFFER_BRAND;
+  const syntheticProduct: CatalogProduct = {
+    handle: offer.handle,
+    title: offer.title,
+    description: '',
+    currency: offer.currency,
+    price: offer.price,
+    compareAtPrice: null,
+  };
+  const category = guessCategory(product ?? syntheticProduct) ?? 'accessory';
+  return {
+    id,
+    at,
+    merchant: `${brand} online store`,
+    brand,
+    handle: offer.handle,
+    title: offer.title,
+    category,
+    size: offer.size ?? 'OS',
+    price: offer.price,
+    currency: offer.currency,
+    promoCode: offer.promoCode,
+    offerId: offer.offerId,
+    source: 'offer',
+  };
 }

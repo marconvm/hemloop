@@ -1,22 +1,31 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buyingPattern,
   checkFit,
   consentFieldsForRequest,
   findGaps,
   garmentsForProfile,
   makeSignal,
   seedPreferences,
+  seedPurchases,
   seedWardrobe,
   sizesOwned,
   type ConsentField,
+  type Purchase,
 } from '../lib/proofframe/closet';
 import {
   buildClosetTools,
   type ClosetCallbacks,
 } from '../lib/proofframe/webmcp-closet';
 import { fence, type ToolContent } from '../lib/proofframe/webmcp';
-import { toSignal } from '../lib/proofframe/signal-bridge';
+import { parseReceipt, SAMPLE_RECEIPTS } from '../lib/proofframe/receipts';
+import {
+  purchaseFromOffer,
+  toOffer,
+  toSignal,
+  type PersonalOffer,
+} from '../lib/proofframe/signal-bridge';
 import type {
   DemandSignal,
   Garment,
@@ -33,6 +42,7 @@ function makeStore(
     consentLevel?: 0 | 1 | 2 | 3;
     activeProfile?: ShopperProfile;
     preferences?: Preferences;
+    purchases?: Purchase[];
   } = {},
 ) {
   const wardrobe = seedWardrobe();
@@ -41,6 +51,7 @@ function makeStore(
   const consentLevel = opts.consentLevel ?? 1;
   const activeProfile = opts.activeProfile ?? 'self';
   const preferences = opts.preferences ?? seedPreferences();
+  let purchases = opts.purchases ?? seedPurchases();
   const cb: ClosetCallbacks = {
     getWardrobe: () => wardrobe,
     addGarment: (input) => {
@@ -63,6 +74,10 @@ function makeStore(
     getActiveProfile: () => activeProfile,
     getConsentLevel: () => consentLevel,
     getPreferences: () => preferences,
+    getPurchases: () => purchases,
+    addPurchases: (p) => {
+      purchases = [...p, ...purchases];
+    },
   };
   return {
     wardrobe,
@@ -71,6 +86,27 @@ function makeStore(
     approve: () => {
       shareApproved = true;
     },
+    getPurchases: () => purchases,
+  };
+}
+
+/** Fake same-origin localStorage, mirroring the pattern already used for
+ * signal-bridge tests below - a Map-backed getItem/setItem/removeItem plus
+ * inert event methods. Returns a restore function. */
+function installFakeWindow(): () => void {
+  const store = new Map<string, string>();
+  (globalThis as { window?: unknown }).window = {
+    localStorage: {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+    },
+    dispatchEvent: () => true,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  };
+  return () => {
+    delete (globalThis as { window?: unknown }).window;
   };
 }
 
@@ -195,7 +231,7 @@ void test('consentFieldsForRequest: level 3 adds colourFamily/avoidMaterials/pri
   }
 });
 
-void test('closet tool surface: 7 tools, reads flagged readOnly', () => {
+void test('closet tool surface: 9 tools, reads flagged readOnly', () => {
   const { cb } = makeStore();
   const tools = buildClosetTools(cb);
   assert.deepEqual(
@@ -208,6 +244,8 @@ void test('closet tool surface: 7 tools, reads flagged readOnly', () => {
       'get_preferences',
       'add_garment',
       'report_demand_gap',
+      'import_receipt',
+      'get_offers',
     ],
   );
   for (const name of [
@@ -216,6 +254,7 @@ void test('closet tool surface: 7 tools, reads flagged readOnly', () => {
     'find_gaps',
     'check_fit',
     'get_preferences',
+    'get_offers',
   ]) {
     assert.equal(
       tools.find((t) => t.name === name)?.annotations?.readOnlyHint,
@@ -466,6 +505,7 @@ void test('consent level 3 (Taste): includes context and taste, forbids identity
         'colourFamily',
         'avoidMaterials',
         'priceCeiling',
+        'buyingPattern',
       ] as ConsentField[]
     ).sort(),
   );
@@ -518,6 +558,8 @@ void test('PF4-6a: an invalid kind is rejected BEFORE the approval is consumed',
     getActiveProfile: () => 'self',
     getConsentLevel: () => 1,
     getPreferences: () => seedPreferences(),
+    getPurchases: () => seedPurchases(),
+    addPurchases: () => undefined,
   };
   const report = buildClosetTools(cb).find((t) => t.name === 'report_demand_gap')!;
   const bad = payload(await report.execute({ kind: 'bogus', category: 'hoodie' }));
@@ -747,4 +789,415 @@ void test('round 3 A(d): agent-written fence markers cannot escape in get_my_siz
   }
   assert.equal(last.ok, false);
   assert.equal(last.error, 'wardrobe-full');
+});
+
+// ---------- Wave 3: receipts.ts ----------
+
+void test('parseReceipt: till receipt sample parses merchant, items, promo code, date', () => {
+  const sample = SAMPLE_RECEIPTS.find((s) => s.label.includes('Till receipt'))!;
+  const parsed = parseReceipt(sample.text);
+  assert.ok(parsed);
+  assert.equal(parsed!.merchant, 'Northlight Apparel');
+  assert.equal(parsed!.promoCode, 'NORTHLIGHT25');
+  assert.equal(parsed!.currency, 'CAD');
+  assert.equal(parsed!.items.length, 2);
+  assert.equal(parsed!.items[0].title, 'Everyday Fleece Hoodie');
+  assert.equal(parsed!.items[0].size, 'M');
+  assert.equal(parsed!.items[0].price, 44.9);
+  assert.equal(parsed!.items[0].category, 'hoodie');
+  assert.equal(parsed!.items[1].title, 'Solstice Graphic Tee');
+  assert.equal(parsed!.items[1].category, 'tee');
+  assert.equal(parsed!.at, '2026-07-12T00:00:00.000Z');
+});
+
+void test('parseReceipt: order email sample parses merchant from the thank-you line, items, discount code', () => {
+  const sample = SAMPLE_RECEIPTS.find((s) => s.label.includes('Order email'))!;
+  const parsed = parseReceipt(sample.text);
+  assert.ok(parsed);
+  assert.equal(parsed!.merchant, 'Harborview Basics');
+  assert.equal(parsed!.promoCode, 'HB20');
+  assert.equal(parsed!.items.length, 2);
+  assert.equal(parsed!.items[0].title, 'Essential Crew Tee');
+  assert.equal(parsed!.items[0].size, 'M');
+  assert.equal(parsed!.items[0].price, 12.99);
+  assert.equal(parsed!.items[0].category, 'tee');
+  assert.equal(parsed!.items[1].title, 'Woven Cap');
+  assert.equal(parsed!.items[1].category, 'accessory');
+  assert.equal(parsed!.at, '2026-04-27T00:00:00.000Z');
+});
+
+void test('parseReceipt: unrecognisable text returns null, never throws', () => {
+  assert.equal(parseReceipt('just some random text\nwith no items or prices'), null);
+  assert.equal(parseReceipt(''), null);
+  assert.equal(parseReceipt('   \n  \n'), null);
+});
+
+void test('parseReceipt: bounds input to 4000 chars and items to 20', () => {
+  const manyItems = Array.from(
+    { length: 30 },
+    (_, i) => `1 x Item Number ${i} M  $${(10 + i).toFixed(2)}`,
+  ).join('\n');
+  const parsed = parseReceipt(`Some Store\n${manyItems}`);
+  assert.ok(parsed);
+  assert.ok(parsed!.items.length <= 20);
+
+  const huge = 'Some Store\n' + '1 x Padding Item M  $1.00\n'.repeat(500);
+  assert.ok(huge.length > 4000);
+  const parsedHuge = parseReceipt(huge);
+  assert.ok(parsedHuge, 'still parses from the first 4000 chars');
+  assert.ok(parsedHuge!.items.length <= 20);
+});
+
+// ---------- Wave 3: buyingPattern ----------
+
+function purchase(overrides: Partial<Purchase>): Purchase {
+  return {
+    id: 'x',
+    at: '2026-01-01T00:00:00.000Z',
+    merchant: 'Test Store',
+    brand: 'Test Brand',
+    title: 'Test Item',
+    category: 'tee',
+    size: 'M',
+    price: 30,
+    currency: 'CAD',
+    promoCode: null,
+    source: 'manual',
+    ...overrides,
+  };
+}
+
+void test('buyingPattern: code wins when most purchases in the category used a promo code', () => {
+  const rows: Purchase[] = [
+    purchase({ promoCode: 'A' }),
+    purchase({ promoCode: 'B' }),
+    purchase({ promoCode: null }),
+  ];
+  assert.equal(buyingPattern(rows, 'tee').discountSensitivity, 'code');
+});
+
+void test('buyingPattern: percent wins when most purchases came from an approved offer without a code', () => {
+  const rows: Purchase[] = [
+    purchase({ promoCode: null, source: 'offer' }),
+    purchase({ promoCode: null, source: 'offer' }),
+    purchase({ promoCode: 'X' }),
+  ];
+  assert.equal(buyingPattern(rows, 'tee').discountSensitivity, 'percent');
+});
+
+void test('buyingPattern: none when purchases are mostly full price', () => {
+  const rows: Purchase[] = [
+    purchase({ promoCode: null, source: 'manual' }),
+    purchase({ promoCode: null, source: 'manual' }),
+  ];
+  assert.equal(buyingPattern(rows, 'tee').discountSensitivity, 'none');
+});
+
+void test('buyingPattern: brand loyalty is loyal for one brand, switcher for 2+ in the category', () => {
+  const loyalRows: Purchase[] = [
+    purchase({ brand: 'Northlight Apparel' }),
+    purchase({ brand: 'Northlight Apparel' }),
+  ];
+  assert.equal(buyingPattern(loyalRows, 'tee').brandLoyalty, 'loyal');
+
+  const switcherRows: Purchase[] = [
+    purchase({ brand: 'Northlight Apparel' }),
+    purchase({ brand: 'Harborview Basics' }),
+  ];
+  assert.equal(buyingPattern(switcherRows, 'tee').brandLoyalty, 'switcher');
+});
+
+void test('buyingPattern: spend band is derived from the median price in the category', () => {
+  assert.equal(
+    buyingPattern([purchase({ price: 20 }), purchase({ price: 30 })], 'tee').spendBand,
+    'under-50',
+  );
+  assert.equal(
+    buyingPattern([purchase({ price: 60 }), purchase({ price: 80 })], 'tee').spendBand,
+    '50-100',
+  );
+  assert.equal(
+    buyingPattern([purchase({ price: 120 }), purchase({ price: 200 })], 'tee').spendBand,
+    '100-plus',
+  );
+});
+
+void test('buyingPattern: an empty category match returns a neutral default, never throws', () => {
+  assert.deepEqual(buyingPattern([], 'jacket'), {
+    discountSensitivity: 'none',
+    spendBand: 'under-50',
+    brandLoyalty: 'loyal',
+  });
+});
+
+void test('buyingPattern: optional brand argument scopes the match', () => {
+  const rows: Purchase[] = [
+    purchase({ brand: 'Northlight Apparel', promoCode: 'A' }),
+    purchase({ brand: 'Harborview Basics', promoCode: null, source: 'manual' }),
+  ];
+  const scoped = buyingPattern(rows, 'tee', 'Northlight Apparel');
+  assert.equal(scoped.discountSensitivity, 'code');
+  assert.equal(scoped.brandLoyalty, 'loyal');
+});
+
+void test('buyingPattern: seed data derives tee as code/switcher/under-50', () => {
+  const pattern = buyingPattern(seedPurchases(), 'tee');
+  assert.equal(pattern.discountSensitivity, 'code');
+  assert.equal(pattern.brandLoyalty, 'switcher');
+  assert.equal(pattern.spendBand, 'under-50');
+});
+
+void test('buyingPattern: seed data derives denim as percent/loyal via catalog markdown detection', () => {
+  const pattern = buyingPattern(seedPurchases(), 'denim');
+  assert.equal(pattern.discountSensitivity, 'percent');
+  assert.equal(pattern.brandLoyalty, 'loyal');
+});
+
+// ---------- Wave 3: import_receipt tool ----------
+
+void test('import_receipt: success adds purchases and garments, fences the merchant, under 1.5K, never echoes the raw text', async () => {
+  const { cb, getPurchases, wardrobe } = makeStore();
+  const tool = buildClosetTools(cb).find((t) => t.name === 'import_receipt')!;
+  const sample = SAMPLE_RECEIPTS.find((s) => s.label.includes('Till receipt'))!;
+  const beforePurchases = getPurchases().length;
+  const beforeGarments = wardrobe.garments.length;
+  const result = payload(await tool.execute({ text: sample.text }));
+  assert.equal(result.ok, true);
+  assert.equal(result.itemsAdded, 2);
+  assert.equal(result.garmentsAdded, 2);
+  assert.equal(result.purchasesAdded, 2);
+  const merchant = result.merchant as string;
+  assert.ok(merchant.startsWith('<storefront_data>') && merchant.endsWith('</storefront_data>'));
+  assert.ok(merchant.includes('Northlight Apparel'));
+  assert.equal(getPurchases().length, beforePurchases + 2);
+  assert.equal(wardrobe.garments.length, beforeGarments + 2);
+  assert.equal(typeof result.next, 'string');
+  const json = JSON.stringify(result);
+  assert.ok(json.length <= 1500);
+  assert.ok(!json.includes(sample.text), 'never returns the raw text back');
+});
+
+void test('import_receipt: unrecognised text fails with unparsed-receipt, adds nothing', async () => {
+  const { cb, getPurchases } = makeStore();
+  const tool = buildClosetTools(cb).find((t) => t.name === 'import_receipt')!;
+  const before = getPurchases().length;
+  const result = payload(await tool.execute({ text: 'this is not a receipt at all' }));
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'unparsed-receipt');
+  assert.equal(typeof result.next, 'string');
+  assert.equal(getPurchases().length, before);
+});
+
+void test('import_receipt: rejects empty or over-length text before parsing', async () => {
+  const { cb } = makeStore();
+  const tool = buildClosetTools(cb).find((t) => t.name === 'import_receipt')!;
+  const empty = payload(await tool.execute({ text: '' }));
+  assert.equal(empty.ok, false);
+  const oversized = payload(await tool.execute({ text: 'x'.repeat(4001) }));
+  assert.equal(oversized.ok, false);
+});
+
+// ---------- Wave 3: signal-bridge PersonalOffer store ----------
+
+function fakeOffer(overrides: Partial<PersonalOffer> = {}): PersonalOffer {
+  return {
+    offerId: 'offer-1',
+    requestId: 'my-signal-1',
+    handle: 'northlight-hoodie',
+    title: 'Northlight Hoodie',
+    size: 'M',
+    currency: 'CAD',
+    regularPrice: 59.9,
+    price: 44.9,
+    discountPercent: 25,
+    promoCode: 'NORTHLIGHT25',
+    validFrom: '2026-08-01T00:00:00.000Z',
+    validTo: '2026-09-15T00:00:00.000Z',
+    disclaimer: 'While supplies last.',
+    purchaseUrl: 'https://hemloop.app/closet?product=northlight-hoodie',
+    status: 'approved',
+    proposedBy: 'agent',
+    proposedAt: '2026-08-01T00:00:00.000Z',
+    reasons: ['matches size', 'within margin floor'],
+    marginCheck: { floorPercent: 20, resultingMarginPercent: 30, ok: true },
+    ...overrides,
+  };
+}
+
+void test('toOffer: valid offer round-trips, junk and out-of-range values are rejected, extra keys dropped', () => {
+  const valid = fakeOffer();
+  assert.deepEqual(toOffer(valid), valid);
+  assert.equal(toOffer(null), null);
+  assert.equal(toOffer('garbage'), null);
+  assert.equal(toOffer({ ...valid, status: 'bogus' }), null);
+  assert.equal(toOffer({ ...valid, proposedBy: 'human-typo' }), null);
+  assert.equal(toOffer({ ...valid, discountPercent: 150 }), null);
+  assert.equal(toOffer({ ...valid, price: -5 }), null);
+  assert.equal(toOffer({ ...valid, offerId: '' }), null);
+  assert.equal(toOffer({ ...valid, validTo: 'not-a-date' }), null);
+  assert.equal(
+    toOffer({ ...valid, marginCheck: { floorPercent: 'nope', resultingMarginPercent: 10, ok: true } }),
+    null,
+  );
+  const junkReasons = toOffer({ ...valid, reasons: ['a'.repeat(200), 'b', 'c', 'd'] });
+  assert.ok(junkReasons);
+  assert.deepEqual(junkReasons!.reasons, ['b', 'c']);
+  const withExtra = toOffer({ ...valid, shopperId: 'LEAK' } as unknown);
+  assert.ok(withExtra);
+  assert.ok(!('shopperId' in withExtra!));
+});
+
+void test('readOffers/upsertOffer: round-trip via a fake storage, replaces by offerId, drops junk', async () => {
+  const restore = installFakeWindow();
+  try {
+    const store = await import('../lib/proofframe/signal-bridge');
+    assert.equal(store.upsertOffer(fakeOffer()), true);
+    assert.equal(store.readOffers().length, 1);
+    assert.equal(store.upsertOffer(fakeOffer({ price: 39.9 })), true);
+    const after = store.readOffers();
+    assert.equal(after.length, 1, 'same offerId replaces, does not duplicate');
+    assert.equal(after[0].price, 39.9);
+  } finally {
+    restore();
+  }
+});
+
+// ---------- Wave 3: get_offers tool ----------
+
+void test('get_offers: filters to this closet\'s own approved requests and stays under 1.5K', async () => {
+  const restore = installFakeWindow();
+  try {
+    const bridge = await import('../lib/proofframe/signal-bridge');
+    bridge.appendSignal({
+      signalId: 'my-signal-1',
+      kind: 'gap',
+      category: 'hoodie',
+      size: 'M',
+      handle: null,
+      at: '2026-08-01T00:00:00.000Z',
+      level: 'need',
+      consent: { level: 1, fields: ['category', 'level', 'size'] },
+    });
+
+    bridge.upsertOffer(fakeOffer());
+    bridge.upsertOffer(fakeOffer({ offerId: 'offer-2', requestId: 'someone-elses-signal' }));
+    bridge.upsertOffer(fakeOffer({ offerId: 'offer-3', status: 'proposed' }));
+
+    const { cb } = makeStore();
+    const tool = buildClosetTools(cb).find((t) => t.name === 'get_offers')!;
+    const result = payload(await tool.execute({}));
+    assert.equal(result.ok, true);
+    const offers = result.offers as Record<string, unknown>[];
+    assert.equal(offers.length, 1);
+    assert.equal(offers[0].offerId, 'offer-1');
+    assert.equal(offers[0].requestId, 'my-signal-1');
+    const title = offers[0].title as string;
+    assert.ok(title.startsWith('<storefront_data>') && title.endsWith('</storefront_data>'));
+    assert.equal(typeof result.next, 'string');
+    assert.ok(JSON.stringify(result).length <= 1500);
+  } finally {
+    restore();
+  }
+});
+
+void test('get_offers: budget guard keeps the result under 1.5K even with many large offers', async () => {
+  const restore = installFakeWindow();
+  try {
+    const bridge = await import('../lib/proofframe/signal-bridge');
+    for (let i = 0; i < 10; i++) {
+      bridge.appendSignal({
+        signalId: `sig-${i}`,
+        kind: 'want',
+        category: 'tee',
+        size: 'M',
+        handle: null,
+        at: '2026-08-01T00:00:00.000Z',
+        level: 'want',
+        consent: { level: 1, fields: ['category', 'level'] },
+      });
+      bridge.upsertOffer(
+        fakeOffer({
+          offerId: `offer-${i}-${'a'.repeat(30)}`,
+          requestId: `sig-${i}`,
+          handle: 'x'.repeat(60),
+          title: 'T'.repeat(150),
+          promoCode: 'CODE'.repeat(8),
+          disclaimer: 'D'.repeat(300),
+          purchaseUrl: 'https://hemloop.app/' + 'p'.repeat(200),
+          reasons: ['R'.repeat(120), 'R'.repeat(120), 'R'.repeat(120)],
+        }),
+      );
+    }
+    const { cb } = makeStore();
+    const tool = buildClosetTools(cb).find((t) => t.name === 'get_offers')!;
+    const result = payload(await tool.execute({}));
+    const json = JSON.stringify(result);
+    assert.ok(json.length <= 1500, `get_offers result is ${json.length} chars`);
+    assert.equal(result.count, 10);
+    const offers = result.offers as unknown[];
+    assert.ok(offers.length <= 10);
+    assert.equal(result.truncated, 10 - offers.length);
+  } finally {
+    restore();
+  }
+});
+
+// ---------- Wave 3: level 3 pattern on report_demand_gap ----------
+
+void test('report_demand_gap: level 3 signal carries pattern and consent.fields includes buyingPattern; level 2 does not', async () => {
+  const customPurchases: Purchase[] = [
+    purchase({ category: 'hoodie', brand: 'Northlight Apparel', promoCode: 'NORTHLIGHT25', price: 33 }),
+    purchase({ category: 'hoodie', brand: 'Northlight Apparel', promoCode: 'NORTHLIGHT25', price: 40 }),
+  ];
+
+  const level3 = makeStore({ consentLevel: 3, purchases: customPurchases });
+  const tool3 = buildClosetTools(level3.cb).find((t) => t.name === 'report_demand_gap')!;
+  level3.approve();
+  const result3 = payload(await tool3.execute({ kind: 'gap', category: 'hoodie' }));
+  assert.equal(result3.ok, true);
+  const sent3 = result3.sent as DemandSignal;
+  assert.ok(sent3.consent.fields.includes('buyingPattern'));
+  assert.deepEqual(sent3.pattern, buyingPattern(customPurchases, 'hoodie'));
+  assert.equal(sent3.pattern?.discountSensitivity, 'code');
+
+  const level2 = makeStore({ consentLevel: 2, purchases: customPurchases });
+  const tool2 = buildClosetTools(level2.cb).find((t) => t.name === 'report_demand_gap')!;
+  level2.approve();
+  const result2 = payload(await tool2.execute({ kind: 'gap', category: 'hoodie' }));
+  assert.equal(result2.ok, true);
+  const sent2 = result2.sent as DemandSignal;
+  assert.equal('pattern' in sent2, false);
+  assert.ok(!sent2.consent.fields.includes('buyingPattern'));
+});
+
+// ---------- Wave 3: purchaseFromOffer (the pure helper behind "Bought") ----------
+
+void test('purchaseFromOffer: builds a Purchase carrying offerId and promoCode, brand/category from the catalog by handle', () => {
+  const offer = fakeOffer({ offerId: 'offer-42', size: 'L' });
+  const p = purchaseFromOffer(offer, 'p-new', '2026-08-05T00:00:00.000Z');
+  assert.equal(p.id, 'p-new');
+  assert.equal(p.at, '2026-08-05T00:00:00.000Z');
+  assert.equal(p.offerId, 'offer-42');
+  assert.equal(p.promoCode, 'NORTHLIGHT25');
+  assert.equal(p.source, 'offer');
+  assert.equal(p.brand, 'Northlight Apparel');
+  assert.equal(p.category, 'hoodie');
+  assert.equal(p.size, 'L');
+  assert.equal(p.price, offer.price);
+  assert.equal(p.handle, 'northlight-hoodie');
+});
+
+void test('purchaseFromOffer: falls back to a default brand and keyword-guessed category for an unknown handle; null size becomes OS', () => {
+  const offer = fakeOffer({
+    offerId: 'offer-99',
+    handle: 'unknown-handle-xyz',
+    title: 'Trail Runner Jacket',
+    size: null,
+    promoCode: null,
+  });
+  const p = purchaseFromOffer(offer, 'p-2', '2026-08-06T00:00:00.000Z');
+  assert.equal(p.brand, 'Northlight Apparel');
+  assert.equal(p.category, 'jacket');
+  assert.equal(p.size, 'OS');
+  assert.equal(p.promoCode, null);
 });

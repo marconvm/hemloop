@@ -59,7 +59,8 @@ export type ConsentField =
   | 'fitPreference'
   | 'colourFamily'
   | 'avoidMaterials'
-  | 'priceCeiling';
+  | 'priceCeiling'
+  | 'buyingPattern';
 
 export interface ConsentGrant {
   level: 0 | 1 | 2 | 3;
@@ -84,6 +85,9 @@ export interface DemandSignal {
   context?: { fitPreference?: string };
   /** Only present at consent level 3. */
   taste?: { colourFamily?: string; avoidMaterials?: string[]; priceCeiling?: number };
+  /** Only present at consent level 3. A coarse, category-scoped buying
+   * pattern derived from purchase history - never the raw purchases. */
+  pattern?: BuyingPattern;
 }
 
 /** Exactly which fields would leave the page for report_demand_gap at a
@@ -103,7 +107,7 @@ export function consentFieldsForRequest(
     if (opts.hasOccasion) fields.push('occasion');
   }
   if (level >= 3) {
-    fields.push('colourFamily', 'avoidMaterials', 'priceCeiling');
+    fields.push('colourFamily', 'avoidMaterials', 'priceCeiling', 'buyingPattern');
   }
   return fields;
 }
@@ -473,4 +477,275 @@ export function writePreferences(prefs: Preferences): void {
   } catch {
     /* ignore */
   }
+}
+
+// ---------- Purchases across stores ----------
+
+/** One purchase, from any merchant (including rivals). Never leaves the
+ * page as a raw row - only the derived BuyingPattern below does, and only
+ * at consent level 3. */
+export interface Purchase {
+  id: string;
+  at: string; // ISO timestamp
+  merchant: string;
+  brand: string;
+  handle?: string;
+  title: string;
+  category: GarmentCategory;
+  size: string;
+  price: number;
+  currency: string;
+  promoCode?: string | null;
+  offerId?: string | null;
+  source: 'receipt' | 'order-email' | 'manual' | 'lookup' | 'offer';
+}
+
+/** ~10 purchases over the last 12 months across four partner brands and one
+ * rival (Harborview Basics), mixed promo-code and full-price, one bought
+ * through an approved personal offer. Deterministic dates, no `now` call -
+ * mirrors seedWardrobe. */
+export function seedPurchases(): Purchase[] {
+  return [
+    {
+      id: 'p1',
+      at: '2025-09-10T14:22:00.000Z',
+      merchant: 'Northlight Apparel online store',
+      brand: 'Northlight Apparel',
+      title: 'Harborview Crew Tee',
+      category: 'tee',
+      size: 'M',
+      price: 17.18,
+      currency: 'CAD',
+      promoCode: 'NORTHLIGHT25',
+      source: 'receipt',
+    },
+    {
+      id: 'p2',
+      at: '2025-10-18T09:05:00.000Z',
+      merchant: 'Denim Supply Co. flagship',
+      brand: 'Denim Supply Co.',
+      handle: 'east-side-straight-jean',
+      title: 'East Side Straight Jean',
+      category: 'denim',
+      size: '32x30',
+      price: 68.0,
+      currency: 'CAD',
+      promoCode: null,
+      source: 'manual',
+    },
+    {
+      id: 'p3',
+      at: '2025-11-24T18:40:00.000Z',
+      merchant: 'Ridgeline Outdoor',
+      brand: 'Ridgeline Outdoor',
+      handle: 'tidewater-shell-jacket',
+      title: 'Tidewater Shell Jacket',
+      category: 'jacket',
+      size: 'M',
+      price: 96.0,
+      currency: 'CAD',
+      promoCode: null,
+      source: 'order-email',
+    },
+    {
+      id: 'p4',
+      at: '2025-12-06T12:00:00.000Z',
+      merchant: 'Overland Trading Co.',
+      brand: 'Overland Trading Co.',
+      handle: 'fieldhouse-cap',
+      title: 'Fieldhouse Cap',
+      category: 'accessory',
+      size: 'OS',
+      price: 23.4,
+      currency: 'CAD',
+      promoCode: 'OVERLAND10',
+      source: 'order-email',
+    },
+    {
+      id: 'p5',
+      at: '2026-01-14T20:15:00.000Z',
+      merchant: 'Harborview Basics online',
+      brand: 'Harborview Basics',
+      title: 'Essential Crew Tee',
+      category: 'tee',
+      size: 'M',
+      price: 12.99,
+      currency: 'CAD',
+      promoCode: 'HB20',
+      source: 'receipt',
+    },
+    {
+      id: 'p6',
+      at: '2026-02-02T11:30:00.000Z',
+      merchant: 'Northlight Apparel online store',
+      brand: 'Northlight Apparel',
+      handle: 'northlight-hoodie',
+      title: 'Northlight Hoodie',
+      category: 'hoodie',
+      size: 'L',
+      price: 33.68,
+      currency: 'CAD',
+      promoCode: 'NORTHLIGHT25',
+      source: 'manual',
+    },
+    {
+      id: 'p7',
+      at: '2026-03-19T16:45:00.000Z',
+      merchant: 'Denim Supply Co. flagship',
+      brand: 'Denim Supply Co.',
+      handle: 'camden-chino',
+      title: 'Camden Chino',
+      category: 'denim',
+      size: '32x30',
+      price: 58.0,
+      currency: 'CAD',
+      promoCode: null,
+      source: 'lookup',
+    },
+    {
+      id: 'p8',
+      at: '2026-04-27T13:10:00.000Z',
+      merchant: 'Harborview Basics online',
+      brand: 'Harborview Basics',
+      title: 'Woven Cap',
+      category: 'accessory',
+      size: 'OS',
+      price: 15.0,
+      currency: 'CAD',
+      promoCode: null,
+      source: 'receipt',
+    },
+    {
+      id: 'p9',
+      at: '2026-06-15T10:00:00.000Z',
+      merchant: 'Ridgeline Outdoor',
+      brand: 'Ridgeline Outdoor',
+      handle: 'amble-court-sneaker',
+      title: 'Amble Court Sneaker',
+      category: 'footwear',
+      size: '10',
+      price: 79.0,
+      currency: 'CAD',
+      promoCode: null,
+      source: 'order-email',
+    },
+    {
+      id: 'p10',
+      at: '2026-07-30T08:20:00.000Z',
+      merchant: 'Northlight Apparel online store',
+      brand: 'Northlight Apparel',
+      handle: 'solstice-graphic-tee',
+      title: 'Solstice Graphic Tee',
+      category: 'tee',
+      size: 'M',
+      price: 18.0,
+      currency: 'CAD',
+      promoCode: null,
+      offerId: 'seed-offer-1',
+      source: 'offer',
+    },
+  ];
+}
+
+const PURCHASES_KEY = 'hemloop.purchases';
+
+/** Read stored purchases, or the seed set when storage is empty,
+ * unavailable, or holds something malformed. Never throws. */
+export function readPurchases(): Purchase[] {
+  if (!hasStorage()) return seedPurchases();
+  try {
+    const raw = window.localStorage.getItem(PURCHASES_KEY);
+    if (!raw) return seedPurchases();
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return seedPurchases();
+    return parsed;
+  } catch {
+    return seedPurchases();
+  }
+}
+
+export function writePurchases(purchases: Purchase[]): void {
+  if (!hasStorage()) return;
+  try {
+    window.localStorage.setItem(PURCHASES_KEY, JSON.stringify(purchases));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** A coarse, per-category buying pattern the shopper's own agent may share
+ * at consent level 3: how they tend to get a discount, how much they tend
+ * to spend, and whether they stick to one brand. Never the raw purchases. */
+export type BuyingPattern = {
+  discountSensitivity: 'code' | 'percent' | 'none';
+  spendBand: 'under-50' | '50-100' | '100-plus';
+  brandLoyalty: 'loyal' | 'switcher';
+};
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+function spendBandFor(medianPrice: number): BuyingPattern['spendBand'] {
+  if (medianPrice < 50) return 'under-50';
+  if (medianPrice >= 100) return '100-plus';
+  return '50-100';
+}
+
+/** True when a purchase looks like it was won on a markdown without a
+ * promo code: it came from an approved personal offer (the discount is
+ * baked into the price, no code needed), or its price sits below the
+ * catalog's known regular price for that handle. Pure - reads the
+ * committed catalog snapshot, never fetches. */
+function isMarkdown(p: Purchase): boolean {
+  if (p.promoCode) return false;
+  if (p.source === 'offer') return true;
+  if (!p.handle) return false;
+  const product = demoCatalog.products.find((x) => x.handle === p.handle);
+  if (!product) return false;
+  const onSale = product.compareAtPrice !== null && product.compareAtPrice > product.price;
+  const regular = onSale ? (product.compareAtPrice as number) : product.price;
+  return p.price < regular;
+}
+
+/** Derive a category-scoped buying pattern from purchase history: code if
+ * most purchases in the category used a promo code, percent if most were on
+ * markdown without one, else none; spend band from the median price;
+ * brand loyalty from how many distinct brands appear. Ties favour code over
+ * percent over none. Pure and total - an empty match returns a neutral
+ * default rather than throwing. Optionally scoped to one brand. */
+export function buyingPattern(
+  purchases: Purchase[],
+  category: GarmentCategory,
+  brand?: string,
+): BuyingPattern {
+  const rows = purchases.filter(
+    (p) =>
+      p.category === category &&
+      (!brand || p.brand.toLowerCase() === brand.toLowerCase()),
+  );
+  if (rows.length === 0) {
+    return { discountSensitivity: 'none', spendBand: 'under-50', brandLoyalty: 'loyal' };
+  }
+  let codeCount = 0;
+  let markdownCount = 0;
+  let noneCount = 0;
+  for (const p of rows) {
+    if (p.promoCode) codeCount++;
+    else if (isMarkdown(p)) markdownCount++;
+    else noneCount++;
+  }
+  const discountSensitivity: BuyingPattern['discountSensitivity'] =
+    codeCount > 0 && codeCount >= markdownCount && codeCount >= noneCount
+      ? 'code'
+      : markdownCount > 0 && markdownCount >= noneCount
+        ? 'percent'
+        : 'none';
+  const spendBand = spendBandFor(median(rows.map((p) => p.price)));
+  const brands = new Set(rows.map((p) => p.brand.toLowerCase()));
+  const brandLoyalty: BuyingPattern['brandLoyalty'] = brands.size >= 2 ? 'switcher' : 'loyal';
+  return { discountSensitivity, spendBand, brandLoyalty };
 }
