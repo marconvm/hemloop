@@ -83,24 +83,29 @@ const HREF = { closet: '/closet', studio: '/studio' } as const;
  * there is no current step, which is what "the loop closed" looks like.
  */
 export function loopSteps(flags: LoopFlags): LoopStep[] {
-  const done: Record<LoopStepKey, boolean> = {
-    gap: flags.gapFound,
-    approved: flags.requestSent,
-    offer: flags.offerApproved,
-    bought: flags.bought,
-    learned: flags.attributed,
-  };
-  let currentAssigned = false;
-  return STEPS.map((s) => {
-    let state: LoopStepState;
-    if (done[s.key]) {
-      state = 'done';
-    } else if (!currentAssigned) {
-      state = 'current';
-      currentAssigned = true;
-    } else {
-      state = 'todo';
-    }
+  const raw = [
+    flags.gapFound,
+    flags.requestSent,
+    flags.offerApproved,
+    flags.bought,
+    flags.attributed,
+  ];
+  // A step is done only when every step before it is done too. The first
+  // version read each flag independently, which let a stale or hand-written
+  // storage row light steps 4 and 5 while step 1 was still current, and let
+  // loopProgress report 2/5 for a loop that had not started (found by Codex on
+  // acceptance replay - the comment above claimed this behaviour, the code did
+  // not have it, and the regression test asserted the wrong shape under a name
+  // that described the right one).
+  let precededByDone = true;
+  return STEPS.map((s, i) => {
+    const done = precededByDone && raw[i] === true;
+    if (!done) precededByDone = false;
+    const state: LoopStepState = done
+      ? 'done'
+      : raw.slice(0, i).every(Boolean) && !raw[i]
+        ? 'current'
+        : 'todo';
     return { ...s, state, href: HREF[s.surface] };
   });
 }

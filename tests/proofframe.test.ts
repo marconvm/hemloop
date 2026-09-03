@@ -1162,15 +1162,25 @@ void test('loopSteps: the first incomplete step is the current one', () => {
   assert.deepEqual(loopProgress(steps), { done: 2, total: 5 });
 });
 
-void test('loopSteps: a later flag does not skip an earlier step', () => {
-  // Storage is not authenticated, and a page can be opened mid-flow. A "bought"
-  // with no request behind it must not present the loop as further along than
-  // it is.
+void test('loopSteps: a later flag cannot light a step while an earlier one is unfinished', () => {
+  // Storage is not authenticated and a page can be opened mid-flow, so a
+  // "bought" with no request behind it must not present the loop as further
+  // along than it is. The first version of this test carried this name and
+  // asserted the opposite: it expected the late steps to show done. Codex
+  // caught that on acceptance replay.
   const steps = loopSteps({
     gapFound: false, requestSent: false, offerApproved: false, bought: true, attributed: true,
   });
-  assert.equal(steps[0]?.state, 'current', 'still waiting on the gap');
-  assert.deepEqual(steps.map((s) => s.state), ['current', 'todo', 'todo', 'done', 'done']);
+  assert.deepEqual(steps.map((s) => s.state), ['current', 'todo', 'todo', 'todo', 'todo']);
+  assert.deepEqual(loopProgress(steps), { done: 0, total: 5 }, 'nothing is done until step 1 is');
+});
+
+void test('loopSteps: a gap in the middle stops the rail there, whatever comes after', () => {
+  const steps = loopSteps({
+    gapFound: true, requestSent: true, offerApproved: false, bought: true, attributed: true,
+  });
+  assert.deepEqual(steps.map((s) => s.state), ['done', 'done', 'current', 'todo', 'todo']);
+  assert.deepEqual(loopProgress(steps), { done: 2, total: 5 });
 });
 
 void test('loopSteps: all five done leaves no current step, which is the closed loop', () => {

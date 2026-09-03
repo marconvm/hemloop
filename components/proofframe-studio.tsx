@@ -733,11 +733,19 @@ export function ProofFrameStudio() {
       requestSent: signals.length > 0,
       offerApproved: offers.some((o) => o.status === 'approved'),
       bought: outcomes.some((o) => o.outcome === 'bought'),
-      // Attribution is recorded on the shopper's page, which the merchant
-      // cannot read. The outcome is the furthest the merchant can see.
-      attributed: false,
+      // The merchant cannot read the purchase row, but it does not need to:
+      // an approved offer whose request came back bought IS the merchant's
+      // half of attribution, and both halves are already on this page. It was
+      // hardcoded false, which capped the studio rail at 4/5 forever and made
+      // the v4 script's closing shot (both surfaces, all five lit) impossible
+      // (found by Codex on acceptance replay). No shopper identifier or
+      // purchase row is involved: this joins an offer's requestId to an
+      // outcome's signalId, both of which are already merchant-visible.
+      attributed: offers.some(
+        (o) => o.status === 'approved' && outcomeById.get(o.requestId) === 'bought',
+      ),
     }),
-    [signals, offers, outcomes],
+    [signals, offers, outcomes, outcomeById],
   );
   const aggregatedSignals = useMemo(
     () =>
