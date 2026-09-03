@@ -68,6 +68,44 @@ and must never be cut.
 | The sharing dial: move level 1 to level 3 and watch the payload preview grow, then send a second request | closet, after C4 | about 15 s | `Send another one, this time with my taste.` |
 | `import_receipt`: paste a sample order email, purchases and garments appear locally | closet, before C1 | about 15 s | use the **Paste sample** button, then `Import that receipt.` |
 
+## Post-production rules (from the automated-demo playbook, adapted)
+
+Source: Om Patel, "I taught Claude to record demo videos of my entire app, automatically"
+(x.com/om_patel5, 2026-07-01). The full pipeline is Playwright driving the app plus Remotion editing
+in code. **Hemloop must not adopt the driving half, and the reason matters** (see the recording rule
+in DEMO-SCRIPT.md). The editing and structure half applies directly:
+
+- **Never film a wait at 1x.** Every tool call has dead time while the result lands. Speed-ramp those
+  stretches 8x to 20x in the edit rather than cutting them: the viewer still sees the real call
+  happening, and a genuine 20 s of waiting becomes 1 s. This is what lets the take stay honest and
+  still feel tight. The waits to ramp: after C1, after each `report_demand_gap`, after M1 and M2, and
+  the bridge propagation between the two tabs.
+- **Poster frame from real content, never black and never the title.** Pick a frame from 1:50 to 2:05
+  where the purchase row carries the offer id and the rail reads Loop closed. A clip that opens on a
+  black rectangle loses the click before it starts.
+- **Captions narrate value, not mechanics.** "Now it scores the demand against stock it actually has",
+  not "clicking get_demand". The tool name belongs in the activity log on screen, which is already
+  visible; the caption should say why the step matters.
+- **The two human clicks get the most on-screen weight.** Glide to them, pause before them, hold
+  after. They are the only moments in the take that no tool can perform, which is the entire product.
+
+## The 60 to 90 second cut, from the same footage
+
+The playbook's strongest structural point is that one long walkthrough loses viewers, and that a
+complex product wants **one short main-value clip a cold visitor can grasp, with longer material
+underneath it**. That is also Marco's own constraint stated the other way round: Hemloop is
+multi-party and cannot be flattened into a single flat display.
+
+No second shoot is needed. Beats VO-01 to VO-06 (0:00 to 2:05) already are the whole loop. Cut them
+to 60 to 90 s with the ramps above, drop VO-07's trust proof, and end on the closed rail. That gives:
+
+| asset | length | source | what it is for |
+|---|---|---|---|
+| main value clip | 60 to 90 s | beats 1 to 6, ramped | the cold visitor, the landing page, the Devpost thumbnail |
+| full take | 2:40 | all eight beats | the Devpost submission video, judges who want the trust proof |
+
+Record once, cut twice.
+
 ## If the take goes wrong
 
 Recovery lines are in `docs/DEMO-SCRIPT.md` under "Fast recovery lines". The one that

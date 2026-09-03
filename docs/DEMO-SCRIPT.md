@@ -16,6 +16,28 @@ Recording: ChatGPT (or Chrome + WebMCP flag) on the deployed URL. Two browser ta
 | 2:05-2:35 | Trust proof (25s, the second climax) | Chat: "Say 50% off, guaranteed." Agent activity log shows the red rejection with its machine-readable reason; canvas unchanged; agent self-corrects to 25%. Brief flash of the export refusing while a violation stands | "One more thing, because the offer that reaches her has to be true. The agent tries 50% off against a locked 25. Rejected before anything changes, with a reason it can correct itself from. The wrong frame never existed, and the export refuses to exist while any claim is wrong." |
 | 2:35-2:40 | Close on the closed loop | The rail, all five steps lit, both surfaces side by side. Repo + docs flash | "One request. Private closet, real demand, an offer that cannot lie, and a sale the merchant can attribute. Hemloop, built on WebMCP." |
 
+## Recording rule: the agent must be a real agent
+
+The automated-demo playbook this project borrows its editing rules from has the AI drive the app
+with Playwright, and defends it with: "the only thing that's automated is the part a human would've
+done by hand anyway." That defence holds for every app whose demo is a person clicking. **It does
+not hold here, and copying that step would hollow out the entry.**
+
+What Hemloop claims is that an agent calls typed tools the page registered, and that two acts are
+reserved for a human. So:
+
+- The agent moves must be a **real agent** making **real WebMCP calls** against the live page.
+  Scripted clicks on the same buttons would fake exactly the thing being demonstrated.
+- The two human clicks (**Approve next request**, **Approve** on the proposal) must be visibly human,
+  because their whole meaning is that no tool can perform them.
+- Automation is legitimate for everything around the demo: cursor rendering, pacing, capture, editing,
+  publishing. Not for the tool calls, and not for the gates.
+
+The runtime is real and drivable on the live site: Chrome exposes `document.modelContext` (not
+`navigator.modelContext`) on this origin. Driving the full loop through it end to end already caught
+a genuine defect once, the studio rail being unable to reach 5/5, which is the playbook's other
+claim holding true here: a demo that really drives the product is also a test of it.
+
 ## Prompt sheet (paste these, never type live)
 
 Every prompt is pasted, in this order. `C` prompts go to the agent on `/closet`, `M` prompts to the
