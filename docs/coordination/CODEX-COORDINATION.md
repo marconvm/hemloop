@@ -221,3 +221,19 @@ Reports: CODEX-ROUND3.md (with its "Reconciliation replies"), CLAUDE-ROUND3.md. 
 Gates after landing: tsc, oxlint, 66/66 tests (3 new: hostile wardrobe budget, stored-consent narrowing, fence
 escape + cap), build, deploy, live 200 x4, X-Frame-Options DENY on live. Both reviewers' do-not-touch lists
 respected: no dependency, token, robots, CSP, deployment config or component-split change.
+
+### Codex unified-architecture review, Section 16 (2026-09-03) — Hemloop finding, recorded here because the source file lives outside the repo
+Source: ~/Documents/Codex/2026-09-02/referenced-chatgpt-conversation-this-is-an/outputs/anthropic-commerce-agents-unified-architecture-summary.md, section 16.
+Recommendation: adopt Anthropic commerce-agents **contracts and release discipline**, not its runtime. Bring in now
+(already true of the build): explicit closet/studio role boundary sharing only pure contracts and a minimized
+signal; tool -> policy -> human approval shape (one-shot approval, consent dial, locked offer facts, gated export);
+provenance vocabulary (closet_data / storefront_data fences, untrusted hints, bounded payloads, known identifiers);
+the replay loop as the shared eval contract (positive + negative case per tool/consent field; the 66 tests are the
+seed); small typed presentation payloads (offer, demand, completeness, export summaries as stable JSON).
+Do NOT bring into the challenge app: the Python runtime, intent router or agent swarm, memory store, MCP backend,
+raw shopper memory / order history / CRM / credentials, any new service before submission.
+Post-challenge seam, three interfaces only: ToolContract (schema, provenance, output budget), ApprovalReceipt
+(human/policy actor, scope, expiry, replay key), PresentationEvent (typed UI payload plus source and freshness);
+the WebMCP adapters stay one frontend implementation of them.
+Claude position: AGREED in full; consistent with docs/coordination/commerce-agents-gap-2026-09-02.md and the
+artefacts in docs/integrations/commerce-agents/. No code change before the deadline. Both agents.

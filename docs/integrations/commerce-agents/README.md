@@ -17,3 +17,12 @@ repo's source labels (`<closet_data>`, `<storefront_data>`); `signalId` is serve
 on resulting state; the two human gates are the repo's "model stages, person applies". What we refuse:
 memory keyed by a person. The wardrobe, preferences and request log are bound to the browser and can be
 cleared by the shopper; no field that could identify the shopper ever enters a request at any sharing level.
+
+## Post-challenge seam (agreed by both reviewing agents, 2026-09-03)
+
+Three interfaces, nothing more: `ToolContract` (schema, provenance label, output budget), `ApprovalReceipt`
+(who approved, human or policy, scope, expiry, replay key) and `PresentationEvent` (typed UI payload with
+source and freshness). The WebMCP adapters in `lib/proofframe/webmcp*.ts` stay one frontend implementation of
+those interfaces; a future authenticated backend adds server-side identity and revalidation behind them without
+weakening the no-identifier bridge. Not before the deadline: no runtime, router, memory store, MCP backend or
+new service enters the challenge app.
