@@ -1,95 +1,140 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="robots" content="noindex, nofollow" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hemloop: Documentation</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.2/marked.min.js" integrity="sha384-dAw12gnWShdrRMCwiNUvPHQ5IWS3uZwljXl3x7qNqvn+5gD/O/DXFCnR29GdXgOk" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.14/purify.min.js" integrity="sha384-46dPGH1XlTmj7bc50bqLjTdORXs/3EP2QpA/6EWbelYWOY9VGp+87RT61S3Mcslb" crossorigin="anonymous"></script>
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Sans:wght@400;500;650&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" integrity="sha512-sUCxb2d4RHydzgprGEeV5cQlBs2YUPa/A3OlPMAhtaU3BnOVSG0cjRDbB4qz2mMjdEaTRBcOc6hpeAm6ZCiOFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" integrity="sha512-qSnxhX+/wTFjYS7l0VL8hHN2xf4ZO4aa2kRBQ+f7CgaWMD1tEh6P0TOaOqW+uY2S2rWqBmz0FbT9bXt9ur5xqw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
+  /* Tokens shared with the app: see app/globals.css. */
   :root {
-    --bg: #0e0f11; --panel: #16181b; --ink: #e9e7e1; --dim: #a4a29c;
-    --line: rgba(255,255,255,0.09); --accent: #cdeb5a; --link: #b7d84a;
+    --ink: #17211c; --forest: #183e30; --moss: #346b45; --loop: #b9f227;
+    --cream: #f4f0e6; --paper: #fbfaf5; --white: #ffffff; --coral: #ee6f4d;
+    --muted: #687169; --line: rgba(23, 33, 28, 0.13);
+    --font-display: 'Manrope', system-ui, sans-serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
-    display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-  nav { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
-    border-right: 1px solid var(--line); padding: 28px 20px; background: var(--panel); }
-  nav .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
-  nav .tag { color: var(--dim); font-size: 12px; margin: 4px 0 24px; }
-  nav a { display: block; color: var(--dim); text-decoration: none; padding: 7px 10px;
-    border-radius: 8px; font-size: 14px; }
-  nav a:hover { color: var(--ink); background: rgba(255,255,255,0.04); }
-  nav a.active { color: #17210b; background: var(--accent); font-weight: 600; }
-  nav .home { display:inline-block; margin-top: 24px; color: var(--link); font-size: 13px; }
-  main { padding: 48px clamp(24px, 5vw, 72px); max-width: 900px; }
-  article h1 { font-size: 32px; letter-spacing: -0.02em; margin: 0 0 8px; }
-  article h2 { margin-top: 40px; border-top: 1px solid var(--line); padding-top: 24px; font-size: 22px; }
-  article h3 { margin-top: 28px; font-size: 17px; }
-  article a { color: var(--link); }
-  article code { background: rgba(255,255,255,0.07); padding: 1px 6px; border-radius: 5px; font-size: 0.88em; }
-  article pre { background: #0a0b0d; border: 1px solid var(--line); border-radius: 10px;
-    padding: 16px; overflow-x: auto; }
-  article pre code { background: none; padding: 0; }
-  article table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; display: block; overflow-x: auto; }
-  article th, article td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; }
-  article th { background: rgba(255,255,255,0.04); }
-  article blockquote { border-left: 3px solid var(--accent); margin: 16px 0; padding: 4px 16px; color: var(--dim); }
-  article img { max-width: 100%; }
-  @media (max-width: 720px) { body { grid-template-columns: 1fr; } nav { position: static; height: auto; } }
+  html { color-scheme: light; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.62 var(--font-body); }
+  a { color: var(--forest); }
+
+  /* Persistent header: logo left, navigation right, on every page. */
+  .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 28px; background: rgba(251,250,245,.86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font: 750 21px/1 var(--font-display); letter-spacing: -.05em; color: var(--ink); text-decoration: none; }
+  .brand-mark { position: relative; display: inline-grid; place-items: center; width: 31px; height: 31px; border: 2px solid var(--ink); border-radius: 50%; }
+  .brand-mark span { width: 8px; height: 8px; background: var(--loop); border: 1px solid var(--ink); border-radius: 50%; }
+  .sitenav { display: flex; gap: 22px; font: 650 13px/1 var(--font-body); }
+  .sitenav a { color: var(--ink); text-decoration: none; opacity: .72; padding: 6px 0; border-bottom: 2px solid transparent; }
+  .sitenav a:hover, .sitenav a[aria-current] { opacity: 1; border-bottom-color: var(--loop); }
+
+  .frame { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 36px; max-width: 1180px; margin: 0 auto; padding: 34px 28px 80px; }
+  nav.toc { position: sticky; top: 80px; align-self: start; }
+  .toc .kicker { margin: 0 0 10px; color: var(--moss); font: 800 11px/1 var(--font-body); letter-spacing: .13em; text-transform: uppercase; }
+  .toc a { display: block; padding: 8px 12px; margin: 2px 0; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 500; font-size: 14px; }
+  .toc a:hover { background: var(--cream); }
+  .toc a.active { background: var(--ink); color: var(--white); }
+  .toc .group { margin-top: 22px; }
+  .toc .foot { margin-top: 26px; font-size: 12px; color: var(--muted); }
+  .toc .foot a { display: inline; padding: 0; color: var(--muted); text-decoration: underline; font-size: 12px; }
+
+  article { background: var(--white); border: 1px solid var(--line); border-radius: 22px; padding: 42px 46px; }
+  article h1 { margin: 0 0 18px; font: 760 clamp(30px, 3.6vw, 44px)/1.02 var(--font-display); letter-spacing: -.05em; }
+  article h2 { margin: 36px 0 12px; font: 750 22px/1.15 var(--font-display); letter-spacing: -.03em; }
+  article p, article li { max-width: 72ch; }
+  article code { background: var(--cream); padding: 2px 6px; border-radius: 6px; font-size: .92em; }
+  article pre { background: var(--ink); color: #eef3ea; padding: 18px 20px; border-radius: 14px; overflow: auto; font-size: 13px; line-height: 1.5; }
+  article pre code { background: none; padding: 0; color: inherit; }
+  article table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 14px; }
+  article th, article td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  article th { color: var(--muted); font: 700 11px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+  article blockquote { border-left: 3px solid var(--loop); margin: 16px 0; padding: 4px 16px; color: var(--muted); }
+  article img { display: block; max-width: 100%; margin: 22px 0; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(23,33,28,.10); }
+
+  /* Use-case tabs, rendered above the article when a use case is open. */
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .tabs a { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); text-decoration: none; font: 650 13px/1 var(--font-body); }
+  .tabs a.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+  @media (max-width: 820px) {
+    .frame { grid-template-columns: 1fr; padding: 22px 16px 60px; }
+    nav.toc { position: static; }
+    article { padding: 28px 22px; }
+    .sitenav { gap: 14px; }
+  }
 </style>
 </head>
 <body>
-<nav>
-  <div class="brand">Hemloop</div>
-  <div class="tag">Documentation</div>
-  <div id="toc"></div>
-  <a class="home" href="/">← Home</a>
-  <a class="home" href="/closet">Closet</a>
-  <a class="home" href="/studio">Studio</a>
-  <div class="tag" style="margin-top:18px">Internal record</div>
-  <a class="home small" href="#PRD.md">Requirements</a>
-  <a class="home small" href="#TEST-PLAN.md">Test plan</a>
-  <a class="home small" href="#VERIFICATION.md">Verification</a>
-  <a class="home small" href="#GAP-ANALYSIS.md">Gap analysis</a>
-  <a class="home small" href="#PHOTO-CREDITS.md">Photo credits</a>
-  <a class="home small" href="#DEVPOST-SUBMISSION.md">Submission pack</a>
-</nav>
-<main><article id="content">Loading…</article></main>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Hemloop home"><span class="brand-mark" aria-hidden="true"><span></span></span><span>hemloop</span></a>
+  <nav class="sitenav" aria-label="Hemloop surfaces">
+    <a href="/">Loop</a>
+    <a href="/closet">Closet</a>
+    <a href="/studio">Studio</a>
+    <a href="/docs/" aria-current="page">Docs</a>
+  </nav>
+</header>
+
+<div class="frame">
+  <nav class="toc" aria-label="Documentation">
+    <p class="kicker">Read in order</p>
+    <div id="toc"></div>
+    <div class="group"><p class="kicker">Use cases</p><div id="toc-uc"></div></div>
+    <p class="foot">Product photos in the shopper's wardrobe are real, from the author's own catalogs, used with permission. The merchant is fictional. <a href="#PHOTO-CREDITS.md">Provenance</a>.</p>
+  </nav>
+  <main>
+    <div id="tabs" class="tabs" hidden></div>
+    <article id="content">Loading…</article>
+  </main>
+</div>
+
 <script>
-  // Five documents, in the order a judge should read them. The internal record
-  // (test plan, verification, gap analysis, PRD, demo script, photo credits)
-  // stays in the repo where it belongs and is linked at the foot of the nav,
-  // rather than competing for attention with the product itself.
+  // Five documents in the order a reader should take them, then the use cases
+  // as tabs. Nothing else is on this site: the working record stays in the
+  // repository, where it is a record and not a pitch.
   const DOCS = [
-    ["WRITEUP.md", "Start here: the argument"],
-    ["README.md", "Overview and tool surface"],
-    ["USE-CASES.md", "The loop, as a story"],
-    ["TECH-GUIDE.md", "WebMCP implementation"],
-    ["USER-GUIDE.md", "Using both surfaces"],
-    ["SECURITY.md", "Threat model and review"],
+    ["01-what-is-hemloop.md", "What is Hemloop"],
+    ["02-the-loop.md", "The loop, and what each side gets"],
+    ["03-the-problem.md", "The problem in the real world"],
+    ["04-webmcp-overview.md", "Hemloop and WebMCP"],
+    ["05-quick-start.md", "Quick start and implementation"],
   ];
-  // Reachable by direct link, just not headline cards.
-  const EXTRA = [
-    ["PRD.md", "Requirements"], ["TEST-PLAN.md", "Test plan"],
-    ["VERIFICATION.md", "Verification"], ["GAP-ANALYSIS.md", "Gap analysis"],
-    ["PHOTO-CREDITS.md", "Photo credits"], ["DEMO-SCRIPT.md", "Demo script"],
-    ["DEVPOST-SUBMISSION.md", "Submission pack"], ["DEVPOST-CHECKLIST.md", "Submission checklist"],
+  const USE_CASES = [
+    ["uc-right-time.md", "Right time"],
+    ["uc-cannot-fill.md", "What the merchant cannot fill"],
+    ["uc-family.md", "Shopping for someone else"],
+    ["uc-rival-receipt.md", "A receipt from a rival"],
+    ["uc-handoff.md", "Handoff to a shopping agent"],
   ];
-  const ALL = [...DOCS, ...EXTRA];
+  const EXTRA = [["PHOTO-CREDITS.md", "Provenance"]];
+  const ALL = [...DOCS, ...USE_CASES, ...EXTRA];
+
   const toc = document.getElementById("toc");
+  const tocUc = document.getElementById("toc-uc");
+  const tabs = document.getElementById("tabs");
   const content = document.getElementById("content");
   const links = {};
-  for (const [file, label] of DOCS) {
+  const addLink = (parent, file, label, cls) => {
     const a = document.createElement("a");
     a.href = "#" + file; a.textContent = label; a.dataset.file = file;
-    toc.appendChild(a); links[file] = a;
-  }
+    if (cls) a.className = cls;
+    parent.appendChild(a); return a;
+  };
+  for (const [file, label] of DOCS) links[file] = addLink(toc, file, label);
+  for (const [file, label] of USE_CASES) links[file] = addLink(tocUc, file, label);
+  const tabLinks = {};
+  for (const [file, label] of USE_CASES) tabLinks[file] = addLink(tabs, file, label);
+
   async function load(file) {
     for (const f in links) links[f].classList.toggle("active", f === file);
+    const isUc = USE_CASES.some(([f]) => f === file);
+    tabs.hidden = !isUc;
+    for (const f in tabLinks) tabLinks[f].classList.toggle("active", f === file);
     try {
       const res = await fetch(file);
       if (!res.ok) throw new Error(res.status);
@@ -102,8 +147,6 @@
   }
   function route() {
     const file = location.hash.slice(1);
-    // ALL, not DOCS: the internal record is still directly linkable from the
-    // foot of the nav even though it is not a headline card.
     load(ALL.some(([f]) => f === file) ? file : DOCS[0][0]);
   }
   window.addEventListener("hashchange", route);

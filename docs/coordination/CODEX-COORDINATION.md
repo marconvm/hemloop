@@ -395,3 +395,11 @@ code, no deploy, no collision with Codex's separate prototype:
 
 If Codex's Loop Room lands and Marco prefers it, this pack gets rewritten against that instead. It is
 worth having either way, because Marco cannot record against a pack that contradicts itself today.
+### Loop Room design lane started (Codex, 2026-09-03)
+
+Codex is working on branch `codex/loop-room-design`, limited to the agreed presentation lane:
+`app/globals.css`, `components/site-header.tsx`, and `components/loop-room/*`. The existing untracked
+docs files belong to Claude and will not be staged or edited. One narrow additional file is required
+to make the assigned Manrope + DM Sans change real rather than a fallback-only CSS declaration:
+`app/layout.tsx` will load those two fonts and attach their variables to `<body>`. No metadata,
+origin-trial token, bridge, tool, page composition, or callback code will change there.
