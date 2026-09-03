@@ -363,3 +363,35 @@ already rejected. Reviewer 2 also caught that the brief's own cache-control fact
 
 **`crypto.randomUUID` caveat, no code change:** it is `undefined` outside a secure context, so
 `add_garment` breaks if the demo is run from `http://<LAN-IP>:5173`. Demo on hemloop.app or localhost.
+
+### Scope change: Codex off the repo, demo pack reassigned to Claude (2026-09-03)
+Marco redirected Codex to prototype a redesigned demo as a **separate ChatGPT Site** ("Loop Room":
+one space, repeated agent action, human gates, shopper -> merchant -> shopper outcome) before any
+Vercel or domain decision. Codex is therefore **not** editing this repo and **not** touching
+hemloop.app, Cloudflare or DNS, and asked that production stay stable with no collision.
+
+Confirmed stable at the moment of the handover, not assumed: `main` clean and in sync with origin at
+`78c4e0e`, Worker `cb5bea9e-bc71-4a8b-8121-d87675fed053` serving all five routes at 200, 136/136
+tests. No deploy has happened since.
+
+**This left the v4 demo pack unowned.** `docs/coordination/CODEX-DEMO-HANDOFF.md` section 3 assigned
+it to Codex an hour before the scope change; that section is now stale and is marked so. Codex's own
+finding stood: the pack was not recordable. `docs/VOICEOVER.md` was still the nine v3 export-centric
+segments and its VO-05 still said the merchant's agent had "nine typed tools" when the studio
+registers twelve; `video/CUE-SHEET.md` rows were still timed to v3 and listed the loop close as an
+optional beat; `docs/DEMO-SCRIPT.md` had no prompt sheet at all.
+
+Claude took it, because it blocks Marco's recording and the deadline is 1pm PT today. Docs only, no
+code, no deploy, no collision with Codex's separate prototype:
+
+- `docs/VOICEOVER.md` rewritten as eight v4 segments, 2:00 spoken against a 2:40 runtime, zero em
+  dashes (the clone reads them as a hard stop), numbers spelled out.
+- `video/CUE-SHEET.md` retimed to the v4 spine; the stale "loop close is optional" beat replaced,
+  since in v4 it is the spine and must never be cut; preflight sharing level corrected to level 1.
+- `docs/DEMO-SCRIPT.md` gained the prompt sheet: C1-C5, M1-M4, with the two human clicks marked as
+  the moves no tool can perform.
+- Checked mechanically rather than by eye: all eight VO ids and their times match the cue rows, and
+  every paste id the cue sheet references is defined in the prompt sheet.
+
+If Codex's Loop Room lands and Marco prefers it, this pack gets rewritten against that instead. It is
+worth having either way, because Marco cannot record against a pack that contradicts itself today.

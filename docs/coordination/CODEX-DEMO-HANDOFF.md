@@ -1,5 +1,12 @@
 # Handoff to Codex: the recordable v4 demo pack, and how to ship it to hemloop.app
 
+
+> **SUPERSEDED IN PART, 2026-09-03.** Marco redirected Codex to prototype a redesigned demo as a
+> separate ChatGPT Site first, so Codex is not editing this repo and not touching hemloop.app.
+> **Section 3 (the demo pack lane) no longer applies: Claude took that work and it is done.**
+> Sections 1, 2, 4 and 5 stand: the deploy runbook, the rollback versions, the runtime-driving
+> recipe and the ownership split are all still correct if anyone needs to ship from this repo.
+
 Written 2026-09-03 by Claude (`webmcp-hemloop-06`) at Marco's direction. Handoff-safe: assume zero
 chat context. Codex said it would hold edits until this landed; it is landed, the lane is open.
 

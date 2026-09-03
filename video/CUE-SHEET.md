@@ -1,27 +1,4 @@
-# Cue sheet: one-take demo, 2:50
-
-> **v4 reframe (2026-09-03).** DEMO-SCRIPT.md moved from "export is the climax" to
-> "one request's complete lifecycle is the spine", target 2:40. The cue rows below were
-> timed against v3 and no longer match beat for beat: the loop close (propose_offer →
-> merchant approve → get_offers → Bought → attribution) moved from an optional tail beat
-> to 1:10-2:05, and the trust proof shrank to a 25-second supporting beat at 2:05. Re-time
-> against the v4 table before recording. The on-screen device for the join is the loop rail
-> that now runs under the header on both surfaces.
-
-
-
-The timed layer over `docs/DEMO-SCRIPT.md`. That file holds the prompts and the
-argument; this one holds the clock and what preflight actually found.
-
-Build the narration bed first:
-
-```sh
-python3 video/build-vo-track.py video/vo-clone video/vo-clone-track.wav --check
-```
-
-Drop `vo-clone-track.wav` (your cloned voice, rendered 2026-09-03 from the current script) at 00:00. Every line is already at its beat start, so you
-cut the screen capture to meet the audio rather than sliding eight files by hand.
-The HeyGen bed in `video/vo/` is the fallback (`build-vo-track.py video/vo video/vo-track.wav`).
+# Cue sheet: one request end to end, 2:40
 
 ## Preflight, run 2026-09-02 on the live deployment, all green
 
@@ -30,12 +7,13 @@ Chrome 151 with `chrome://flags/#enable-webmcp-testing`, after the dead-code rem
 | check | result |
 |---|---|
 | `/closet` badge | **9 WebMCP tools live** |
+| loop rail | present on both surfaces, **Gap** current, next-line visible |
 | closet tools registered | `add_garment`, `check_fit`, `find_gaps`, `get_my_sizes`, `get_offers`, `get_preferences`, `get_wardrobe`, `import_receipt`, `report_demand_gap` |
 | `/studio` badge | **12 WebMCP tools live** |
 | studio tools registered | `add_scene`, `export_composition`, `get_campaign_state`, `get_demand`, `get_offer`, `import_product`, `propose_offer`, `reorder_scenes`, `seek_preview`, `set_brief`, `update_scene`, `validate_claims` |
 | clean state | `localStorage` empty · closet "Nothing sent yet" · studio "No signals yet" |
-| sharing level | set to **2 Context**, **Shopping for: Me** |
-| gates | campaign truth **locked** · **Approve next request (level 2)** armed and visible |
+| sharing level | set to **1 Basics**, **Shopping for: Me** (v4 sends at level 1; the dial is an optional beat, not the spine) |
+| gates | campaign truth **locked** · **Approve next request (level 1)** visible and NOT yet armed |
 | proof trail | "All claims trace to locked facts · 4 scenes checked · safe to export" |
 | runtime namespace | `document.modelContext` defined, `navigator.modelContext` **undefined** |
 
@@ -60,27 +38,35 @@ Three things to know before you roll:
 
 ## The clock
 
-The clone VO runs 1:58 across a 2:50 timeline: 52 s of headroom spread over eight beats, so
+The clone VO runs 2:00 across a 2:40 timeline: about 39 s of headroom spread over eight beats, so
 every line lands inside its slot with room for the action to breathe. Never type
 live: paste, and cut the wait.
 
 | t | VO (len) | On screen | Paste |
 |---|---|---|---|
-| 0:00 | VO-01 (9.2s) | Cold open **already on `/closet`**, live badge visible, first call firing. No title card. | C1 |
-| 0:12 | VO-02 (11.3s) | `find_gaps` result: hoodie absent. Wardrobe grid visible, never read aloud. | n/a |
-| 0:35 | VO-03 (22.2s) | Sharing level already **2 Context**; payload preview visible before any click. `report_demand_gap` → `human-approval-required`. Human clicks **Approve next request (level 2)**. Retry succeeds; **hold on the payload**: this is the longest line, use it to let a judge read the fields and see no identity column. | C2, human click, C3 |
-| 1:00 | VO-04 (15.4s) | Cut to `/studio`. New event top of Incoming requests, its Occasion / For / "Shared at level 2" line visible. Human: **Unlock offer facts** → **Answer this request** → **Add sizes in stock** (meter 8 of 9 → 9 of 9) → **Lock offer facts**. Agent never clicks. | n/a |
-| 1:20 | VO-05 (10.7s) | Agent runs the five-call chain; human edits the hero heading by hand in the same canvas. 14 s of headroom here: the widest beat, spend it on the two-editors shot. | M1 |
-| 1:45 | VO-06 (17.2s) | The block: 50% off rejected, red row in the proof trail with the reason, canvas unchanged, agent self-corrects to 25%. | M2 |
-| 2:10 | VO-07 (18.8s) | `validate_claims` → `export_composition`; the downloaded composition plays with the disclaimer footer visible. | M3 |
-| 2:35 | VO-08 (13.7s) | Landing page, repo + docs flash, supporters line. | n/a |
+| 0:00 | VO-01 (18.0s) | Cold open **already on `/closet`**, live badge visible, first call firing. No title card. `find_gaps` returns **three** rows: no hoodie, only one jacket, footwear due at twenty one months. The narration names two of them and does not claim a count. Loop rail under the header: **Gap** lit, four steps ahead. | C1 |
+| 0:20 | VO-02 (18.8s) | Payload preview visible **before any click**. `report_demand_gap` returns `human-approval-required` and sends nothing. Human clicks **Approve next request (level 1)**. Retry succeeds: **hold on the returned payload** so a judge can read every field and see there is no identity column. Third call refused again, on screen, proving the approval was consumed. Rail advances to **Approved request**. | C2, human click, C3, C4 |
+| 0:50 | VO-03 (15.6s) | Cut to `/studio`. `get_demand` returns the grouped row with its verdict against locked stock. Human clicks **Answer this request**. | M1 |
+| 1:10 | VO-04 (16.8s) | `propose_offer` with the request id from `get_demand`. Proposal shows price, reasons, and the margin check against the locked floor. Human clicks **Approve**. Rail advances to **Matched offer**. | M2, human click |
+| 1:30 | VO-05 (8.0s) | Cut to `/closet`. `get_offers` returns it. Human clicks **Bought**. Shortest line in the take: about 12 s of air, spend it on the click and the row changing. | C5, human click |
+| 1:50 | VO-06 (12.4s) | Purchases row appears carrying the **offer id**, garment lands in the wardrobe, request shows its outcome. Rail reaches **Learned**; the next-line reads **Loop closed**. Cut to `/studio`: its rail is 5/5 too. | n/a |
+| 2:05 | VO-07 (21.2s) | The block: fifty per cent off rejected, red row in the activity log with its machine readable reason, canvas unchanged, agent self-corrects to twenty five. Three second flash of the export refusing while a violation stands. | M3, M4 |
+| 2:35 | VO-08 (9.2s) | Both surfaces side by side, both rails 5/5. Repo and docs flash. | n/a |
 
-Hard cap 3:00. VO-08 is 13.7 s inside a 15 s slot, so the close has almost no slack: start the landing cut exactly at 2:35. If you reach 2:35 behind, skip opening the downloaded HTML and cut
-straight to the close: the export *result* already proved the point at 2:10.
+Spoken total 2:00 against a 2:40 runtime: about 39 s of air across the take, concentrated at 1:30
+(the Bought click) and 0:20 (the refusal, the approval, the refusal again). That air is the demo.
 
-## Optional beat, only if ahead of time
+## Optional beats, only if ahead of time
 
-**M5 / C5**, inserted after M4 (the `get_offer` handoff), before the close: no VO track exists for this beat, so it only runs silent or ad-libbed, and only when the take is comfortably ahead of the clock above. In the studio, the merchant either toggles **Auto-propose** or clicks **Propose offer** on the incoming request, then **Approve**. Cut to the closet: the offer appears in **Offers for your requests**, Maya clicks **Bought**, and the Purchases panel row shows the offer id it came from. Skip entirely rather than push into the 3:00 hard cap.
+None of these has a VO track, so each runs silent or ad-libbed. Skip rather than push into the 3:00
+hard cap. The v3 sheet listed the loop close here as optional; in v4 it is the spine (1:10 to 1:50)
+and must never be cut.
+
+| beat | where | costs | paste |
+|---|---|---|---|
+| `get_offer` handoff to a third-party shopping agent: purchase link, sizes in stock, offer completeness | studio, before the close | about 12 s | `Read the locked offer back as structured data for a shopping agent.` |
+| The sharing dial: move level 1 to level 3 and watch the payload preview grow, then send a second request | closet, after C4 | about 15 s | `Send another one, this time with my taste.` |
+| `import_receipt`: paste a sample order email, purchases and garments appear locally | closet, before C1 | about 15 s | use the **Paste sample** button, then `Import that receipt.` |
 
 ## If the take goes wrong
 

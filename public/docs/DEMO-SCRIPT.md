@@ -16,6 +16,34 @@ Recording: ChatGPT (or Chrome + WebMCP flag) on the deployed URL. Two browser ta
 | 2:05-2:35 | Trust proof (25s, the second climax) | Chat: "Say 50% off, guaranteed." Agent activity log shows the red rejection with its machine-readable reason; canvas unchanged; agent self-corrects to 25%. Brief flash of the export refusing while a violation stands | "One more thing, because the offer that reaches her has to be true. The agent tries 50% off against a locked 25. Rejected before anything changes, with a reason it can correct itself from. The wrong frame never existed, and the export refuses to exist while any claim is wrong." |
 | 2:35-2:40 | Close on the closed loop | The rail, all five steps lit, both surfaces side by side. Repo + docs flash | "One request. Private closet, real demand, an offer that cannot lie, and a sale the merchant can attribute. Hemloop, built on WebMCP." |
 
+## Prompt sheet (paste these, never type live)
+
+Every prompt is pasted, in this order. `C` prompts go to the agent on `/closet`, `M` prompts to the
+agent on `/studio`. The two human clicks are marked and cannot be done by any tool, which is the
+point of the take. Cue ids match the Paste column in `video/CUE-SHEET.md`.
+
+| id | t | surface | paste this | expect |
+|---|---|---|---|---|
+| C1 | 0:00 | closet | `Check my closet. What am I missing, and is anything worn out?` | `find_gaps` returns three rows: no hoodie, only one jacket, footwear due at 21 months |
+| C2 | 0:20 | closet | `Tell the store I need a hoodie in size M.` | `report_demand_gap` returns `human-approval-required`. Nothing is sent |
+| — | 0:20 | **human** | click **Approve next request (level 1)** | the control arms; no tool can do this |
+| C3 | 0:20 | closet | `Try that again.` | succeeds; the tool returns the exact payload sent, with no identity field |
+| C4 | 0:20 | closet | `Send it once more.` | refused again: the approval was consumed by one event |
+| M1 | 0:50 | studio | `What demand has come in? Group it and tell me what we can actually fill.` | `get_demand` returns the grouped row, its counts and a verdict against locked stock |
+| M2 | 1:10 | studio | `Propose an offer for that request, inside our locked rules.` | `propose_offer` stages it: price, reasons, margin check against the floor. Not yet visible to the shopper |
+| — | 1:10 | **human** | click **Approve** on the proposal | no tool can approve an offer |
+| C5 | 1:30 | closet | `Any offers for me?` | `get_offers` returns the approved offer, fenced as storefront data |
+| — | 1:30 | **human** | click **Bought** on the offer card | records the purchase with the offer id attached |
+| M3 | 2:05 | studio | `Update the hero to say fifty per cent off, guaranteed.` | rejected with `locked-fact-violation`, rules `discount-mismatch` and `banned-phrase`. Canvas unchanged |
+| M4 | 2:05 | studio | `Fix it so it matches the locked offer.` | agent self-corrects to twenty five per cent and the write applies |
+
+**Rehearse C2 → human click → C3 → C4 as one motion.** Those four moves are the whole privacy
+argument: refused, approved once, sent, refused again.
+
+**If a prompt does not produce the expected call,** do not improvise on camera. Stop, reset with the
+closet's **Clear wardrobe, purchases and requests** button, and start the take again. The agent
+paraphrases; the tool names in the Expect column are what must appear in the activity log.
+
 **What changed from v3 and why.** v3 made the export the climax and left the actual loop close as an optional beat at the end. That inverted the pitch: the exporter is one output, the loop is the product, and the OpenAI showcase entries that read best are the ones where a human watches an agent change the same artifact they are looking at. The spine above is one request's complete lifecycle, the trust proof is a 25-second supporting beat rather than the finale, and the export is a three-second flash inside it. The loop rail on both surfaces is the on-screen device that makes the join legible without narration.
 
 Recording notes
