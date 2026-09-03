@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
+import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { SurfaceTabs } from '@/components/surface-tabs';
 import { useSurfaceTab } from '@/components/use-surface-tab';
@@ -1461,6 +1462,7 @@ export function ClosetStudio() {
           </p>
         </aside>
       </section>
+      <SiteFooter />
     </main>
   );
 }

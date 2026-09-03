@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
+import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { SurfaceTabs } from '@/components/surface-tabs';
 import { useSurfaceTab } from '@/components/use-surface-tab';
@@ -35,7 +36,7 @@ import {
   type DemandGroup,
   type PersonalOffer,
 } from '@/lib/proofframe/offers';
-import { seedCampaign } from '@/lib/proofframe/seed';
+import { readCampaign, seedCampaign, writeCampaign } from '@/lib/proofframe/seed';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
@@ -307,8 +308,12 @@ function sortNeedsFirst(signals: DemandSignal[]): DemandSignal[] {
 
 export function ProofFrameStudio() {
   const [tab, setTab] = useSurfaceTab<StudioTab>(STUDIO_TAB_IDS, 'demand');
+  // One campaign for every page (Loop Room and /studio): read the stored one
+  // once mounted, write on every change after that. The seed only lands in a
+  // browser that has nothing stored; factsLocked travels with it.
   const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
   const campaignRef = useRef(campaign);
+  const campaignHydratedRef = useRef(false);
   const [activity, setActivity] = useState<Activity[]>(initialActivity);
   const [selectedId, setSelectedId] = useState(campaign.scenes[0]?.id ?? '');
   const [playhead, setPlayhead] = useState(0);
@@ -322,6 +327,28 @@ export function ProofFrameStudio() {
   const [toolCallCount, setToolCallCount] = useState(0);
   const [blockedCount, setBlockedCount] = useState(0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const stored = readCampaign();
+      campaignRef.current = stored;
+      setCampaign(stored);
+      setSelectedId((current) =>
+        stored.scenes.some((scene) => scene.id === current)
+          ? current
+          : (stored.scenes[0]?.id ?? ''),
+      );
+      campaignHydratedRef.current = true;
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (campaignHydratedRef.current) writeCampaign(campaign);
+  }, [campaign]);
 
   // A stable, always-current view of `signals` for the getRequests callback
   // handed to WebMCP tools, so a tool registered once still sees fresh
@@ -1770,6 +1797,7 @@ export function ProofFrameStudio() {
           </div>
         </section>
       </section>
+      <SiteFooter />
     </main>
   );
 }

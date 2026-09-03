@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { seedCampaign } from '../lib/proofframe/seed';
+import { readCampaign, seedCampaign, writeCampaign } from '../lib/proofframe/seed';
 import { validateCampaign, validateScene, validateText } from '../lib/proofframe/validator';
 import { exportComposition } from '../lib/proofframe/exporter';
 import {
@@ -1261,4 +1261,73 @@ void test('loopRoomFlags: flags come from real rows and calls, and a restart sco
   // A persisted import row only proves the first loop's item, never a restart's.
   assert.equal(loopRoomFlags({ ...second, ran: new Set(), hasImportedPurchase: true }).itemAdded, false);
   assert.equal(loopRoomFlags({ ...first, ran: new Set(), hasImportedPurchase: true }).itemAdded, true);
+});
+
+/** Fake same-origin localStorage, mirroring tests/closet.test.ts — a
+ * Map-backed getItem/setItem/removeItem plus inert event methods. */
+function installFakeWindow(): () => void {
+  const store = new Map<string, string>();
+  (globalThis as { window?: unknown }).window = {
+    localStorage: {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => void store.set(k, v),
+      removeItem: (k: string) => void store.delete(k),
+    },
+    dispatchEvent: () => true,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  };
+  return () => {
+    delete (globalThis as { window?: unknown }).window;
+  };
+}
+
+void test('readCampaign/writeCampaign: one campaign for every page; seed on empty/corrupt; factsLocked persists', () => {
+  const restore = installFakeWindow();
+  try {
+    const empty = readCampaign();
+    assert.equal(empty.facts.productName, seedCampaign().facts.productName);
+    assert.equal(empty.factsLocked, true);
+
+    const unlocked: CampaignState = {
+      ...seedCampaign(),
+      brief: 'Shared brief from studio',
+      factsLocked: false,
+      scenes: [
+        {
+          id: 'hero',
+          kind: 'hero',
+          heading: 'Edited on studio',
+          body: 'Must show on the Loop Room',
+          durationSec: 4,
+        },
+      ],
+    };
+    writeCampaign(unlocked);
+    const roundTrip = readCampaign();
+    assert.equal(roundTrip.brief, 'Shared brief from studio');
+    assert.equal(roundTrip.factsLocked, false);
+    assert.equal(roundTrip.scenes.length, 1);
+    assert.equal(roundTrip.scenes[0].heading, 'Edited on studio');
+
+    window.localStorage.setItem('hemloop.campaign', '{not-json');
+    assert.equal(readCampaign().factsLocked, seedCampaign().factsLocked);
+
+    window.localStorage.setItem(
+      'hemloop.campaign',
+      JSON.stringify({ brief: 'x', factsLocked: true, facts: { productName: 1 }, scenes: [] }),
+    );
+    assert.equal(readCampaign().brief, seedCampaign().brief);
+
+    window.localStorage.setItem(
+      'hemloop.campaign',
+      JSON.stringify({
+        ...seedCampaign(),
+        scenes: [{ id: 'bad', kind: 'spaceship', heading: 'x', body: 'y', durationSec: 1 }],
+      }),
+    );
+    assert.equal(readCampaign().scenes[0].kind, 'hero');
+  } finally {
+    restore();
+  }
 });

@@ -519,3 +519,28 @@ change conflict-free. Not landed from the eleven-item brief: none. No extra task
 
 Verification: desktop local browser smoke at 1440 px; 140/140 tests, TypeScript clean, oxlint clean,
 and production build complete.
+
+### Cursor wave5b: docs chrome + shared campaign (2026-09-03)
+
+Branch: `cursor/wave5b` (worktree `../hemloop-cursor`), rebased onto `origin/main` @ `6267478`
+(Codex SiteFooter live).
+
+Landed:
+1. `public/docs/index.html` header matches `SiteHeader` (logo top-left, Loop · Closet · Studio · Docs
+   with Docs active, Manrope/DM Sans + loop tokens, pill nav). Docs sections/reading order untouched.
+   Footer is a static byte-mirror of `components/site-footer.tsx` (docs is static HTML — cannot import
+   the React component; markup + tokens stay in lockstep with Codex's component).
+2. `/closet` and `/studio` render Codex's `SiteFooter` (Loop Room already did).
+3. `readCampaign` / `writeCampaign` in `lib/proofframe/seed.ts` (`hemloop.campaign`): seed when
+   empty/unavailable/corrupt JSON; validate facts + scenes (+ format/style/factsLocked) before
+   trusting storage. Hydrate on mount in `loop-room-page.tsx` and `proofframe-studio.tsx`, write
+   after hydration — same pattern as wardrobe. A human lock on `/studio` persists as `factsLocked`
+   on `/`.
+4. Test in `tests/proofframe.test.ts` with the fake-window pattern from `tests/closet.test.ts`.
+
+Lane note (Claude, after Codex quota): visual fixes inside `components/loop-room/*` and
+`app/globals.css` are Cursor's when Marco reports them; `lib/proofframe/loop-room.ts` props
+contract stays untouched.
+
+Verified docs chrome at 1440 (header 72px, nav centered) and 820 (wraps, no overflowX) via
+getBoundingClientRect. Gates: 141/141, tsc, lint, build. No deploy.
