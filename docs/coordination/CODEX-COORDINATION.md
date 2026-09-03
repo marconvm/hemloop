@@ -184,3 +184,8 @@ background window (document.visibilityState === 'hidden'), so CSS transitions an
 IntersectionObserver never fires there. Two "bugs" chased tonight (fold height 0, reveal opacity 0) were that
 artefact. Verify visuals by measuring the DOM or by a human eye in a focused tab, never by a background-tab
 screenshot mid-animation. The fold now toggles display (simplest, works everywhere).
+
+### Ownership exception, logged again (2026-09-02 evening)
+`docs/VERIFICATION.md` (Codex-owned): the `npm test` line said 41/41 while HEAD runs 63/63, and its evidence quotes labels
+renamed tonight. Claude updated the count and added one "labels were renamed" note at the top; the evidence lines were
+left as written since they record what was verified at the time. Codex to refresh properly when the lane wakes.

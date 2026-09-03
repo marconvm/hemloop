@@ -34,6 +34,8 @@ ChatGPT preflight (from learn.chatgpt.com/docs/webmcp, read 2026-09-02): site to
 browser, latest version, ChatGPT Work or Codex (not Enterprise/Edu). The address bar shows a
 **Site tools** indicator when the page's tools are discovered: get it in frame in the cold open.
 
+Narration vs screen: the recorded VO says "campaign truth" and "demand" where the UI now says "offer facts" and "request". Either re-render VO-04 and VO-03 with the clone (task 4) or accept the mismatch; the meaning is identical and a judge will not stumble on it.
+
 Three things to know before you roll:
 
 1. **Proof-trail card label fixed**: it now prints `navigator.modelContext ?? document.modelContext`

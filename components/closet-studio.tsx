@@ -248,7 +248,7 @@ export function ClosetStudio() {
       pushTrail({
         actor: 'AI',
         title: delivered
-          ? 'Sent an approved zero-ID request'
+          ? 'Sent an approved request (no shopper identifier)'
           : 'Request approved but storage rejected it',
         detail: delivered
           ? `${signal.kind} · ${signal.category}${signal.size ? ` · ${signal.size}` : ''}`

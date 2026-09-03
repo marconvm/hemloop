@@ -1,12 +1,12 @@
 # Hemloop Verification Record
 
-Last updated: 2026-09-02 (America/Toronto)
+Last updated: 2026-09-02 evening (America/Toronto). UI labels were renamed during the revamp: the evidence below quotes the labels as they were at the time (Approve next signal is now Approve next request; Live Demand is now Incoming requests; the studio registers 10 tools, the closet 7).
 
 This file separates verified behaviour from the remaining ChatGPT natural-language pairing check.
 
 ## Green gates
 
-- `npm test`: 41/41 tests pass, including the zero-ID signal schema, human-approval rejection, one-shot approval consumption, exact returned/sent payload equality, claim rejection, tool registration, catalog mapping and export structure.
+- `npm test`: 63/63 tests pass (2026-09-02 evening, after the revamp: consent gating, get_preferences, profile filtering, outcomes, placements, completeness added), including the no-shopper-identifier signal schema, human-approval rejection, one-shot approval consumption, exact returned/sent payload equality, claim rejection, tool registration, catalog mapping and export structure.
 - `npm exec -- tsc --noEmit`: clean.
 - `npm exec -- oxlint`: clean.
 - `npm run build`: clean; `/`, `/closet` and `/studio` are present in the Vinext output.
