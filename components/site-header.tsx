@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { BRAND } from '@/lib/proofframe/brand';
 
-export type SiteSection = 'loop' | 'closet' | 'studio' | 'docs';
+export type SiteSection = 'loop' | 'closet' | 'studio' | 'merchant' | 'docs';
 
 export interface SiteHeaderProps {
   active: SiteSection;
@@ -14,6 +14,7 @@ const LINKS: { key: SiteSection; label: string; href: string }[] = [
   { key: 'loop', label: 'Loop', href: '/' },
   { key: 'closet', label: 'Closet', href: '/closet' },
   { key: 'studio', label: 'Studio', href: '/studio' },
+  { key: 'merchant', label: 'Merchant', href: '/merchant' },
   { key: 'docs', label: 'Docs', href: '/docs/' },
 ];
 

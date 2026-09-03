@@ -22,7 +22,7 @@ import {
 } from '../lib/proofframe/offers';
 import { buildClosetTools } from '../lib/proofframe/webmcp-closet';
 import { loopProgress, loopSteps } from '../lib/proofframe/loop';
-import { currentStation, stationOrder, stationStates } from '../lib/proofframe/loop-room';
+import { currentStation, loopRoomFlags, stationOrder, stationStates } from '../lib/proofframe/loop-room';
 import { seedPreferences, seedPurchases, seedWardrobe } from '../lib/proofframe/closet';
 
 function makeStore(state: CampaignState = seedCampaign()) {
@@ -1230,4 +1230,35 @@ void test("stationStates: 'again' is done only when a second loop has actually s
   const second = stationStates(all, 2);
   assert.equal(second.again, 'done');
   assert.equal(currentStation(second), 'again', 'nothing is current once every station is done');
+});
+
+void test('loopRoomFlags: flags come from real rows and calls, and a restart scopes to the new loop', () => {
+  const t0 = '2026-09-03T10:00:00.000Z';
+  const t1 = '2026-09-03T11:00:00.000Z';
+  const first = {
+    ran: new Set(['import_receipt', 'find_gaps']),
+    hasImportedPurchase: false,
+    signals: [{ signalId: 'req-1', at: t0 }],
+    offers: [{ offerId: 'off-1', requestId: 'req-1', status: 'approved', proposedAt: t0 }],
+    outcomes: [{ signalId: 'req-1', outcome: 'bought', at: t0 }],
+    purchases: [{ offerId: 'off-1' }],
+    loopStartedAt: null,
+  };
+  assert.deepEqual(loopRoomFlags(first), {
+    itemAdded: true, gapFound: true, requestSent: true, offerApproved: true, bought: true, attributed: true,
+  });
+
+  // A proposed offer, or one for a request this loop never sent, approves nothing.
+  const stranger = { ...first, offers: [{ offerId: 'off-x', requestId: 'req-9', status: 'approved', proposedAt: t0 }] };
+  assert.equal(loopRoomFlags(stranger).offerApproved, false);
+  assert.equal(loopRoomFlags({ ...first, offers: [{ ...first.offers[0], status: 'proposed' }] }).offerApproved, false);
+
+  // Loop 2 starts at t1: loop-1 rows no longer count, the new import does.
+  const second = { ...first, ran: new Set(['import_receipt']), loopStartedAt: t1 };
+  assert.deepEqual(loopRoomFlags(second), {
+    itemAdded: true, gapFound: false, requestSent: false, offerApproved: false, bought: false, attributed: false,
+  });
+  // A persisted import row only proves the first loop's item, never a restart's.
+  assert.equal(loopRoomFlags({ ...second, ran: new Set(), hasImportedPurchase: true }).itemAdded, false);
+  assert.equal(loopRoomFlags({ ...first, ran: new Set(), hasImportedPurchase: true }).itemAdded, true);
 });

@@ -939,6 +939,7 @@ export function ProofFrameStudio() {
           {/* See the note in closet-studio.tsx: one nav on every surface. */}
           <nav className="surface-nav" aria-label="Hemloop surfaces">
             <a href="/">Home</a>
+            <a href="/merchant">Merchant</a>
             <a href="/docs/">Docs</a>
           </nav>
           <Badge

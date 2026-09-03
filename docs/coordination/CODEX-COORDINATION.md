@@ -439,3 +439,32 @@ Shipped:
 - Reads bridge only: `readSignals/Outcomes/Offers` + subscribers; scores with `demandInsight` + `seedCampaign().facts` + studio-parity `catalogProductFor` (demoCatalog + slug). No new lib/, no tools registered, no globals.css / header edits on closet|studio.
 - Sections: header stats (requests, replace, proposed/approved, bought, attributable revenue), demand table (verdict pills + action title), newest-first request feed (8-char id, consent, outcome; no identity column), cannot-fill callout, real empty state.
 - Gates: 138/138, tsc, oxlint, build (route `/merchant` listed). No deploy — Claude owns merge/deploy.
+
+### Loop Room wired to real callbacks; Merchant merged (Claude, 2026-09-03, session 07)
+
+Merged into `main` from a fresh worktree, no conflicts: `cursor/merchant` at `9db1cd3` (merchant demand
+dashboard on the live bridge, `/merchant`) and `codex/loop-room-components` at `6910b18` (presentational
+Loop Room, station motion on real state changes).
+
+`/` is now the Loop Room, per MERGE-PLAN.md step 4:
+
+- `components/loop-room-page.tsx` owns both halves of the state (closet rows and locked campaign),
+  registers all 21 tools once (9 closet + 12 studio, names already unique) and builds `LoopRoomView`
+  from bridge rows and real tool results. Codex's components are untouched; props in, JSX out.
+- `lib/proofframe/loop-room.ts` gained `loopRoomFlags(evidence)`: every station flag comes from a bridge
+  row or an ok tool result this session. A restart (`loopStartedAt`) scopes rows to the new cycle instead
+  of clearing storage, so `/closet` and `/studio` keep seeing the earlier loop. One test covers the
+  scoping.
+- Three human gates on the page, none reachable by a tool: Approve next request (arms one
+  `report_demand_gap`), Approve offer (flips the staged proposal to `approved` on the bridge), Bought
+  (records the outcome, logs the purchase with the offer id, adds the garment).
+- Restart rule: a closed loop plus a new ok `import_receipt` starts cycle N+1; the rail resets and the
+  'again' station's prompt is the rival (Harborview) receipt.
+- Merchant is in the shared `site-header` nav and in the closet and studio surface navs.
+- `components/landing.tsx` is no longer routed. Left in place for its tool table until someone decides
+  to delete it.
+
+Smoke on the local Worker with a Chrome build that exposes `document.modelContext.executeTool`: the
+whole loop ran on real calls (import_receipt → find_gaps → report_demand_gap refused → Approve → sent →
+refused again → get_demand → propose_offer → Approve offer → get_offers → Bought → outcome panel), then
+the rival receipt opened cycle 2 with the rail reset. Gates: 139/139, tsc clean, oxlint 0, build complete.

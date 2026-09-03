@@ -122,3 +122,60 @@ export function currentStation(states: Record<StationKey, StationState>): Statio
 export function stationOrder(): StationKey[] {
   return [...ORDER];
 }
+
+// ---------- From evidence to flags ----------
+
+/** What the page has that can prove a station happened. Bridge rows carry
+ * their own timestamps; tool calls are session memory. Nothing here is a
+ * scripted "done", every flag is derived from a real row or a real call. */
+export interface LoopRoomEvidence {
+  /** Tool names that returned ok on this page during this loop. */
+  ran: ReadonlySet<string>;
+  /** A purchase row minted by import_receipt exists (ids start `import-`). */
+  hasImportedPurchase: boolean;
+  signals: { signalId: string; at: string }[];
+  offers: { offerId: string; requestId: string; status: string; proposedAt: string }[];
+  outcomes: { signalId: string; outcome: string; at: string }[];
+  purchases: { offerId?: string | null }[];
+  /** ISO instant this loop started. Null for the first loop: every row counts. */
+  loopStartedAt: string | null;
+}
+
+/** ISO timestamps compare as strings, so no Date parsing is needed here. */
+function since(loopStartedAt: string | null, at: string): boolean {
+  return loopStartedAt === null || at >= loopStartedAt;
+}
+
+export function loopRoomFlags(e: LoopRoomEvidence): LoopRoomFlags {
+  const signals = e.signals.filter((s) => since(e.loopStartedAt, s.at));
+  const sentIds = new Set(signals.map((s) => s.signalId));
+  const offers = e.offers.filter(
+    (o) => sentIds.has(o.requestId) && since(e.loopStartedAt, o.proposedAt),
+  );
+  const approved = offers.filter((o) => o.status === 'approved');
+  const boughtIds = new Set(
+    e.outcomes
+      .filter((o) => o.outcome === 'bought' && since(e.loopStartedAt, o.at))
+      .map((o) => o.signalId),
+  );
+  return {
+    itemAdded:
+      e.ran.has('import_receipt') || (e.loopStartedAt === null && e.hasImportedPurchase),
+    // A sent request proves a gap was found, even if find_gaps ran in another tab.
+    gapFound: e.ran.has('find_gaps') || signals.length > 0,
+    requestSent: signals.length > 0,
+    offerApproved: approved.length > 0,
+    bought: approved.some((o) => boughtIds.has(o.requestId)),
+    attributed: e.purchases.some(
+      (p) => p.offerId != null && approved.some((o) => o.offerId === p.offerId),
+    ),
+  };
+}
+
+export function patternLabel(p: {
+  discountSensitivity: string;
+  spendBand: string;
+  brandLoyalty: string;
+}): string {
+  return `${p.discountSensitivity} · ${p.spendBand} · ${p.brandLoyalty}`;
+}

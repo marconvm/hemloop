@@ -776,6 +776,7 @@ export function ClosetStudio() {
               the two pages read as separate prototypes (wave-4 review). */}
           <nav className="surface-nav" aria-label="Hemloop surfaces">
             <a href="/">Home</a>
+            <a href="/merchant">Merchant</a>
             <a href="/docs/">Docs</a>
           </nav>
         </div>
