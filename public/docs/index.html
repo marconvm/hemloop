@@ -58,6 +58,7 @@
 
   /* Use-case tabs, rendered above the article when a use case is open. */
   .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+  .tabs[hidden] { display: none; } /* author display:flex beat the UA [hidden] rule, so tabs showed on every page */
   .tabs a { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); text-decoration: none; font: 650 13px/1 var(--font-body); }
   .tabs a.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
