@@ -25,10 +25,23 @@ import { seedCampaign } from '@/lib/proofframe/seed';
 import { makeCatalogImporter } from '@/lib/proofframe/shopify';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
-import type { CampaignFacts, CampaignState, Scene } from '@/lib/proofframe/types';
+// Namespace import so this component compiles even before a sibling branch
+// adds readOutcomes/subscribeOutcomes to signal-bridge — accessed only
+// through the defensive helpers below.
+import * as signalBridgeModule from '@/lib/proofframe/signal-bridge';
+import {
+  PLACEMENTS,
+  formatForPlacement,
+  type CampaignFacts,
+  type CampaignState,
+  type Placement,
+  type Scene,
+} from '@/lib/proofframe/types';
 import { validateCampaign } from '@/lib/proofframe/validator';
 import {
   buildTools,
+  COMPLETENESS_CHECKS,
+  computeCompleteness,
   getModelContext,
   instrumentTools,
   registerAll,
@@ -40,6 +53,43 @@ import {
 // Optional fields another agent may add to CampaignFacts; treated as optional
 // here so this component compiles standalone regardless of merge order.
 type FactsView = CampaignFacts & { purchaseUrl?: string; productImage?: string };
+
+// Optional fields a sibling agent may add to DemandSignal (consent dial,
+// occasion, who-for, taste). All optional and read defensively: this
+// component must compile and render correctly whether or not they exist yet.
+type SignalView = DemandSignal & {
+  level?: 'need' | 'want';
+  occasion?: 'everyday' | 'season' | 'gift' | 'event';
+  for?: 'self' | 'partner' | 'kid';
+  consent?: { level: 0 | 1 | 2 | 3; fields: string[] };
+};
+
+const CONSENT_LEVEL_LABEL: Record<number, string> = {
+  0: 'Level 0, Private: nothing leaves the page.',
+  1: 'Level 1, Basics: category, size, need or want.',
+  2: 'Level 2, Context: adds occasion and fit preference.',
+  3: 'Level 3, Taste: adds colour family, materials to avoid, price ceiling.',
+};
+
+/** A purchase-or-not outcome reported back for one demand signal. Optional
+ * bridge export — same defensive-access pattern as the fields above. */
+type SignalOutcome = { signalId: string; outcome: 'bought' | 'passed'; at: string };
+
+function readOutcomesSafe(): SignalOutcome[] {
+  const mod = signalBridgeModule as unknown as {
+    readOutcomes?: () => SignalOutcome[];
+  };
+  return typeof mod.readOutcomes === 'function' ? mod.readOutcomes() : [];
+}
+
+function subscribeOutcomesSafe(onChange: () => void): () => void {
+  const mod = signalBridgeModule as unknown as {
+    subscribeOutcomes?: (cb: () => void) => () => void;
+  };
+  return typeof mod.subscribeOutcomes === 'function'
+    ? mod.subscribeOutcomes(onChange)
+    : () => {};
+}
 
 type Activity = {
   id: number;
@@ -106,8 +156,16 @@ function money(value: number | null, currency: string) {
   }).format(value);
 }
 
-function demandLabel(kind: DemandSignal['kind']): 'Need' | 'Want' {
-  return kind === 'want' ? 'Want' : 'Need';
+/** Prefer the sibling branch's explicit `level` field when present; fall
+ * back to the existing `kind` heuristic ('want' vs everything else). */
+function demandLevel(signal: DemandSignal): 'need' | 'want' {
+  const level = (signal as SignalView).level;
+  if (level === 'need' || level === 'want') return level;
+  return signal.kind === 'want' ? 'want' : 'need';
+}
+
+function demandLabel(signal: DemandSignal): 'Need' | 'Want' {
+  return demandLevel(signal) === 'want' ? 'Want' : 'Need';
 }
 
 type AggregateRow = {
@@ -117,10 +175,14 @@ type AggregateRow = {
   total: number;
   need: number;
   want: number;
+  bought: number;
   newest: string;
 };
 
-function aggregateSignals(signals: DemandSignal[]): AggregateRow[] {
+function aggregateSignals(
+  signals: DemandSignal[],
+  outcomeById: Map<string, SignalOutcome['outcome']>,
+): AggregateRow[] {
   const map = new Map<string, AggregateRow>();
   for (const s of signals) {
     const size = s.size ?? 'any size';
@@ -132,23 +194,32 @@ function aggregateSignals(signals: DemandSignal[]): AggregateRow[] {
       total: 0,
       need: 0,
       want: 0,
+      bought: 0,
       newest: s.at,
     };
     row.total += 1;
-    if (s.kind === 'want') row.want += 1;
+    if (demandLevel(s) === 'want') row.want += 1;
     else row.need += 1;
+    if (outcomeById.get(s.signalId) === 'bought') row.bought += 1;
     if (s.at > row.newest) row.newest = s.at;
     map.set(key, row);
   }
-  return Array.from(map.values()).sort((a, b) => (a.newest < b.newest ? 1 : -1));
+  // Needs above Wants: a group with at least one Need sorts first, then
+  // newest-first within each tier.
+  return Array.from(map.values()).sort((a, b) => {
+    const aHasNeed = a.need > 0;
+    const bHasNeed = b.need > 0;
+    if (aHasNeed !== bHasNeed) return aHasNeed ? -1 : 1;
+    return a.newest < b.newest ? 1 : -1;
+  });
 }
 
 /** Need rows first, newest-first order preserved within each group
  * (Array.prototype.sort is stable). */
 function sortNeedsFirst(signals: DemandSignal[]): DemandSignal[] {
   return [...signals].sort((a, b) => {
-    const aNeed = a.kind !== 'want';
-    const bNeed = b.kind !== 'want';
+    const aNeed = demandLevel(a) === 'need';
+    const bNeed = demandLevel(b) === 'need';
     if (aNeed === bNeed) return 0;
     return aNeed ? -1 : 1;
   });
@@ -164,6 +235,7 @@ export function ProofFrameStudio() {
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>('checking');
   const [registeredCount, setRegisteredCount] = useState(0);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
+  const [outcomes, setOutcomes] = useState<SignalOutcome[]>([]);
   const [toolCallCount, setToolCallCount] = useState(0);
   const [blockedCount, setBlockedCount] = useState(0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
@@ -205,6 +277,18 @@ export function ProofFrameStudio() {
       unsubscribe();
     };
   }, [applySignals]);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setOutcomes(readOutcomesSafe());
+    });
+    const unsubscribe = subscribeOutcomesSafe(() => setOutcomes(readOutcomesSafe()));
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   const pushActivity = useCallback((entry: Omit<Activity, 'id' | 'at'>) => {
     const id = Date.now() + Math.random();
@@ -409,8 +493,20 @@ export function ProofFrameStudio() {
   const progress =
     totalDuration > 0 ? Math.min(playhead / totalDuration, 1) : 0;
   const facts = campaign.facts as FactsView;
+  const completeness = useMemo(() => computeCompleteness(campaign.facts), [campaign.facts]);
+  const missingChecks = useMemo(
+    () => COMPLETENESS_CHECKS.filter((c) => completeness.missing.includes(c.key)),
+    [completeness],
+  );
   const sortedSignals = useMemo(() => sortNeedsFirst(signals), [signals]);
-  const aggregatedSignals = useMemo(() => aggregateSignals(signals), [signals]);
+  const outcomeById = useMemo(
+    () => new Map(outcomes.map((o) => [o.signalId, o.outcome])),
+    [outcomes],
+  );
+  const aggregatedSignals = useMemo(
+    () => aggregateSignals(signals, outcomeById),
+    [signals, outcomeById],
+  );
 
   useEffect(() => {
     if (!playing || totalDuration <= 0) return;
@@ -442,6 +538,12 @@ export function ProofFrameStudio() {
     },
     [commit],
   );
+
+  // Placement is a human choice, never a WebMCP tool: it goes through the
+  // same commit path as any human edit, writing format directly.
+  const setPlacement = (placement: Placement) => {
+    commit((current) => ({ ...current, format: formatForPlacement(placement) }));
+  };
 
   const toggleTruthLock = () => {
     const willLock = !campaign.factsLocked;
@@ -718,6 +820,31 @@ export function ProofFrameStudio() {
             </label>
           </div>
 
+          <div className="completeness-meter">
+            <div className="completeness-head">
+              <span>Offer completeness</span>
+              <strong>
+                {completeness.locked} of {completeness.total} facts locked
+              </strong>
+            </div>
+            <progress
+              className="completeness-bar"
+              aria-label="Offer completeness"
+              value={completeness.locked}
+              max={completeness.total}
+            />
+            {missingChecks.length > 0 && (
+              <ul className="completeness-missing">
+                {missingChecks.map((c) => (
+                  <li key={c.key}>
+                    <strong>{c.label}</strong>
+                    <span>Unlocks: {c.unlocks}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div className="asset-card">
             <div className="asset-art" aria-hidden="true">
               <span className="textile-swatch swatch-one" />
@@ -750,10 +877,31 @@ export function ProofFrameStudio() {
         </aside>
 
         <section className="canvas-panel panel" aria-label="Campaign preview">
+          <fieldset
+            className="placement-control"
+            title="Placement is a human choice, not a WebMCP tool. No agent can set it."
+          >
+            <legend className="placement-control-label">Placement</legend>
+            {(Object.keys(PLACEMENTS) as Placement[]).map((placement) => (
+              <button
+                key={placement}
+                type="button"
+                className={`placement-option ${campaign.format.placement === placement ? 'active' : ''}`}
+                aria-pressed={campaign.format.placement === placement}
+                onClick={() => setPlacement(placement)}
+              >
+                {PLACEMENTS[placement].label} {PLACEMENTS[placement].ratio}
+              </button>
+            ))}
+          </fieldset>
+
           <div className="canvas-toolbar">
             <div>
               <p className="eyebrow">Live composition</p>
-              <h2>9:16 · {totalDuration.toFixed(1)} seconds</h2>
+              <h2>
+                {PLACEMENTS[campaign.format.placement].ratio} ·{' '}
+                {totalDuration.toFixed(1)} seconds
+              </h2>
             </div>
             <div className="toolbar-controls">
               <Button
@@ -771,7 +919,7 @@ export function ProofFrameStudio() {
           <div className="preview-stage">
             {activeScene ? (
               <div
-                className={`phone-preview dynamic-preview kind-${activeScene.kind}`}
+                className={`phone-preview dynamic-preview kind-${activeScene.kind} placement-${campaign.format.placement}`}
                 style={
                   {
                     background:
@@ -1004,6 +1152,9 @@ export function ProofFrameStudio() {
                       {row.total} request{row.total === 1 ? '' : 's'} (
                       {row.need} need{row.need === 1 ? '' : 's'}, {row.want}{' '}
                       want{row.want === 1 ? '' : 's'})
+                      {row.bought > 0
+                        ? ` · ${row.bought} bought`
+                        : ''}
                     </span>
                   </div>
                 ))}
@@ -1017,6 +1168,8 @@ export function ProofFrameStudio() {
             ) : (
               sortedSignals.slice(0, 4).map((signal) => {
                 const isNew = newSignalIds.has(signal.signalId);
+                const view = signal as SignalView;
+                const outcome = outcomeById.get(signal.signalId);
                 return (
                   <div
                     className={`demand-item ${isNew ? 'is-new' : ''}`}
@@ -1028,16 +1181,38 @@ export function ProofFrameStudio() {
                         {signal.size ? ` · ${signal.size}` : ''}
                         {signal.handle ? ` · ${signal.handle}` : ''}
                       </strong>
-                      <span
-                        className={`kind-pill ${signal.kind === 'want' ? 'kind-want' : 'kind-need'}`}
-                      >
-                        {demandLabel(signal.kind)}
+                      <span className="demand-item-badges">
+                        <span
+                          className={`kind-pill ${demandLevel(signal) === 'want' ? 'kind-want' : 'kind-need'}`}
+                        >
+                          {demandLabel(signal)}
+                        </span>
+                        {outcome && (
+                          <span className={`outcome-badge outcome-${outcome}`}>
+                            {outcome === 'bought' ? 'Bought' : 'Passed'}
+                          </span>
+                        )}
                       </span>
                     </div>
                     <small>
                       event #{signal.signalId.slice(0, 8)} · no shopper ID or
                       wardrobe rows
                     </small>
+                    {view.occasion && (
+                      <small className="signal-meta">Occasion: {view.occasion}</small>
+                    )}
+                    {view.for && <small className="signal-meta">For: {view.for}</small>}
+                    {view.consent && (
+                      <small
+                        className="signal-meta consent-meta"
+                        title={
+                          CONSENT_LEVEL_LABEL[view.consent.level] ??
+                          'Consent level, set by the shopper.'
+                        }
+                      >
+                        Shared at level {view.consent.level}: {view.consent.fields.join(', ')}
+                      </small>
+                    )}
                     {signal.handle && (
                       <button
                         type="button"

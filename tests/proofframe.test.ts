@@ -5,12 +5,13 @@ import { validateCampaign, validateScene, validateText } from '../lib/proofframe
 import { exportComposition } from '../lib/proofframe/exporter';
 import {
   buildTools,
+  computeCompleteness,
   registerProofFrameTools,
   type ProofFrameCallbacks,
   type ToolContent,
   type WebMcpTool,
 } from '../lib/proofframe/webmcp';
-import type { CampaignState, Scene, Violation } from '../lib/proofframe/types';
+import { PLACEMENTS, formatForPlacement, type CampaignState, type Scene, type Violation } from '../lib/proofframe/types';
 
 function makeStore(state: CampaignState = seedCampaign()) {
   let seekedTo: number | null = null;
@@ -254,7 +255,9 @@ void test('get_offer reads the current locked facts as agent-actionable offer da
     validTo?: string;
     disclaimer?: string;
     purchaseUrl?: string | null;
+    sizesInStock?: string[];
     locked?: boolean;
+    completeness?: { locked: number; total: number; missing: string[] };
   };
   assert.equal(result.ok, true);
   assert.equal(result.product, facts.productName);
@@ -267,7 +270,57 @@ void test('get_offer reads the current locked facts as agent-actionable offer da
   assert.equal(result.validTo, facts.endDate);
   assert.equal(result.disclaimer, facts.disclaimer);
   assert.equal(result.locked, true);
+  assert.deepEqual(result.sizesInStock, facts.sizesInStock);
+  assert.equal(result.completeness?.total, 9);
+  assert.equal(result.completeness?.locked, 9);
+  assert.deepEqual(result.completeness?.missing, []);
   assert.ok(JSON.stringify(result).length <= 1500);
+});
+
+void test('placement presets map to the right dimensions, and the exporter emits them', () => {
+  assert.deepEqual(PLACEMENTS.story, { label: 'Story', ratio: '9:16', width: 1080, height: 1920, fps: 30 });
+  assert.deepEqual(PLACEMENTS.feed, { label: 'Feed', ratio: '4:5', width: 1080, height: 1350, fps: 30 });
+  assert.deepEqual(PLACEMENTS.display, { label: 'Display', ratio: '16:9', width: 1920, height: 1080, fps: 30 });
+
+  for (const placement of ['story', 'feed', 'display'] as const) {
+    const state = seedCampaign();
+    state.format = formatForPlacement(placement);
+    assert.equal(state.format.placement, placement);
+    const html = exportComposition(state);
+    const preset = PLACEMENTS[placement];
+    assert.match(html, new RegExp(`data-width="${preset.width}" data-height="${preset.height}"`));
+    assert.match(
+      html,
+      new RegExp(`width: ${preset.width}px; height: ${preset.height}px;`),
+    );
+  }
+});
+
+void test('seed campaign defaults to the story placement', () => {
+  assert.equal(seedCampaign().format.placement, 'story');
+});
+
+void test('get_campaign_state includes placement (nested in format)', async () => {
+  const { cb } = makeStore();
+  const tools = buildTools(cb);
+  const result = (await tool(tools, 'get_campaign_state').execute({})) as unknown as {
+    state: CampaignState;
+  };
+  assert.equal(result.state.format.placement, 'story');
+});
+
+void test('completeness counts on the seed and after removing purchaseUrl', () => {
+  const seed = seedCampaign();
+  const full = computeCompleteness(seed.facts);
+  assert.equal(full.total, 9);
+  assert.equal(full.locked, 9);
+  assert.deepEqual(full.missing, []);
+
+  const withoutUrl = { ...seed.facts, purchaseUrl: undefined };
+  const partial = computeCompleteness(withoutUrl);
+  assert.equal(partial.total, 9);
+  assert.equal(partial.locked, 8);
+  assert.deepEqual(partial.missing, ['purchaseUrl']);
 });
 
 void test('add_scene with violating copy is rejected and applies nothing', async () => {

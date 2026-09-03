@@ -13,6 +13,7 @@ export interface CampaignFacts {
   bannedPhrases: string[]; // copy that legal never allows, case-insensitive
   purchaseUrl?: string;
   productImage?: string;
+  sizesInStock?: string[];
 }
 
 export type SceneKind = 'hero' | 'product' | 'offer' | 'cta';
@@ -32,10 +33,35 @@ export interface Scene {
   style?: Partial<SceneStyle>;
 }
 
+// A placement is a human choice (ad surface + aspect ratio), never an
+// agent-writable field: no WebMCP tool sets it, only the studio UI.
+export type Placement = 'story' | 'feed' | 'display';
+
+export interface PlacementPreset {
+  label: string;
+  ratio: string; // display label, e.g. "9:16"
+  width: number;
+  height: number;
+  fps: number;
+}
+
+export const PLACEMENTS: Record<Placement, PlacementPreset> = {
+  story: { label: 'Story', ratio: '9:16', width: 1080, height: 1920, fps: 30 },
+  feed: { label: 'Feed', ratio: '4:5', width: 1080, height: 1350, fps: 30 },
+  display: { label: 'Display', ratio: '16:9', width: 1920, height: 1080, fps: 30 },
+};
+
+/** Build a CampaignFormat from a placement preset. */
+export function formatForPlacement(placement: Placement): CampaignFormat {
+  const preset = PLACEMENTS[placement];
+  return { width: preset.width, height: preset.height, fps: preset.fps, placement };
+}
+
 export interface CampaignFormat {
   width: number;
   height: number;
   fps: number;
+  placement: Placement;
 }
 
 export interface CampaignState {

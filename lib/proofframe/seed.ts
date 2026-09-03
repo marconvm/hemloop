@@ -1,6 +1,7 @@
 // Seeded synthetic campaign for the demo. "Northlight Apparel" is a fictional
 // brand; every number here is invented.
 import type { CampaignState } from './types';
+import { formatForPlacement } from './types';
 
 export function seedCampaign(): CampaignState {
   return {
@@ -19,6 +20,7 @@ export function seedCampaign(): CampaignState {
       bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
       purchaseUrl: 'https://hemloop.app/closet?product=northlight-hoodie',
       productImage: '/products/northlight-hoodie.jpg',
+      sizesInStock: ['XS', 'S', 'M', 'L', 'XL'],
     },
     factsLocked: true,
     scenes: [
@@ -52,7 +54,7 @@ export function seedCampaign(): CampaignState {
         durationSec: 3,
       },
     ],
-    format: { width: 1080, height: 1920, fps: 30 },
+    format: formatForPlacement('story'),
     style: { background: '#101418', ink: '#f4f1ea', accent: '#ff7a45' },
   };
 }

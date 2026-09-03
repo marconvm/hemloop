@@ -223,6 +223,88 @@ function invalidInput(message: string, next: string): ToolContent {
   return { ok: false, error: 'invalid-input', message, next };
 }
 
+/** The offer-completeness checklist. Each entry names one fact a shopping
+ * agent can rely on once it is locked, and the concrete thing that fact
+ * unlocks for that agent — shown as "Unlocks: <unlocks>" next to any
+ * missing item. `key` is stable and appears in get_offer's `missing` list. */
+export interface CompletenessCheck {
+  key: string;
+  label: string;
+  unlocks: string;
+  check: (facts: CampaignFacts) => boolean;
+}
+
+export const COMPLETENESS_CHECKS: CompletenessCheck[] = [
+  {
+    key: 'productName',
+    label: 'Product name',
+    unlocks: 'agents can name the product with confidence',
+    check: (f) => f.productName.trim().length > 0,
+  },
+  {
+    key: 'regularPrice',
+    label: 'Regular price',
+    unlocks: 'agents can state a real price',
+    check: (f) => typeof f.regularPrice === 'number' && f.regularPrice > 0,
+  },
+  {
+    key: 'salePriceOrDiscount',
+    label: 'Sale price or discount',
+    unlocks: 'agents can tell the shopper what the deal actually is',
+    check: (f) => f.salePrice !== null || f.discountPercent !== null,
+  },
+  {
+    key: 'promoCode',
+    label: 'Promo code',
+    unlocks: 'agents can hand the shopper a code to redeem',
+    check: (f) => Boolean(f.promoCode),
+  },
+  {
+    key: 'dates',
+    label: 'Start and end date',
+    unlocks: 'agents can tell the shopper how long the offer lasts',
+    check: (f) => Boolean(f.startDate) && Boolean(f.endDate),
+  },
+  {
+    key: 'disclaimer',
+    label: 'Disclaimer',
+    unlocks: 'agents can quote the terms that must accompany the offer',
+    check: (f) => Boolean(f.disclaimer),
+  },
+  {
+    key: 'purchaseUrl',
+    label: 'Purchase link',
+    unlocks: 'agents can hand the shopper a place to buy',
+    check: (f) => Boolean(f.purchaseUrl),
+  },
+  {
+    key: 'sizesInStock',
+    label: 'Sizes in stock',
+    unlocks: 'agents can skip sizes you cannot fill',
+    check: (f) => Array.isArray(f.sizesInStock) && f.sizesInStock.length > 0,
+  },
+  {
+    key: 'productImage',
+    label: 'Product image',
+    unlocks: 'agents can show the shopper what it looks like',
+    check: (f) => Boolean(f.productImage),
+  },
+];
+
+export interface Completeness {
+  locked: number;
+  total: number;
+  missing: string[];
+}
+
+/** Count how many offer facts a human has locked in, out of the fixed
+ * checklist above. Pure; the same function backs get_offer and the studio
+ * UI's completeness meter, so the two never drift. */
+export function computeCompleteness(facts: CampaignFacts): Completeness {
+  const missing = COMPLETENESS_CHECKS.filter((c) => !c.check(facts)).map((c) => c.key);
+  return { locked: COMPLETENESS_CHECKS.length - missing.length, total: COMPLETENESS_CHECKS.length, missing };
+}
+
 export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
   const tools: WebMcpTool[] = [
     {
@@ -461,7 +543,9 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
           validTo: facts.endDate,
           disclaimer: facts.disclaimer,
           purchaseUrl: facts.purchaseUrl ?? null,
+          sizesInStock: facts.sizesInStock ?? [],
           locked: state.factsLocked,
+          completeness: computeCompleteness(facts),
         });
       },
     },
