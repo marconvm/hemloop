@@ -95,7 +95,7 @@ const STUDIO_ROWS: ToolRow[] = [
     tool: 'get_offer',
     kind: 'read',
     what: 'Returns the locked offer as structured data for a shopping agent: product, prices, code, dates, disclaimer, purchase link',
-    guarantee: 'readOnlyHint, reads locked facts only, nothing the agent invents can change them',
+    guarantee: 'readOnlyHint; returns the facts with whether a human has locked them, so an agent can tell a locked offer from a draft',
   },
   {
     surface: 'Studio',
@@ -255,6 +255,11 @@ export function Landing() {
           WebMCP: seventeen typed tools on two web pages, running in the shopper&apos;s and
           merchant&apos;s own browsers.
         </p>
+        <p className="landing-sub" data-reveal>
+          Both sides choose how much to give, and both sides get more back for giving it. Maya sets
+          a sharing dial from 0 to 3; every step up buys a better offer. The store has the same dial
+          in reverse: every offer fact it locks is one more thing a shopping agent can do for it.
+        </p>
         <div className="landing-ctas" data-reveal>
           <a className="landing-cta primary" href="/closet">
             <Shirt aria-hidden="true" />
@@ -274,6 +279,44 @@ export function Landing() {
         </div>
       </section>
 
+
+      <section className="landing-flow content" data-reveal aria-label="How a request travels">
+        <svg className="flow-diagram" viewBox="0 0 960 190" role="img" aria-labelledby="flow-title">
+          <title id="flow-title">Closet to studio to shopping agent, and back</title>
+          <g fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="12" y="30" width="250" height="90" rx="14" />
+            <rect x="355" y="30" width="250" height="90" rx="14" />
+            <rect x="698" y="30" width="250" height="90" rx="14" />
+            <path d="M262 75 H355" markerEnd="url(#flow-arrow)" />
+            <path d="M605 75 H698" markerEnd="url(#flow-arrow)" />
+            <path d="M823 120 V160 H137 V120" strokeDasharray="4 5" markerEnd="url(#flow-arrow)" />
+          </g>
+          <defs>
+            <marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+              <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
+            </marker>
+          </defs>
+          <g fill="currentColor" fontSize="15" fontWeight="600">
+            <text x="137" y="62" textAnchor="middle">Maya&apos;s closet</text>
+            <text x="480" y="62" textAnchor="middle">Merchant studio</text>
+            <text x="823" y="62" textAnchor="middle">Shopping agent</text>
+          </g>
+          <g fill="currentColor" fontSize="12" opacity="0.75">
+            <text x="137" y="84" textAnchor="middle">7 tools, wardrobe stays here</text>
+            <text x="137" y="103" textAnchor="middle">sharing dial 0 to 3</text>
+            <text x="480" y="84" textAnchor="middle">10 tools inside locked offer facts</text>
+            <text x="480" y="103" textAnchor="middle">false claims rejected before render</text>
+            <text x="823" y="84" textAnchor="middle">reads get_offer</text>
+            <text x="823" y="103" textAnchor="middle">buys on the store&apos;s own page</text>
+            <text x="308" y="66" textAnchor="middle">one approved request</text>
+            <text x="308" y="92" textAnchor="middle" fontSize="11">no shopper identifier</text>
+            <text x="651" y="66" textAnchor="middle">structured offer</text>
+            <text x="651" y="92" textAnchor="middle" fontSize="11">prices, code, dates, link</text>
+            <text x="480" y="178" textAnchor="middle" fontSize="11">bought or passed, so both sides learn</text>
+          </g>
+        </svg>
+      </section>
+
       <LandingDivider />
 
       <section className="landing-loop content" aria-label="How the loop works">
@@ -291,8 +334,10 @@ export function Landing() {
           <Radio aria-hidden="true" />
           <h2>One approved request leaves</h2>
           <p>
-            Category, size, an optional product, need or want. No name, no account, no wardrobe
-            rows. The agent cannot press Approve, only Maya can.
+            At the default level: category, size, an optional product, need or want. Maya&apos;s dial
+            can add occasion, who she is shopping for, and taste; the payload preview shows exactly
+            what leaves. No name, no account, no wardrobe rows, at any level. The agent cannot press
+            Approve, only Maya can.
           </p>
         </div>
         <div className="loop-step" data-reveal>
@@ -306,6 +351,34 @@ export function Landing() {
             agents as structured data.
           </p>
         </div>
+      </section>
+
+
+      <section className="landing-dial content" data-reveal aria-label="Sharing levels">
+        <h2>The dial: the more you share, the more you gain</h2>
+        <p className="landing-agent-note">
+          Never shared at any level: name, account, email, wardrobe rows, purchase history, income.
+        </p>
+        <div className="tool-table-scroll">
+          <table className="tool-subtable" aria-label="Sharing levels">
+            <thead>
+              <tr className="tool-row tool-row-head">
+                <th scope="col">Level</th>
+                <th scope="col">What leaves the closet</th>
+                <th scope="col">What Maya gains</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="tool-row"><td>0 Private</td><td>nothing</td><td>fit checks and gap finding stay local</td></tr>
+              <tr className="tool-row"><td>1 Basics (default)</td><td>category, size, need or want</td><td>offers in the right size</td></tr>
+              <tr className="tool-row"><td>2 Context</td><td>+ occasion, fit preference, who she is shopping for</td><td>offers timed and cut for the occasion</td></tr>
+              <tr className="tool-row"><td>3 Taste</td><td>+ colour family, materials to avoid, price ceiling</td><td>creatives that match, no wasted offers</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="landing-agent-note">
+          The store has the same dial in reverse: every offer fact it locks is one more thing a shopping agent can do for it, and the studio shows which.
+        </p>
       </section>
 
       <LandingDivider />

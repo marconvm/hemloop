@@ -6,7 +6,7 @@ Inputs: Marco's 14-point third-party read of the site, his product vision, Anthr
 
 ## What Hemloop is, in one breath
 
-Two web pages register 15 WebMCP tools. The shopper's agent shops a private closet and can send
+Two web pages register 17 WebMCP tools. The shopper's agent shops a private closet and can send
 a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after
 the person presses Approve. The merchant's agent answers inside offer facts a human locked first;
 copy that contradicts them is rejected before it renders. The guarantees are structural: there is no
@@ -77,7 +77,7 @@ request before Approve, and revocable with the clear button.
 |---|---|---|
 | 0 Private | nothing | fit checks and gap finding stay local |
 | 1 Basics (default) | category, size, need or want | offers in the right size |
-| 2 Context | + occasion (season, gift, event), fit preference | offers timed and cut for the occasion |
+| 2 Context | + occasion (season, gift, event), fit preference, who you are shopping for | offers timed and cut for the occasion |
 | 3 Taste | + colour family, materials to avoid, price ceiling | creatives that match, no wasted offers |
 
 Never shared at any level: name, account, email, wardrobe rows, purchase history, income. The

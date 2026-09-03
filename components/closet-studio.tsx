@@ -105,7 +105,7 @@ const CONSENT_LEVELS: {
   {
     level: 2,
     label: 'Context',
-    leaves: '+ occasion (season, gift, event), fit preference',
+    leaves: '+ occasion (season, gift, event), fit preference, who you are shopping for',
     gains: 'offers timed and cut for the occasion',
   },
   {
@@ -501,7 +501,7 @@ export function ClosetStudio() {
     setEditingId(null);
     pushTrail({
       actor: 'ME',
-      title: 'Cleared wardrobe and signal log',
+      title: 'Cleared wardrobe and requests sent',
       detail: 'Both were removed from this browser only.',
     });
   };
@@ -968,10 +968,10 @@ export function ClosetStudio() {
           </div>
           <button type="button" className="clear-all-button" onClick={clearAll}>
             <Trash2 aria-hidden="true" />
-            Clear wardrobe and signal log
+            Clear wardrobe and requests sent
           </button>
           <p className="human-only-note">
-            Wardrobe rows and the signal log live in this browser only.
+            Wardrobe rows and the request log live in this browser only.
             Nothing is stored on a server. Clearing removes both.
           </p>
         </aside>

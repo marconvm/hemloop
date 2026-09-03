@@ -582,7 +582,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
             ok: false,
             error: 'import-failed',
             message: error instanceof Error ? error.message : String(error),
-            next: 'Confirm campaign truth is unlocked and the handle exists in the catalog, then retry import_product with a valid handle.',
+            next: 'Confirm the offer facts are unlocked and the handle exists in the catalog, then retry import_product with a valid handle.',
           };
         }
       },

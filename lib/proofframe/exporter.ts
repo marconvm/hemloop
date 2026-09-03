@@ -113,7 +113,7 @@ export function exportComposition(state: CampaignState): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=${width}, height=${height}" />
-    <title>${escapeHtml(state.facts.productName)} — ${BRAND.name} promo</title>
+    <title>${escapeHtml(state.facts.productName)}, ${BRAND.name} promo</title>
     <script src="${GSAP_SRC}"></script>
     <style>
       body { margin: 0; background: ${base.background}; font-family: Inter, system-ui, sans-serif; }

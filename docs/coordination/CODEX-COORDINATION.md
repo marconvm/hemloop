@@ -189,3 +189,16 @@ screenshot mid-animation. The fold now toggles display (simplest, works everywhe
 `docs/VERIFICATION.md` (Codex-owned): the `npm test` line said 41/41 while HEAD runs 63/63, and its evidence quotes labels
 renamed tonight. Claude updated the count and added one "labels were renamed" note at the top; the evidence lines were
 left as written since they record what was verified at the time. Codex to refresh properly when the lane wakes.
+
+### Judge round 2 (2026-09-02 night) — 11 of 14 resolved; remaining fixes shipped
+Report: docs/coordination/judge-review-2-2026-09-02.md. Legibility gap "roughly 70% closed"; use of WebMCP now
+"presented strongly". Shipped from its top 5: an inline SVG flow diagram on the landing (closet -> one approved
+request -> studio -> shopping agent, bought/passed back), the consent sentence under the hero plus a four-level
+dial table with the never-shared list, level 2 "what leaves" now says "who you are shopping for" (UI, README,
+USER-GUIDE, GAP-ANALYSIS agreed on the summary while the payload preview already showed it), the seed ships
+without sizesInStock so the completeness meter opens at 8 of 9 with a human-only "Add sizes in stock" button
+(the merchant half of "the more you share" now demonstrates on camera), get_offer's guarantee reworded
+(returns facts with whether a human locked them), WRITEUP counts 17 / seven / 63, last "signal log" and
+"campaign truth" strings retired, studio footer no longer Shopify-pinned, exporter title em dash removed.
+Not done, owner's call: SECURITY.md length, docs/coordination in the public repo, VOICEOVER retired terms in
+the already-rendered audio.

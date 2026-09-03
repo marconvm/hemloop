@@ -18,7 +18,7 @@ Before you approve anything, set the **sharing level**: a row of four buttons ab
 |---|---|---|
 | 0 Private | nothing | fit checks and gap finding stay local |
 | 1 Basics (default) | category, size, need or want | offers in the right size |
-| 2 Context | + occasion (season, gift, event), fit preference | offers timed and cut for the occasion |
+| 2 Context | + occasion (season, gift, event), fit preference, who you are shopping for | offers timed and cut for the occasion |
 | 3 Taste | + colour family, materials to avoid, price ceiling | creatives that match, no wasted offers |
 
 Your name, account, email, wardrobe rows, purchase history and income are never shared, at any level. Under the level buttons sits a **payload preview**: the exact list of fields that would leave the page if you approved right now, so you see the boundary before you cross it, not after. At level 0, sharing is disabled outright, the Approve button is greyed out, and any agent call to `report_demand_gap` gets `sharing-disabled` back instead of a request to approve.

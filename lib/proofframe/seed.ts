@@ -20,7 +20,6 @@ export function seedCampaign(): CampaignState {
       bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
       purchaseUrl: 'https://hemloop.app/closet?product=northlight-hoodie',
       productImage: '/products/northlight-hoodie.jpg',
-      sizesInStock: ['XS', 'S', 'M', 'L', 'XL'],
     },
     factsLocked: true,
     scenes: [

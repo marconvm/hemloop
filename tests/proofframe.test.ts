@@ -270,10 +270,12 @@ void test('get_offer reads the current locked facts as agent-actionable offer da
   assert.equal(result.validTo, facts.endDate);
   assert.equal(result.disclaimer, facts.disclaimer);
   assert.equal(result.locked, true);
-  assert.deepEqual(result.sizesInStock, facts.sizesInStock);
+  // The seed ships without sizes in stock on purpose: the studio opens at 8 of 9 so the
+  // completeness meter has one "Unlocks" line to show, and the human adds the sizes on camera.
+  assert.deepEqual(result.sizesInStock, []);
   assert.equal(result.completeness?.total, 9);
-  assert.equal(result.completeness?.locked, 9);
-  assert.deepEqual(result.completeness?.missing, []);
+  assert.equal(result.completeness?.locked, 8);
+  assert.deepEqual(result.completeness?.missing, ['sizesInStock']);
   assert.ok(JSON.stringify(result).length <= 1500);
 });
 
@@ -311,16 +313,19 @@ void test('get_campaign_state includes placement (nested in format)', async () =
 
 void test('completeness counts on the seed and after removing purchaseUrl', () => {
   const seed = seedCampaign();
-  const full = computeCompleteness(seed.facts);
-  assert.equal(full.total, 9);
+  const onSeed = computeCompleteness(seed.facts);
+  assert.equal(onSeed.total, 9);
+  assert.equal(onSeed.locked, 8);
+  assert.deepEqual(onSeed.missing, ['sizesInStock']);
+
+  const full = computeCompleteness({ ...seed.facts, sizesInStock: ['XS', 'S', 'M', 'L', 'XL'] });
   assert.equal(full.locked, 9);
   assert.deepEqual(full.missing, []);
 
   const withoutUrl = { ...seed.facts, purchaseUrl: undefined };
   const partial = computeCompleteness(withoutUrl);
-  assert.equal(partial.total, 9);
-  assert.equal(partial.locked, 8);
-  assert.deepEqual(partial.missing, ['purchaseUrl']);
+  assert.equal(partial.locked, 7);
+  assert.deepEqual(partial.missing.sort(), ['purchaseUrl', 'sizesInStock']);
 });
 
 void test('add_scene with violating copy is rejected and applies nothing', async () => {

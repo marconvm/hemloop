@@ -10,13 +10,13 @@ In one sentence each, the before/after: a shopper's agent can surface an anonymo
 
 ## What it does
 
-Two web pages register 16 WebMCP tools. The shopper's agent shops a private closet and can send a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after the person presses Approve. The merchant's agent answers inside offer facts a human locked first; copy that contradicts them is rejected before it renders. The guarantees are structural: there is no tool that can unlock facts or arm sharing.
+Two web pages register 17 WebMCP tools. The shopper's agent shops a private closet and can send a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after the person presses Approve. The merchant's agent answers inside offer facts a human locked first; copy that contradicts them is rejected before it renders. The guarantees are structural: there is no tool that can unlock facts or arm sharing.
 
 Maya has a closet. Northlight Apparel (a demo brand) has a campaign. The agent is the only thing that touches both.
 
 The loop, in three steps:
 
-1. **The shopper's agent finds the gap.** On `/closet`, six WebMCP tools let the agent read wardrobe rows, find what is missing and check fit against a product catalog snapshot. The only merchant-facing tool, `report_demand_gap`, rejects until the shopper presses **Approve next request**, a human-only control deliberately absent from WebMCP. One approval releases one event with no shopper identifier: category, size, optional product, kind, time and a random event id. The tool returns the exact payload sent, so the boundary is inspectable.
+1. **The shopper's agent finds the gap.** On `/closet`, seven WebMCP tools let the agent read wardrobe rows, find what is missing and check fit against a product catalog snapshot. The only merchant-facing tool, `report_demand_gap`, rejects until the shopper presses **Approve next request**, a human-only control deliberately absent from WebMCP. One approval releases one event with no shopper identifier: category, size, optional product, kind, time and a random event id. The tool returns the exact payload sent, so the boundary is inspectable.
 2. **The merchant answers it, inside locked facts.** On `/studio`, consented demand arrives in a live panel, grouped by category and size with counts, and labelled Need or Want. The merchant locks the offer facts (prices, offer, code, dates, disclaimer), then their agent produces through ten WebMCP tools. Every rendered-copy mutation is claim-validated before it applies; "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason the agent self-corrects from.
 3. **The offer becomes something a shopping agent can act on.** `get_offer` reads the locked facts back out as structured data: product, prices, promo code, validity dates, disclaimer and a purchase link. It is read-only and it is the handoff out of Hemloop toward whatever agent is doing the actual buying.
 
@@ -38,7 +38,7 @@ The tool surface went through six review passes (two independent reviewers, then
 
 ## How we built it
 
-TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, two WebMCP adapters) with 42 unit tests (including adversarial tool-boundary replays: extra-property XSS, malformed input, unicode claim evasion), wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a synthetic apparel catalog shaped like a Shopify store export (this demo's connector), with a generic Catalog interface underneath so any source with handle, title, price and compare-at works unchanged. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The live app is deployed on Cloudflare Workers.
+TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, two WebMCP adapters) with 63 unit tests (including adversarial tool-boundary replays: extra-property XSS, malformed input, unicode claim evasion), wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a synthetic apparel catalog shaped like a Shopify store export (this demo's connector), with a generic Catalog interface underneath so any source with handle, title, price and compare-at works unchanged. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The live app is deployed on Cloudflare Workers.
 
 ## Challenges
 

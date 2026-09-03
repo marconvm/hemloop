@@ -833,6 +833,21 @@ export function ProofFrameStudio() {
               value={completeness.locked}
               max={completeness.total}
             />
+            {!campaign.factsLocked && !campaign.facts.sizesInStock && (
+              <button
+                type="button"
+                className="tool-table-toggle"
+                title="Human-only: no WebMCP tool can write offer facts"
+                onClick={() =>
+                  commit((current) => ({
+                    ...current,
+                    facts: { ...current.facts, sizesInStock: ['XS', 'S', 'M', 'L', 'XL'] },
+                  }))
+                }
+              >
+                Add sizes in stock (XS to XL)
+              </button>
+            )}
             {missingChecks.length > 0 && (
               <ul className="completeness-missing">
                 {missingChecks.map((c) => (
@@ -1275,7 +1290,7 @@ export function ProofFrameStudio() {
           </div>
 
           <footer className="support-strip">
-            Shopify merchant use case · Chrome WebMCP · deployed on Cloudflare Workers
+            Any catalog connector (this demo: a Shopify-shaped snapshot) · Chrome and ChatGPT WebMCP · deployed on Cloudflare Workers
           </footer>
         </aside>
       </section>

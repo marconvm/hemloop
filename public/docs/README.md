@@ -65,7 +65,7 @@ Sharing is not a checkbox in front of the loop, it is a dial the shopper sets, s
 |---|---|---|
 | 0 Private | nothing | fit checks and gap finding stay local |
 | 1 Basics (default) | category, size, need or want | offers in the right size |
-| 2 Context | + occasion (season, gift, event), fit preference | offers timed and cut for the occasion |
+| 2 Context | + occasion (season, gift, event), fit preference, who you are shopping for | offers timed and cut for the occasion |
 | 3 Taste | + colour family, materials to avoid, price ceiling | creatives that match, no wasted offers |
 
 Name, account, email, wardrobe rows, purchase history and income are never shared, at any level. At level 0, `report_demand_gap` returns `sharing-disabled` and nothing crosses the bridge; the Approve button itself reads "Approve next request (level N)" so the level is visible at the moment of the grant.
