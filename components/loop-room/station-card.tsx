@@ -1,7 +1,7 @@
 import {
-  Bot,
   CheckCircle2,
   Clipboard,
+  ListChecks,
   LoaderCircle,
   Wrench,
 } from 'lucide-react';
@@ -17,11 +17,13 @@ import type { ProcessingView } from './types';
 export function StationCard({
   station,
   processing,
+  lastRan,
   onCopySay,
   onHumanGate,
 }: {
   station: StationCardModel;
   processing?: ProcessingView | null;
+  lastRan?: { label: string; tools: string[] } | null;
   onCopySay?: (prompt: string) => void;
   onHumanGate?: (station: StationKey) => void;
 }) {
@@ -30,26 +32,17 @@ export function StationCard({
   return (
     <article className="hlr-station">
       <div className="hlr-station-heading">
-        <div>
-          <p>
-            {station.state === 'done'
-              ? 'Step updated'
-              : station.state === 'current'
-                ? 'Working now'
-                : 'Coming next'}
-          </p>
-          <h2>{station.title}</h2>
-        </div>
-        <span className={`hlr-station-state is-${station.state}`}>
-          {processing ? (
-            <LoaderCircle className="is-spinning" />
-          ) : station.state === 'done' ? (
-            <CheckCircle2 />
-          ) : (
-            <Bot />
-          )}
-          {processing ? 'Processing' : station.state}
-        </span>
+        <h2>{station.label}</h2>
+        {processing || station.state === 'done' ? (
+          <span className="hlr-station-state">
+            {processing ? (
+              <LoaderCircle className="is-spinning" />
+            ) : (
+              <CheckCircle2 />
+            )}
+            {processing ? 'Processing' : 'Done'}
+          </span>
+        ) : null}
       </div>
 
       {prompt ? (
@@ -63,26 +56,23 @@ export function StationCard({
         </div>
       ) : null}
 
-      <div className="hlr-result-grid">
+      <div className="hlr-evidence-grid">
         <section>
           <span className="hlr-slot-label">
-            <Wrench aria-hidden="true" />
-            Tool that ran
+            <ListChecks aria-hidden="true" />
+            What is true now
           </span>
-          {processing ? (
-            <div className="hlr-processing">
-              <LoaderCircle className="is-spinning" />
-              <code>{processing.tool}</code>
-              <small>{processing.label}</small>
-            </div>
-          ) : station.toolsRan.length ? (
-            <div className="hlr-tool-chips">
-              {station.toolsRan.map((tool) => (
-                <code key={tool}>{tool}</code>
+          {station.facts.length ? (
+            <dl className="hlr-updated-list">
+              {station.facts.map((fact) => (
+                <div key={`${fact.label}-${fact.value}`}>
+                  <dt>{fact.label}</dt>
+                  <dd>{fact.value}</dd>
+                </div>
               ))}
-            </div>
+            </dl>
           ) : (
-            <p className="hlr-empty">Waiting for a real call.</p>
+            <p className="hlr-empty">No facts reported for this step.</p>
           )}
         </section>
         <section>
@@ -104,6 +94,31 @@ export function StationCard({
           )}
         </section>
       </div>
+
+      <section className="hlr-last-ran" aria-live="polite">
+        <span className="hlr-slot-label">
+          <Wrench aria-hidden="true" />
+          Tool activity
+        </span>
+        {processing ? (
+          <div className="hlr-processing">
+            <LoaderCircle className="is-spinning" />
+            <code>{processing.tool}</code>
+            <small>{processing.label}</small>
+          </div>
+        ) : lastRan?.tools.length ? (
+          <div className="hlr-last-ran-row">
+            <small>Ran at {lastRan.label}</small>
+            <div className="hlr-tool-chips">
+              {lastRan.tools.map((tool) => (
+                <code key={tool}>{tool}</code>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="hlr-empty">Waiting for a real call.</p>
+        )}
+      </section>
 
       {station.humanGate ? (
         <GateButton
