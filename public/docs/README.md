@@ -17,7 +17,7 @@ The win-win: the shopper gets an agent that can reason over their wardrobe while
 
 ## Why WebMCP
 
-Both surfaces need tools that operate on live page state in the user's own session: the wardrobe on the shopper's page, the composition on the merchant's. WebMCP registers typed tools in the page itself: no backend, no OAuth, no credential grant, and the human watches every agent action land in the UI they are using. It also makes both trust boundaries structural rather than conventional: the closet's only outbound tool physically cannot include wardrobe data, and the studio has no tool that can touch locked facts.
+Both surfaces need tools that operate on live page state in the user's own session: the wardrobe on the shopper's page, the composition on the merchant's. WebMCP registers typed tools in the page itself: no backend, no OAuth, no credential grant, and the human watches every agent action land in the UI they are using. It also makes both trust boundaries structural rather than conventional: the closet's only outbound tool cannot include wardrobe rows or any shopper identifier, and the studio has no tool that can touch locked facts.
 
 ## What we built: 17 WebMCP tools, two pages
 
@@ -64,11 +64,11 @@ Sharing is not a checkbox in front of the loop, it is a dial the shopper sets, s
 | Level | What leaves the page | What the shopper gains |
 |---|---|---|
 | 0 Private | nothing | fit checks and gap finding stay local |
-| 1 Basics (default) | category, size, need or want | offers in the right size |
+| 1 Basics (default) | category, size, need or want, optional product handle | offers in the right size |
 | 2 Context | + occasion (season, gift, event), fit preference, who you are shopping for | offers timed and cut for the occasion |
 | 3 Taste | + colour family, materials to avoid, price ceiling | creatives that match, no wasted offers |
 
-Name, account, email, wardrobe rows, purchase history and income are never shared, at any level. At level 0, `report_demand_gap` returns `sharing-disabled` and nothing crosses the bridge; the Approve button itself reads "Approve next request (level N)" so the level is visible at the moment of the grant.
+Name, account, email, wardrobe rows, purchase history and income are never shared with a merchant, at any level. At level 0, `report_demand_gap` returns `sharing-disabled` and nothing crosses the bridge; the Approve button itself reads "Approve next request (level N)" so the level is visible at the moment of the grant.
 
 A few more pieces of the shopper side worth knowing about: **Shopping for** lets the shopper switch between Me, Partner and Kid, scoping the wardrobe and every closet tool to that profile. **Bought / Passed** records, in the browser, whether a sent request turned into a purchase, and the studio shows that outcome next to the request. On the merchant side, the studio's **placement** control (Story 9:16, Feed 4:5, Display 16:9) is a human-only choice, never a WebMCP tool, and the **offer completeness meter** counts how many of nine offer facts are locked, naming exactly what each missing fact unlocks for a shopping agent.
 
