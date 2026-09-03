@@ -4,37 +4,106 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hemloop: Documentation</title>
-<link rel="icon" href="/favicon.svg">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=DM+Sans:wght@400;500;650&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/14.1.2/marked.min.js" integrity="sha384-dAw12gnWShdrRMCwiNUvPHQ5IWS3uZwljXl3x7qNqvn+5gD/O/DXFCnR29GdXgOk" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.14/purify.min.js" integrity="sha384-46dPGH1XlTmj7bc50bqLjTdORXs/3EP2QpA/6EWbelYWOY9VGp+87RT61S3Mcslb" crossorigin="anonymous"></script>
 <style>
-  /* Tokens shared with the app: see app/globals.css. */
+  /* Tokens shared with the app: see app/globals.css + SiteHeader. */
   :root {
     --ink: #17211c; --forest: #183e30; --moss: #346b45; --loop: #b9f227;
     --cream: #f4f0e6; --paper: #fbfaf5; --white: #ffffff; --coral: #ee6f4d;
     --muted: #687169; --line: rgba(23, 33, 28, 0.13);
+    --loop-ink: #17211c; --loop-line: rgb(23 33 28 / 13%);
     --font-display: 'Manrope', system-ui, sans-serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-heading: var(--font-display), var(--font-body);
   }
   * { box-sizing: border-box; }
   html { color-scheme: light; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.62 var(--font-body); }
+  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font: 16px/1.62 var(--font-body); }
   a { color: var(--forest); }
 
-  /* Persistent header: logo left, navigation right, on every page. */
-  .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 28px; background: rgba(251,250,245,.86); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
-  .brand { display: inline-flex; align-items: center; gap: 10px; font: 750 21px/1 var(--font-display); letter-spacing: -.05em; color: var(--ink); text-decoration: none; }
-  .brand-mark { position: relative; display: inline-grid; place-items: center; width: 31px; height: 31px; border: 2px solid var(--ink); border-radius: 50%; }
-  .brand-mark span { width: 8px; height: 8px; background: var(--loop); border: 1px solid var(--ink); border-radius: 50%; }
-  .sitenav { display: flex; gap: 22px; font: 650 13px/1 var(--font-body); }
-  .sitenav a { color: var(--ink); text-decoration: none; opacity: .72; padding: 6px 0; border-bottom: 2px solid transparent; }
-  .sitenav a:hover, .sitenav a[aria-current] { opacity: 1; border-bottom-color: var(--loop); }
+  /* Same chrome as components/site-header.tsx (class names + tokens). */
+  .site-header {
+    position: sticky; top: 0; z-index: 50;
+    display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+    align-items: center; min-height: 72px;
+    padding: 10px clamp(18px, 3vw, 48px);
+    border-bottom: 1px solid var(--loop-line);
+    background: rgb(251 250 245 / 92%); color: var(--loop-ink);
+    backdrop-filter: blur(18px);
+  }
+  .site-brand {
+    display: inline-flex; align-items: center; width: max-content; gap: 10px;
+    color: inherit; font-family: var(--font-heading); font-size: 21px; font-weight: 800;
+    letter-spacing: -0.055em; text-decoration: none;
+  }
+  .site-brand-mark {
+    position: relative; display: inline-grid; width: 31px; height: 31px;
+    place-items: center; border: 2px solid currentColor; border-radius: 50%;
+  }
+  .site-brand-mark::after {
+    position: absolute; top: 2px; right: -4px; width: 10px; height: 10px;
+    border-top: 2px solid currentColor; content: ''; transform: rotate(35deg);
+  }
+  .site-brand-mark > span {
+    width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%;
+    background: var(--loop);
+  }
+  .site-nav {
+    display: flex; align-items: center; gap: 4px; padding: 4px;
+    border: 1px solid var(--loop-line); border-radius: 999px;
+    background: rgb(255 255 255 / 78%); box-shadow: 0 8px 24px rgb(23 33 28 / 5%);
+  }
+  .site-nav a {
+    padding: 8px 13px; border-radius: 999px; color: #566159;
+    font-size: 13px; font-weight: 700; line-height: 1; text-decoration: none;
+    transition: background 160ms ease, color 160ms ease;
+  }
+  .site-nav a:hover, .site-nav a:focus-visible {
+    background: #eef1e9; color: var(--loop-ink); outline: none;
+  }
+  .site-nav a.is-active, .site-nav a[aria-current="page"] {
+    background: var(--loop-ink); color: #fff;
+  }
+  .site-header-meta {
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0;
+  }
 
-  .frame { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 36px; max-width: 1180px; margin: 0 auto; padding: 34px 28px 80px; }
-  nav.toc { position: sticky; top: 80px; align-self: start; }
+  /* Same chrome as components/site-footer.tsx (Codex). */
+  .site-footer {
+    margin-top: auto;
+    display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+    align-items: center; gap: 24px; min-height: 112px;
+    padding: 24px clamp(18px, 3vw, 48px);
+    border-top: 1px solid var(--loop-line);
+    background: var(--paper); color: var(--loop-ink);
+  }
+  .site-footer nav {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px;
+  }
+  .site-footer nav a {
+    color: var(--muted); font-size: 13px; font-weight: 700; text-decoration: none;
+  }
+  .site-footer nav a:hover, .site-footer nav a:focus-visible,
+  .site-footer nav a[aria-current="page"] {
+    color: var(--loop-ink); text-decoration: underline; text-underline-offset: 4px;
+  }
+  .site-footer > p {
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    margin: 0; color: var(--muted); font-size: 12px; font-weight: 700;
+  }
+  .site-footer > p > span {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--loop);
+    box-shadow: 0 0 0 4px rgb(185 242 39 / 18%);
+  }
+
+  .frame { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 36px; max-width: 1180px; margin: 0 auto; padding: 34px 28px 80px; width: 100%; }
+  nav.toc { position: sticky; top: 88px; align-self: start; }
   .toc .kicker { margin: 0 0 10px; color: var(--moss); font: 800 11px/1 var(--font-body); letter-spacing: .13em; text-transform: uppercase; }
   .toc a { display: block; padding: 8px 12px; margin: 2px 0; border-radius: 10px; color: var(--ink); text-decoration: none; font-weight: 500; font-size: 14px; }
   .toc a:hover { background: var(--cream); }
@@ -62,23 +131,42 @@
   .tabs a { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); text-decoration: none; font: 650 13px/1 var(--font-body); }
   .tabs a.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
+  @media (max-width: 860px) {
+    .site-header {
+      position: relative; grid-template-columns: 1fr auto; gap: 8px 14px; padding-block: 12px;
+    }
+    .site-nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; overflow-x: auto; }
+    .site-footer { grid-template-columns: 1fr auto; }
+    .site-footer nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+  }
   @media (max-width: 820px) {
     .frame { grid-template-columns: 1fr; padding: 22px 16px 60px; }
     nav.toc { position: static; }
     article { padding: 28px 22px; }
-    .sitenav { gap: 14px; }
+  }
+  @media (max-width: 480px) {
+    .site-header { padding-inline: 13px; }
+    .site-nav { justify-content: stretch; }
+    .site-nav a { flex: 1; padding-inline: 8px; text-align: center; }
+    .site-footer { grid-template-columns: 1fr; }
+    .site-footer > p { justify-content: flex-start; }
+    .site-footer nav { grid-column: auto; grid-row: auto; }
   }
 </style>
 </head>
 <body>
-<header class="topbar">
-  <a class="brand" href="/" aria-label="Hemloop home"><span class="brand-mark" aria-hidden="true"><span></span></span><span>hemloop</span></a>
-  <nav class="sitenav" aria-label="Hemloop surfaces">
+<header class="site-header">
+  <a class="site-brand" href="/" aria-label="Hemloop loop room">
+    <span class="site-brand-mark" aria-hidden="true"><span></span></span>
+    <span>hemloop</span>
+  </a>
+  <nav class="site-nav" aria-label="Hemloop surfaces">
     <a href="/">Loop</a>
     <a href="/closet">Closet</a>
     <a href="/studio">Studio</a>
-    <a href="/docs/" aria-current="page">Docs</a>
+    <a href="/docs/" aria-current="page" class="is-active">Docs</a>
   </nav>
+  <div class="site-header-meta"></div>
 </header>
 
 <div class="frame">
@@ -93,6 +181,20 @@
     <article id="content">Loading…</article>
   </main>
 </div>
+
+<footer class="site-footer">
+  <a class="site-brand" href="/" aria-label="Hemloop loop room">
+    <span class="site-brand-mark" aria-hidden="true"><span></span></span>
+    <span>hemloop</span>
+  </a>
+  <nav aria-label="Hemloop footer navigation">
+    <a href="/">Loop</a>
+    <a href="/closet">Closet</a>
+    <a href="/studio">Studio</a>
+    <a href="/docs/" aria-current="page">Docs</a>
+  </nav>
+  <p><span aria-hidden="true"></span>Demo data, real brands</p>
+</footer>
 
 <script>
   // Five documents in the order a reader should take them, then the use cases
