@@ -103,3 +103,23 @@ Concrete scenarios showing where the loop earns its place. Personas are syntheti
 - **k-anonymity floor:** a merchant sees a demand cell only after N distinct shoppers contribute to it.
 - **Per-merchant fact schemas:** regional pricing and legal-copy templates as locked facts.
 - **Request relay:** the localStorage bridge becomes a hosted queue (same `DemandSignal` contract).
+
+## Right time: the boots that wore out
+
+Maya's closet knows she owns sneakers, so they are not a gap. It also knows she bought them in
+November 2024. Twenty-one months on, past the twelve a pair of shoes typically lasts, `find_gaps`
+returns footwear with a `due` block: the date, the months elapsed, and size 10. Her agent reports it
+with kind `replace`, and the merchant sees demand for footwear in size 10 from someone who already
+owns a pair and wore it out, which is timing their own sales data cannot give them. Nothing about
+where she bought them or what she paid travels; the replacement intervals are one table in the code
+that a merchant with real wear data should tune.
+
+## What the merchant cannot fill
+
+Northlight's studio panel groups the incoming requests: hoodie L, four requests, three of them
+replacing one they own, **can offer**. Hoodie XXL, six requests, **size out of stock**, with the
+reason on hover: restock it, or add the size to the offer facts before locking. Footwear 10, one
+request, **other category**: import a product in that category to answer it. The verdict runs the
+same two checks the matcher itself refuses on, so the panel never promises an offer that
+`propose_offer` would then decline. The merchant's agent reads the same rows with `get_demand`, and
+takes the request ids straight from them.

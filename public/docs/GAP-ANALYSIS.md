@@ -6,7 +6,7 @@ Inputs: Marco's 14-point third-party read of the site, his product vision, Anthr
 
 ## What Hemloop is, in one breath
 
-Two web pages register 17 WebMCP tools. The shopper's agent shops a private closet and can send
+Two web pages register 21 WebMCP tools. The shopper's agent shops a private closet and can send
 a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after
 the person presses Approve. The merchant's agent answers inside offer facts a human locked first;
 copy that contradicts them is rejected before it renders. The guarantees are structural: there is no
@@ -126,3 +126,35 @@ Bought or Passed, which closes the loop and feeds the pattern.
 - [x] Landing, README, PRD, User Guide, Tech Guide, Use Cases, Writeup, Test Plan, Demo Script and Cue Sheet synced to wave 3
 
 Roadmap items unchanged by this wave: receipt OCR, real order-email connectors, a browser extension surface, aggregation before disclosure (k-anonymity floor), the outcome written back into the merchant's own reporting, and the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam described in `docs/integrations/commerce-agents/README.md`.
+
+## Wave 4 (2026-09-03): right time, and stock the merchant can see
+
+Two gaps left by wave 3. The closet knew what was missing but not what was worn out, and the
+merchant's agent had no tool that could tell it which requests existed - `propose_offer` needed a
+request id it could only get out of band.
+
+- [x] Purchase-date lifecycle: `REPLACEMENT_MONTHS` per category (a calibration table, not a law) and
+      `monthsBetween`; `findGaps` adds a `due` block when the oldest garment in an owned category is
+      past its replacement life. The date is the garment's own `purchasedAt`, which the receipt
+      importer and the Bought button now fill in from the purchase log, so anything bought later
+      starts its own clock. An undated garment is never called worn out, and absence still outranks
+      wear: one gap per category
+- [x] `report_demand_gap` gained kind `replace` (level `need`), so the merchant can tell "never had
+      one" from "wore it out" - timing that purchase history alone does not give them
+- [x] The seed closet ships one genuinely worn-out item (the size 10 sneakers, bought 2024-11-05), or
+      the lifecycle would be invisible in the demo
+- [x] `demandInsight`: pure, tested, groups consented requests by category and size and scores each
+      group against the locked stock (`can-offer`, `size-not-in-stock`, `category-mismatch`) using the
+      same two predicates `matchOffer` refuses on, so the panel can never promise what the matcher
+      declines. Replaces the untested aggregator that lived inside the studio component
+- [x] `get_demand` tool: the merchant's agent can now discover request ids and read the same rows the
+      merchant sees. Registered by `getRequests` alone, so it is available even where nothing can be
+      staged
+- [x] Fixed while building it: `matchOffer` checked `facts.sizesInStock` but reported
+      `catalogProduct?.sizesInStock ?? facts.sizesInStock` on the offer it emitted, so it could
+      propose a size the same offer then listed as out of stock. Both now read one resolved source
+- [x] 21 WebMCP tools total (9 closet, 12 studio), 120 unit tests
+
+Roadmap items unchanged by this wave: receipt OCR, real order-email connectors, a browser extension
+surface, aggregation before disclosure (k-anonymity floor), the outcome written back into the
+merchant's own reporting, and the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam.

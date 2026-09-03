@@ -21,7 +21,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BRAND } from '@/lib/proofframe/brand';
 import { exportComposition } from '@/lib/proofframe/exporter';
-import { matchOffer, slug, toDemandSignalLike, type PersonalOffer } from '@/lib/proofframe/offers';
+import {
+  demandInsight,
+  matchOffer,
+  slug,
+  toDemandSignalLike,
+  type DemandGroup,
+  type PersonalOffer,
+} from '@/lib/proofframe/offers';
 import { seedCampaign } from '@/lib/proofframe/seed';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import type { DemandSignal } from '@/lib/proofframe/closet';
@@ -207,50 +214,51 @@ function demandLabel(signal: DemandSignal): 'Need' | 'Want' {
   return demandLevel(signal) === 'want' ? 'Want' : 'Need';
 }
 
-type AggregateRow = {
-  key: string;
-  category: string;
-  size: string;
-  total: number;
-  need: number;
-  want: number;
-  bought: number;
-  newest: string;
+/** The catalog product behind the locked facts. Pure, so both render (the
+ * inventory insight) and the agent callbacks can use it. */
+function catalogProductFor(facts: CampaignFacts) {
+  const f = facts as FactsView;
+  const match = demoCatalog.products.find((p) => p.title === f.productName);
+  return {
+    handle: match?.handle ?? slug(f.productName),
+    title: match?.title ?? f.productName,
+    image: match?.image ?? f.productImage,
+    sizesInStock: f.sizesInStock,
+  };
+}
+
+const VERDICT_LABEL: Record<DemandGroup['verdict'], string> = {
+  'can-offer': 'can offer',
+  'size-not-in-stock': 'size out of stock',
+  'category-mismatch': 'other category',
 };
 
+/** The grouped view the panel renders is the same one `get_demand` returns:
+ * one tested function in offers.ts, so the merchant and their agent can never
+ * be looking at different demand. */
 function aggregateSignals(
   signals: DemandSignal[],
   outcomeById: Map<string, SignalOutcome['outcome']>,
-): AggregateRow[] {
-  const map = new Map<string, AggregateRow>();
-  for (const s of signals) {
-    const size = s.size ?? 'any size';
-    const key = `${s.category}|${size}`;
-    const row = map.get(key) ?? {
-      key,
-      category: s.category,
-      size,
-      total: 0,
-      need: 0,
-      want: 0,
-      bought: 0,
-      newest: s.at,
-    };
-    row.total += 1;
-    if (demandLevel(s) === 'want') row.want += 1;
-    else row.need += 1;
-    if (outcomeById.get(s.signalId) === 'bought') row.bought += 1;
-    if (s.at > row.newest) row.newest = s.at;
-    map.set(key, row);
+  facts: CampaignFacts,
+  catalogProduct?: { handle: string; title: string; sizesInStock?: string[] },
+): DemandGroup[] {
+  const bought: string[] = [];
+  for (const [signalId, outcome] of outcomeById) {
+    if (outcome === 'bought') bought.push(signalId);
   }
-  // Needs above Wants: a group with at least one Need sorts first, then
-  // newest-first within each tier.
-  return Array.from(map.values()).sort((a, b) => {
-    const aHasNeed = a.need > 0;
-    const bHasNeed = b.need > 0;
-    if (aHasNeed !== bHasNeed) return aHasNeed ? -1 : 1;
-    return a.newest < b.newest ? 1 : -1;
-  });
+  return demandInsight(
+    signals.map((s) => ({
+      signalId: s.signalId,
+      category: s.category,
+      size: s.size,
+      kind: s.kind,
+      level: demandLevel(s),
+      at: s.at,
+    })),
+    facts,
+    catalogProduct,
+    bought,
+  );
 }
 
 /** Need rows first, newest-first order preserved within each group
@@ -522,16 +530,10 @@ export function ProofFrameStudio() {
   // product name against the demo catalog snapshot, falling back to a
   // synthetic product built from the facts alone. Reads campaignRef.current
   // directly so it stays correct even if this function is captured once.
-  const getCatalogProductForCampaign = useCallback(() => {
-    const f = campaignRef.current.facts as FactsView;
-    const match = demoCatalog.products.find((p) => p.title === f.productName);
-    return {
-      handle: match?.handle ?? slug(f.productName),
-      title: match?.title ?? f.productName,
-      image: match?.image ?? f.productImage,
-      sizesInStock: f.sizesInStock,
-    };
-  }, []);
+  const getCatalogProductForCampaign = useCallback(
+    () => catalogProductFor(campaignRef.current.facts),
+    [],
+  );
 
   // Called only by the propose_offer WebMCP tool: an agent staged a
   // proposal. A human still has to approve it before a shopper sees it.
@@ -651,6 +653,10 @@ export function ProofFrameStudio() {
       getOffers: () => readOffersSafe(),
       stageOffer: stageOfferFromAgent,
       getCatalogProduct: getCatalogProductForCampaign,
+      getBoughtRequestIds: () =>
+        readOutcomesSafe()
+          .filter((o) => o.outcome === 'bought')
+          .map((o) => o.signalId),
     }),
     [
       agentAddScene,
@@ -719,8 +725,14 @@ export function ProofFrameStudio() {
     [outcomes],
   );
   const aggregatedSignals = useMemo(
-    () => aggregateSignals(signals, outcomeById),
-    [signals, outcomeById],
+    () =>
+      aggregateSignals(
+        signals,
+        outcomeById,
+        campaign.facts,
+        catalogProductFor(campaign.facts),
+      ),
+    [signals, outcomeById, campaign.facts],
   );
   // The most recent offer per request (a request can be re-proposed after a
   // decline). proposedAt is an ISO timestamp, so string comparison sorts.
@@ -1465,7 +1477,10 @@ export function ProofFrameStudio() {
             {aggregatedSignals.length > 0 && (
               <div className="demand-aggregate">
                 {aggregatedSignals.map((row) => (
-                  <div className="aggregate-row" key={row.key}>
+                  <div
+                    className={`aggregate-row verdict-${row.verdict}`}
+                    key={row.key}
+                  >
                     <strong>
                       {row.category} · {row.size}
                     </strong>
@@ -1473,12 +1488,22 @@ export function ProofFrameStudio() {
                       {row.total} request{row.total === 1 ? '' : 's'} (
                       {row.need} need{row.need === 1 ? '' : 's'}, {row.want}{' '}
                       want{row.want === 1 ? '' : 's'})
+                      {row.replace > 0
+                        ? ` · ${row.replace} replacing one they own`
+                        : ''}
                       {row.bought > 0
                         ? ` · ${row.bought} bought`
                         : ''}
                     </span>
+                    <span className="aggregate-verdict" title={row.action}>
+                      {VERDICT_LABEL[row.verdict]}
+                    </span>
                   </div>
                 ))}
+                <p className="panel-subtitle">
+                  Inventory insight: demand scored against the stock you locked.
+                  The same rows your agent reads with get_demand.
+                </p>
               </div>
             )}
             {sortedSignals.length === 0 ? (

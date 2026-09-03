@@ -1189,6 +1189,26 @@ select {
 }
 .gap-card strong {
   text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* A lifecycle gap: owned, but past its replacement life. Cooler than the
+   missing/thin amber, because it is timing rather than absence. */
+.gap-card.is-due {
+  border-left-color: #7fd1c1;
+  background: color-mix(in srgb, #7fd1c1 8%, transparent);
+}
+.gap-due-tag {
+  text-transform: none;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #7fd1c1 45%, transparent);
+  background: color-mix(in srgb, #7fd1c1 18%, transparent);
+  color: #7fd1c1;
 }
 .sizes-table {
   margin-top: 14px;
@@ -2606,4 +2626,27 @@ select {
   .purchase-row {
     grid-template-columns: 1fr;
   }
+}
+
+/* Wave 4 inventory insight: a grouped demand row carries the verdict on
+   whether the locked offer can actually answer it. */
+.aggregate-row {
+  position: relative;
+}
+.aggregate-verdict {
+  justify-self: start;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  opacity: 0.9;
+}
+.verdict-can-offer .aggregate-verdict {
+  color: #7fd1c1;
+}
+.verdict-size-not-in-stock .aggregate-verdict,
+.verdict-category-mismatch .aggregate-verdict {
+  color: #ffd166;
 }

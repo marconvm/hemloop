@@ -41,6 +41,11 @@ export interface GarmentInput {
   brand: string;
   size: string;
   colour: string;
+  /** ISO yyyy-mm-dd. Set by the page when a garment comes from a purchase
+   * (receipt import, or an offer marked Bought), which is what makes the
+   * replacement lifecycle work later. Not in the add_garment tool schema:
+   * an agent cannot backdate a garment. */
+  purchasedAt?: string;
 }
 
 export interface ClosetCallbacks {
@@ -158,7 +163,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'find_gaps',
       description:
-        'Wardrobe categories that are missing or thin, to shop against.',
+        "Wardrobe categories that are missing or thin, plus categories whose oldest garment is past its typical replacement life. A row with a `due` block is a lifecycle gap: report it with report_demand_gap kind 'replace'. Carries only the date, the months elapsed and the size to buy again - no merchant, price or purchase row.",
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () =>
@@ -267,11 +272,11 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
     {
       name: 'report_demand_gap',
       description:
-        "Send one data-minimized demand signal after the human explicitly approves the next share in the UI. Which fields travel is set by the shopper's sharing level (0 Private blocks everything, 1 Basics is category/size/need-or-want, 2 Context adds occasion and fit preference, 3 Taste adds colour/materials/price). Never a shopper id or wardrobe rows. Returns the exact payload sent.",
+        "Send one data-minimized demand signal after the human explicitly approves the next share in the UI. Use kind 'replace' when find_gaps reports a `due` block: the shopper owns the category and is past its replacement life, which is timing the merchant cannot infer. Which fields travel is set by the shopper's sharing level (0 Private blocks everything, 1 Basics is category/size/need-or-want, 2 Context adds occasion and fit preference, 3 Taste adds colour/materials/price). Never a shopper id or wardrobe rows. Returns the exact payload sent.",
       inputSchema: {
         type: 'object',
         properties: {
-          kind: { type: 'string', enum: ['gap', 'fit', 'want'] },
+          kind: { type: 'string', enum: ['gap', 'fit', 'want', 'replace'] },
           category: { type: 'string', enum: GARMENT_CATEGORIES },
           size: { type: 'string' },
           handle: { type: 'string' },
@@ -288,13 +293,14 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
           );
         }
         // PF4-6: a malformed kind must not burn the approval or send as 'want'.
-        if (args.kind !== undefined && args.kind !== 'gap' && args.kind !== 'fit' && args.kind !== 'want') {
+        const KINDS: DemandSignal['kind'][] = ['gap', 'fit', 'want', 'replace'];
+        if (args.kind !== undefined && !KINDS.includes(args.kind as DemandSignal['kind'])) {
           return fail(
-            'kind must be one of: gap, fit, want.',
-            'Use kind gap, fit, or want, then call report_demand_gap again.',
+            `kind must be one of: ${KINDS.join(', ')}.`,
+            `Use kind ${KINDS.join(', ')}, then call report_demand_gap again.`,
           );
         }
-        const kind = (args.kind ?? 'want') as 'gap' | 'fit' | 'want';
+        const kind = (args.kind ?? 'want') as DemandSignal['kind'];
         const level: DemandSignal['level'] = kind === 'want' ? 'want' : 'need';
         // Bound optional strings BEFORE consuming the one-shot approval:
         // invalid input must not burn the human's grant.

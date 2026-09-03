@@ -10,8 +10,8 @@ Maya has a closet. Northlight Apparel (a demo brand) has a campaign. The agent i
 
 Two surfaces, one origin, with the agent orchestrating both sides of the workflow:
 
-1. **The Closet** (`/closet`): the shopper surface. The agent uses 9 WebMCP tools to find wardrobe gaps, check fit and read stated preferences against a product catalog snapshot (this demo's connector is Shopify). When something is missing, `report_demand_gap` can send one event carrying no shopper identifier (zero-ID) and a limited schema, but only after the shopper arms a one-shot approval in the UI. Which fields travel is set by a sharing level the shopper controls (0 Private through 3 Taste); the payload never has an account ID, stable hash or wardrobe rows. A purchase log across every merchant (rivals included) stays in the browser too; `import_receipt` reads a pasted receipt or order email into it, and `get_offers` reads back any approved personal offer addressed to this closet's own requests.
-2. **The Studio** (`/studio`): the merchant surface. Consented demand arrives in a live panel, grouped by category and size with counts and labelled Need or Want: intent that purchase history often misses. The merchant answers it with a workflow: lock the offer facts (prices, offer, code, dates, disclaimer) and the offer rules (cost, margin floor, max discount), then let their agent build the response through 11 WebMCP tools, including `propose_offer`, which stages a personal offer for one incoming request inside those rules for a human to approve or decline. A promo video is one output of that workflow. The trust machinery around it is the product, not the video editor.
+1. **The Closet** (`/closet`): the shopper surface. The agent uses 9 WebMCP tools to find wardrobe gaps, spot what the shopper owns that is worn out, check fit and read stated preferences against a product catalog snapshot (this demo's connector is Shopify). When something is missing, `report_demand_gap` can send one event carrying no shopper identifier (zero-ID) and a limited schema, but only after the shopper arms a one-shot approval in the UI. Which fields travel is set by a sharing level the shopper controls (0 Private through 3 Taste); the payload never has an account ID, stable hash or wardrobe rows. A purchase log across every merchant (rivals included) stays in the browser too; `import_receipt` reads a pasted receipt or order email into it, and `get_offers` reads back any approved personal offer addressed to this closet's own requests.
+2. **The Studio** (`/studio`): the merchant surface. Consented demand arrives in a live panel, grouped by category and size with counts and labelled Need or Want: intent that purchase history often misses. The merchant answers it with a workflow: lock the offer facts (prices, offer, code, dates, disclaimer) and the offer rules (cost, margin floor, max discount), then let their agent build the response through 12 WebMCP tools, including `get_demand`, which scores that demand against the stock they locked, and `propose_offer`, which stages a personal offer for one incoming request inside those rules for a human to approve or decline. A promo video is one output of that workflow. The trust machinery around it is the product, not the video editor.
 
 The win-win: the shopper gets an agent that can reason over their wardrobe while Hemloop strictly limits its merchant-facing channel; the merchant gets an explicit demand event without a shopper identifier; and every rendered claim the merchant's agent proposes is validated before it applies. Copy that says "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason. The exported composition refuses to exist while violations remain, and the disclaimer is baked into every frame as an element no tool can remove.
 
@@ -19,13 +19,13 @@ The win-win: the shopper gets an agent that can reason over their wardrobe while
 
 Both surfaces need tools that operate on live page state in the user's own session: the wardrobe on the shopper's page, the composition on the merchant's. WebMCP registers typed tools in the page itself: no backend, no OAuth, no credential grant, and the human watches every agent action land in the UI they are using. It also makes both trust boundaries structural rather than conventional: the closet's only outbound tool cannot include wardrobe rows or any shopper identifier, and the studio has no tool that can touch locked facts.
 
-## What we built: 20 WebMCP tools, two pages
+## What we built: 21 WebMCP tools, two pages
 
 | Surface | Tool | Kind | What it does | Structural guarantee |
 |---|---|---|---|---|
 | Closet | `get_wardrobe` | read | Returns the garment rows on the page | `readOnlyHint`, `untrustedContentHint`, never returns a shopper id |
 | Closet | `get_my_sizes` | read | Sizes owned, optionally by brand | `readOnlyHint` |
-| Closet | `find_gaps` | read | Categories missing or thin | `readOnlyHint` |
+| Closet | `find_gaps` | read | Categories missing or thin, plus categories whose oldest garment is past its typical replacement life | `readOnlyHint`; a due row carries the date, the months elapsed and the size to buy again, never a merchant, price or purchase row |
 | Closet | `check_fit` | read | Size advice for a catalog item from what is owned | `readOnlyHint`, reads the public catalog only |
 | Closet | `get_preferences` | read | Reads the shopper's stated preferences: fit, colour family, materials to avoid, price ceiling, liked brands | `readOnlyHint`, `closet_data` fence, a field travels only if the sharing level allows it |
 | Closet | `add_garment` | write | Adds one garment to the local wardrobe | Enum-validated category, bounded strings, never leaves the page |
@@ -40,6 +40,7 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 | Studio | `add_scene` / `update_scene` | write | Writes rendered copy | Claim-validated before the state changes, rejected atomically |
 | Studio | `reorder_scenes` | write | Reorders the timeline | Permutation-checked |
 | Studio | `seek_preview` | write | Moves the preview playhead | Clamped to length, deterministic |
+| Studio | `get_demand` | read | Consented demand grouped by category and size, with the request ids and, per group, whether the locked offer can answer it | `readOnlyHint`, `untrustedContentHint`; the verdict uses the same two predicates `matchOffer` refuses on, so it cannot promise what `propose_offer` would decline |
 | Studio | `import_product` | write | Pulls a product into the facts | `untrustedContentHint`, blocked while facts are locked |
 | Studio | `propose_offer` | write | Proposes a personal offer for one incoming request inside the locked offer rules (cost, margin floor, max discount) | Staged; a human approves or declines before the shopper can see it; margin floor enforced in code |
 | Both | *(absent by design)* | none | There is no `lock_facts`, no `unlock_facts`, no `approve_share`, no `set_sharing_level`, no `approve_offer` | Locking the offer, releasing wardrobe data, the consent dial, and approving a personal offer are human-only acts. This row is the product. |
@@ -49,16 +50,16 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 ```sh
 npm install
 npm run dev                       # landing on /, studio on /studio, closet on /closet
-npm test                          # 101 tests
+npm test                          # 120 tests
 ```
 
 To connect an agent in a challenge-supported Chrome build: Chrome 149+ carries an origin-trial token for this domain, so no flag is needed there. On an older build, enable `chrome://flags/#enable-webmcp-testing` in the exact profile you will use, press **Relaunch**, then reopen the live URL. Or open the deployed URL in ChatGPT's desktop browser (GPT-5.6 Sol/Terra), where nothing needs enabling. Each page's header badge switches from "preview mode" to "tools live".
 
 ## Tool surfaces
 
-**Closet (shopper, 9 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit`, `get_preferences`, `get_offers` (all read-only), `add_garment`, `import_receipt`, and `report_demand_gap`, the single tool that can send anything to a merchant. It rejects until the human arms one share, can emit only the no-shopper-identifier `DemandSignal` schema, consumes the approval, and returns the exact payload sent.
+**Closet (shopper, 9 tools):** `get_wardrobe`, `get_my_sizes`, `find_gaps`, `check_fit`, `get_preferences`, `get_offers` (all read-only), `add_garment`, `import_receipt`, and `report_demand_gap`, the single tool that can send anything to a merchant. `find_gaps` is also the lifecycle scan: a category whose oldest garment is past its replacement life comes back with a `due` block, which the agent reports with kind `replace`. It rejects until the human arms one share, can emit only the no-shopper-identifier `DemandSignal` schema, consumes the approval, and returns the exact payload sent.
 
-**Studio (merchant, 11 tools):** `get_campaign_state`, `validate_claims`, `export_composition` (read-only; hands the HTML to the page as a download and returns its size), `get_offer` (read-only; returns the locked offer as structured data for a shopping agent, including sizes in stock, purchase link and offer completeness, or one approved personal offer when called with `requestId`), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`, `propose_offer` (stages a personal offer for one incoming request inside the locked offer rules; a human approves or declines it). Mutations validate against locked facts before applying. There is deliberately no lock/unlock tool on either surface, and no tool that can approve an offer: the merchant locks the offer, the agent works inside it, and a human decides what the shopper sees.
+**Studio (merchant, 12 tools):** `get_campaign_state`, `get_demand`, `validate_claims`, `export_composition` (read-only; hands the HTML to the page as a download and returns its size), `get_offer` (read-only; returns the locked offer as structured data for a shopping agent, including sizes in stock, purchase link and offer completeness, or one approved personal offer when called with `requestId`), `set_brief`, `add_scene`, `update_scene`, `reorder_scenes`, `seek_preview`, `import_product`, `propose_offer` (stages a personal offer for one incoming request inside the locked offer rules; a human approves or declines it). `get_demand` is where those request ids come from, and it tells the merchant which groups their locked offer cannot answer and why. Mutations validate against locked facts before applying. There is deliberately no lock/unlock tool on either surface, and no tool that can approve an offer: the merchant locks the offer, the agent works inside it, and a human decides what the shopper sees.
 
 ## Consent is the dial
 
@@ -78,6 +79,12 @@ A few more pieces of the shopper side worth knowing about: **Shopping for** lets
 ## The loop closes
 
 Purchases across every store, rivals included, stay with the shopper: a private log in their own browser, filled by hand, by pasting a receipt or order email, or automatically whenever an offer is marked Bought. At sharing level 3, a coarse buying pattern derived from that log, discount sensitivity, spend band, brand loyalty, travels with a request; the raw purchases never do. On the merchant side, the locked offer rules (cost, margin floor, max discount) let the merchant's agent auto-match a personal offer to that request, inside the margin, with `propose_offer` or the Auto-propose toggle. A human still approves or declines before anything reaches the shopper. The shopper answers Bought or Passed on the approved offer, and Bought records the purchase with the offer it came from, so the pattern that shaped the offer improves the next one.
+
+## Right time, not just right product
+
+A gap is not only something you never had. `find_gaps` also reads the purchase date on each garment: when the oldest one in a category is past its typical replacement life, that category comes back with a `due` block carrying the date, the months elapsed and the size to buy again, and the agent reports it with kind `replace`. The dates come from the purchase log, so anything imported from a receipt or marked Bought starts its own clock. Nothing about where it was bought or what it cost is in the gap, and the replacement intervals are one table in `closet.ts` a merchant with real wear data should tune.
+
+The merchant gets the reciprocal. `get_demand` groups consented requests by category and size and scores each group against the stock they locked: **can offer**, **size out of stock**, or **other category**, with the request ids to hand straight to `propose_offer`. The verdict runs the same two predicates `matchOffer` refuses on, so the panel can never promise something the matcher then declines, and a group's `replace` count tells the merchant those shoppers already own one. That is restock guidance from real intent, with no shopper identifier anywhere in it.
 
 ## Documentation
 

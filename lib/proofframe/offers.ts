@@ -127,6 +127,8 @@ function clampReason(reason: string): string {
   return reason.length > 120 ? `${reason.slice(0, 119)}…` : reason;
 }
 
+const KINDS = new Set(['gap', 'fit', 'want', 'replace']);
+
 const SENSITIVITY_REASON: Record<DiscountSensitivity, string> = {
   none: 'Kept the discount modest since you tend to buy without needing one.',
   percent: 'Applied the discount automatically, no code required to redeem.',
@@ -147,11 +149,12 @@ export function matchOffer(input: MatchOfferInput): MatchOfferResult {
     return { ok: false, reason: 'category mismatch' };
   }
 
-  if (
-    request.size &&
-    facts.sizesInStock &&
-    !facts.sizesInStock.includes(request.size)
-  ) {
+  // Wave 4: check the stock the offer will actually claim. The emitted offer
+  // reports `catalogProduct?.sizesInStock ?? facts.sizesInStock` further down,
+  // so checking only `facts.sizesInStock` here could propose a size the very
+  // same offer then lists as out of stock.
+  const stock = catalogProduct?.sizesInStock ?? facts.sizesInStock;
+  if (request.size && stock && !stock.includes(request.size)) {
     return { ok: false, reason: 'size not in stock' };
   }
 
@@ -208,7 +211,7 @@ export function matchOffer(input: MatchOfferInput): MatchOfferResult {
   const title = catalogProduct?.title ?? facts.productName;
   const handle = catalogProduct?.handle ?? slug(facts.productName);
   const image = catalogProduct?.image ?? facts.productImage;
-  const sizesInStock = catalogProduct?.sizesInStock ?? facts.sizesInStock;
+  const sizesInStock = stock;
 
   const offer: PersonalOffer = {
     offerId: `${offerIdFor(facts)}:${request.signalId.slice(0, 8)}`,
@@ -250,7 +253,7 @@ const LOYALTIES = new Set<BrandLoyalty>(['loyal', 'switcher']);
  * rows a page's getRequests() callback hands the tool). Mirrors the
  * bounded, exact-key parsing signal-bridge.ts uses for storage readback:
  * unknown keys are dropped, enums enforced, nothing trusted by shape alone. */
-export function toDemandSignalLike(x: unknown): DemandSignalLike | null {
+export function toDemandSignalLike(x: unknown): DemandInsightRequest | null {
   if (typeof x !== 'object' || x === null) return null;
   const s = x as Record<string, unknown>;
   if (typeof s.signalId !== 'string' || s.signalId.length === 0) return null;
@@ -283,5 +286,130 @@ export function toDemandSignalLike(x: unknown): DemandSignalLike | null {
     }
   }
 
-  return { signalId: s.signalId, category: s.category, size, handle, occasion, pattern };
+  // Wave 4: kind, level and at ride along for demandInsight. Bounded the
+  // same way as everything else that crosses the bridge; an unrecognised
+  // value is simply dropped, never trusted through.
+  const kind = typeof s.kind === 'string' && KINDS.has(s.kind) ? s.kind : undefined;
+  const level = s.level === 'need' || s.level === 'want' ? s.level : undefined;
+  const at = typeof s.at === 'string' && s.at.length <= 40 ? s.at : undefined;
+
+  return { signalId: s.signalId, category: s.category, size, handle, occasion, pattern, kind, level, at };
+}
+
+// ---------- Wave 4: merchant inventory insight ----------
+
+/** Why the locked offer can or cannot answer a group of requests. Uses the
+ * SAME two predicates matchOffer refuses on, so the panel can never promise
+ * something the matcher would then decline. */
+export type DemandVerdict = 'can-offer' | 'size-not-in-stock' | 'category-mismatch';
+
+/** What a request contributes to the insight, beyond what the matcher needs.
+ * All of it already travels in a DemandSignal at level 1. */
+export interface DemandInsightRequest extends DemandSignalLike {
+  kind?: string;
+  level?: 'need' | 'want';
+  at?: string;
+}
+
+export interface DemandGroup {
+  key: string;
+  category: string;
+  /** 'any size' when no size travelled with the requests in this group. */
+  size: string;
+  total: number;
+  need: number;
+  want: number;
+  /** Requests the shopper marked as a replacement: they own one already. */
+  replace: number;
+  bought: number;
+  newest: string;
+  /** Ids the merchant's agent can hand straight to propose_offer, capped. */
+  requestIds: string[];
+  verdict: DemandVerdict;
+  action: string;
+}
+
+const MAX_IDS_PER_GROUP = 10;
+
+const VERDICT_ACTION: Record<DemandVerdict, string> = {
+  'can-offer': 'The locked offer covers this: propose_offer will match.',
+  'size-not-in-stock':
+    'This size is not in the locked sizes in stock, so the matcher refuses. Restock it, or add the size on the offer facts before locking.',
+  'category-mismatch':
+    'The locked offer is for another category, so the matcher refuses. Import a product in this category to answer it.',
+};
+
+/**
+ * Group incoming requests by category and size, and tell the merchant which
+ * groups their locked offer can actually answer. Pure: no DOM, no clock, no
+ * storage. This is the merchant's half of the loop - demand they cannot get
+ * from purchase history, scored against the stock they have.
+ *
+ * Ordering: groups the offer can answer come first (that is where the money
+ * is), then groups with at least one Need, then newest first.
+ */
+export function demandInsight(
+  requests: DemandInsightRequest[],
+  facts: CampaignFacts,
+  catalogProduct?: CatalogProductLike,
+  boughtIds: Iterable<string> = [],
+): DemandGroup[] {
+  const bought = new Set(boughtIds);
+  const productCategory = campaignCategory(facts, catalogProduct);
+  const sizesInStock = catalogProduct?.sizesInStock ?? facts.sizesInStock;
+
+  const map = new Map<string, DemandGroup>();
+  for (const r of requests) {
+    const size = r.size ?? 'any size';
+    const key = `${r.category}|${size}`;
+    const at = r.at ?? '';
+    const group = map.get(key) ?? {
+      key,
+      category: r.category,
+      size,
+      total: 0,
+      need: 0,
+      want: 0,
+      replace: 0,
+      bought: 0,
+      newest: at,
+      requestIds: [],
+      verdict: 'can-offer' as DemandVerdict,
+      action: '',
+    };
+    group.total += 1;
+    if (r.level === 'want') group.want += 1;
+    else group.need += 1;
+    if (r.kind === 'replace') group.replace += 1;
+    if (bought.has(r.signalId)) group.bought += 1;
+    if (at > group.newest) group.newest = at;
+    if (group.requestIds.length < MAX_IDS_PER_GROUP) group.requestIds.push(r.signalId);
+    map.set(key, group);
+  }
+
+  for (const group of map.values()) {
+    // Same order of refusal as matchOffer: category first, then size.
+    if (!productCategory || productCategory !== group.category) {
+      group.verdict = 'category-mismatch';
+    } else if (
+      group.size !== 'any size' &&
+      sizesInStock &&
+      !sizesInStock.includes(group.size)
+    ) {
+      group.verdict = 'size-not-in-stock';
+    } else {
+      group.verdict = 'can-offer';
+    }
+    group.action = VERDICT_ACTION[group.verdict];
+  }
+
+  return Array.from(map.values()).sort((a, b) => {
+    const aCan = a.verdict === 'can-offer';
+    const bCan = b.verdict === 'can-offer';
+    if (aCan !== bCan) return aCan ? -1 : 1;
+    const aNeed = a.need > 0;
+    const bNeed = b.need > 0;
+    if (aNeed !== bNeed) return aNeed ? -1 : 1;
+    return a.newest < b.newest ? 1 : -1;
+  });
 }

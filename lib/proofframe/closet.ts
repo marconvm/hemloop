@@ -37,6 +37,15 @@ export interface Wardrobe {
 export interface Gap {
   category: GarmentCategory;
   reason: string;
+  /** Present only when the gap comes from age rather than absence: the
+   * shopper owns this category, but the newest one they bought is past its
+   * typical replacement life. Never carries a merchant, price or handle. */
+  due?: {
+    lastBoughtAt: string;
+    monthsSince: number;
+    typicalMonths: number;
+    size: string;
+  };
 }
 
 export interface FitNote {
@@ -71,12 +80,12 @@ export type Occasion = 'everyday' | 'season' | 'gift' | 'event';
 
 export interface DemandSignal {
   signalId: string;
-  kind: 'gap' | 'fit' | 'want';
+  kind: 'gap' | 'fit' | 'want' | 'replace';
   category: GarmentCategory;
   size: string | null;
   handle: string | null;
   at: string; // ISO timestamp
-  /** Derived from kind: gap or fit -> 'need', want -> 'want'. */
+  /** Derived from kind: gap, fit or replace -> 'need', want -> 'want'. */
   level: 'need' | 'want';
   occasion?: Occasion;
   for?: ShopperProfile;
@@ -191,7 +200,7 @@ export function seedWardrobe(): Wardrobe {
         currency: 'CAD',
         retailer: 'Ridgeline Outdoor',
         material: 'Canvas upper, rubber sole',
-        purchasedAt: '2026-03-05',
+        purchasedAt: '2024-11-05',
       },
       {
         id: 'g7',
@@ -279,8 +288,38 @@ export function garmentsForProfile(
 
 const ESSENTIALS: GarmentCategory[] = ['hoodie', 'tee', 'denim', 'jacket'];
 
-/** Categories the wardrobe is missing or thin on. Pure. */
-export function findGaps(wardrobe: Wardrobe): Gap[] {
+/** How long a category typically lasts before it is worth replacing, in
+ * months. A calibration table, not a law: a merchant or a shopper with real
+ * wear data should tune these numbers - the lifecycle logic does not change
+ * when they do. */
+export const REPLACEMENT_MONTHS: Record<GarmentCategory, number> = {
+  footwear: 12,
+  tee: 18,
+  denim: 24,
+  hoodie: 30,
+  accessory: 36,
+  jacket: 48,
+};
+
+/** Whole months from `from` to `to`, floored, never negative. Day-of-month
+ * aware, so 2026-01-31 to 2026-02-28 is 0 months, not 1. */
+export function monthsBetween(from: string, to: Date): number {
+  const start = new Date(from);
+  if (Number.isNaN(start.getTime())) return 0;
+  let months =
+    (to.getUTCFullYear() - start.getUTCFullYear()) * 12 +
+    (to.getUTCMonth() - start.getUTCMonth());
+  if (to.getUTCDate() < start.getUTCDate()) months -= 1;
+  return Math.max(0, months);
+}
+
+/** Categories the wardrobe is missing or thin on, plus categories the shopper
+ * owns where the oldest garment is past its typical replacement life. The
+ * date comes from the garment's own `purchasedAt`, which the receipt importer
+ * and the Bought button fill in from the purchase log; a garment with no date
+ * is never called worn out. Pure; `now` is injectable so the result is
+ * deterministic in tests. */
+export function findGaps(wardrobe: Wardrobe, now: Date = new Date()): Gap[] {
   const gaps: Gap[] = [];
   for (const category of ESSENTIALS) {
     const owned = wardrobe.garments.filter((g) => g.category === category);
@@ -289,6 +328,34 @@ export function findGaps(wardrobe: Wardrobe): Gap[] {
     } else if (owned.length === 1) {
       gaps.push({ category, reason: `Only one ${category} in rotation.` });
     }
+  }
+
+  // A category already reported as missing or thin does not also need an age
+  // argument - one gap per category, and absence outranks wear. The oldest
+  // dated garment decides: a new tee does not make last decade's boots fine.
+  const reported = new Set(gaps.map((g) => g.category));
+  for (const category of GARMENT_CATEGORIES) {
+    if (reported.has(category)) continue;
+    const oldest = wardrobe.garments
+      .filter((g) => g.category === category && g.purchasedAt)
+      .reduce<Garment | null>(
+        (best, g) => (!best || g.purchasedAt! < best.purchasedAt! ? g : best),
+        null,
+      );
+    if (!oldest) continue;
+    const typicalMonths = REPLACEMENT_MONTHS[category];
+    const monthsSince = monthsBetween(oldest.purchasedAt!, now);
+    if (monthsSince < typicalMonths) continue;
+    gaps.push({
+      category,
+      reason: `Bought ${monthsSince} months ago; ${category} is typically replaced after ${typicalMonths}.`,
+      due: {
+        lastBoughtAt: oldest.purchasedAt!,
+        monthsSince,
+        typicalMonths,
+        size: oldest.size,
+      },
+    });
   }
   return gaps;
 }

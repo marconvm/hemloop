@@ -558,6 +558,7 @@ export function ClosetStudio() {
           brand: parsed.merchant,
           size: item.size ?? 'OS',
           colour: 'unspecified',
+          purchasedAt: parsed.at.slice(0, 10),
         });
         garmentsAdded++;
       }
@@ -597,6 +598,7 @@ export function ClosetStudio() {
           brand: purchase.brand,
           size: purchase.size,
           colour: 'unspecified',
+          purchasedAt: purchase.at.slice(0, 10),
         });
       }
       pushTrail({
@@ -1035,7 +1037,7 @@ export function ClosetStudio() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">What to shop for</p>
-              <h2>Missing and thin</h2>
+              <h2>Missing, thin and worn out</h2>
             </div>
             <ShieldCheck aria-hidden="true" />
           </div>
@@ -1046,8 +1048,21 @@ export function ClosetStudio() {
               </p>
             ) : (
               gaps.map((gap) => (
-                <div className="gap-card" key={gap.category}>
-                  <strong>{gap.category}</strong>
+                <div
+                  className={`gap-card${gap.due ? ' is-due' : ''}`}
+                  key={gap.category}
+                >
+                  <strong>
+                    {gap.category}
+                    {gap.due ? (
+                      <span
+                        className="gap-due-tag"
+                        title="From the purchase dates on this page: you own one, and it is past its typical replacement life. The dates never leave."
+                      >
+                        due · size {gap.due.size}
+                      </span>
+                    ) : null}
+                  </strong>
                   <span>{gap.reason}</span>
                 </div>
               ))

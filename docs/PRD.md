@@ -88,6 +88,16 @@ Wave 2 turns opt-in into the product mechanic rather than a checkbox in front of
 | AC-21 | `import_receipt` never echoes the pasted text back verbatim and never sends it anywhere off the page; a failed parse returns a structured `unparsed-receipt` result, not a throw | tests/closet.test.ts |
 | AC-22 | Auto-propose is a human-only toggle no WebMCP tool can read or flip | adapter tool-surface test, studio guard |
 
+## 4d. Wave 4 acceptance criteria, shipped 2026-09-03
+
+| # | Criterion | Evidence |
+|---|---|---|
+| AC-23 | A category whose oldest owned garment is past its typical replacement life comes back from `find_gaps` with a `due` block carrying the date, the months elapsed and the size to buy again, and nothing about the merchant, the price or the purchase row | tests/closet.test.ts |
+| AC-24 | A garment with no purchase date is never reported as worn out, and a category that is missing or thin is reported once, without a `due` block: absence outranks wear | tests/closet.test.ts |
+| AC-25 | `report_demand_gap` accepts kind `replace` at level `need`; an unknown kind is still refused without consuming the human's one-shot approval | tests/closet.test.ts |
+| AC-26 | `get_demand` never mutates the campaign, drops malformed request rows, and is registered by `getRequests` alone, so an agent can discover a request id before any offer can be staged | tests/proofframe.test.ts |
+| AC-27 | For every demand group, the panel's verdict is `can-offer` exactly when `matchOffer` on that group would return an offer: the insight cannot promise what `propose_offer` then declines | tests/proofframe.test.ts |
+
 ## 5. Ownership
 
 | Component | Owner |
@@ -102,8 +112,8 @@ Hemloop sits between the shopper's closet and the merchant's offer today. The ne
 
 | Layer | Shipped | Still roadmap |
 |---|---|---|
-| Shopper profile | Preferences card (fit, colour family, materials, price ceiling, liked brands) as `get_preferences`, consent-gated per field; `occasion` on the demand event (season, gift, event); family sub-profiles (Me / Partner / Kid) via `garmentsForProfile` (wave 2); purchase log across every merchant, rivals included, filled by hand, `import_receipt` (till receipt and order-email formats, no OCR), or automatically on Bought; a coarse `buyingPattern` per category derived from it (wave 3) | Receipt OCR; real order-email connectors; a consent receipt the shopper can export; a browser extension surface |
-| Demand visibility | Grouped by category and size with counts; labelled Need or Want; each request carries the shopper's consent grant (level and exact fields) (wave 2); the level-3 grant can carry `buyingPattern` (wave 3) | Aggregation before disclosure: a k-anonymity floor so a demand cell only becomes visible to the merchant once enough distinct shoppers have contributed to it; per-merchant consent levels |
+| Shopper profile | Replacement lifecycle from purchase dates: `find_gaps` returns a `due` block for a category whose oldest garment is past its typical life, and `report_demand_gap` kind `replace` carries that timing to the merchant (wave 4). Preferences card (fit, colour family, materials, price ceiling, liked brands) as `get_preferences`, consent-gated per field; `occasion` on the demand event (season, gift, event); family sub-profiles (Me / Partner / Kid) via `garmentsForProfile` (wave 2); purchase log across every merchant, rivals included, filled by hand, `import_receipt` (till receipt and order-email formats, no OCR), or automatically on Bought; a coarse `buyingPattern` per category derived from it (wave 3) | Receipt OCR; real order-email connectors; a consent receipt the shopper can export; a browser extension surface |
+| Demand visibility | Grouped by category and size with counts; labelled Need or Want; each request carries the shopper's consent grant (level and exact fields) (wave 2); the level-3 grant can carry `buyingPattern` (wave 3); each group scored against the locked stock and readable by the merchant's agent through `get_demand`, with a `replace` count marking shoppers who already own one (wave 4) | Aggregation before disclosure: a k-anonymity floor so a demand cell only becomes visible to the merchant once enough distinct shoppers have contributed to it; per-merchant consent levels |
 | Creative output | Placement selector (Story 9:16, Feed 4:5, Display 16:9) on the existing HTML composition; a human-only control, no WebMCP tool sets it (wave 2) | Image and GIF export matched to those placements, then short video once the still and motion pipelines share one validator; a browser extension surface |
 | Commerce handoff | `get_offer`: locked facts as structured data with sizesInStock, purchaseUrl and an offer-completeness meter (9 facts, `computeCompleteness`); Bought / Passed outcomes recorded per demand event (wave 2); locked offer rules (cost, margin floor, max discount); `matchOffer` auto-matches a personal offer inside them; `propose_offer` and the Auto-propose toggle stage one, a human approves or declines; `get_offer(requestId)` and `get_offers` hand the approved offer to a shopping agent or the shopper; Bought on an approved offer records the purchase with its `offerId` (wave 3) | The outcome written back into the merchant's own reporting, not just displayed; the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam described in `docs/integrations/commerce-agents/README.md` |
 
@@ -124,6 +134,7 @@ Summarised; full schemas in `lib/proofframe/webmcp.ts` and docs/TECH-GUIDE.md.
 | reorder_scenes | write | permutation-checked |
 | seek_preview | write | clamped to composition length, deterministic |
 | import_product | write | snapshot-backed, blocked while facts are locked |
+| get_demand | read | consented demand grouped by category and size, with the request ids and, per group, whether the locked offer can answer it (`can-offer`, `size-not-in-stock`, `category-mismatch`) |
 | propose_offer | write | matches one incoming request against the locked offer rules (cost, margin floor, max discount); stages a `PersonalOffer`, never visible to the shopper until a human approves it |
 
 ## Appendix B, Closet tool contract (shopper surface)

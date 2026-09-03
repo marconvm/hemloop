@@ -12,7 +12,13 @@ import type {
 } from './types';
 import { MAX_TOTAL_SECONDS, validateCampaign, validateScene, validateText } from './validator';
 import { exportComposition } from './exporter';
-import { matchOffer, offerIdFor, toDemandSignalLike, type PersonalOffer } from './offers';
+import {
+  demandInsight,
+  matchOffer,
+  offerIdFor,
+  toDemandSignalLike,
+  type PersonalOffer,
+} from './offers';
 
 // A tool result is a plain JSON object. The browser serialises whatever
 // `execute` returns (spec: executeTool resolves to the JSON string of the
@@ -155,6 +161,9 @@ export interface ProofFrameCallbacks {
   stageOffer?(offer: PersonalOffer): void;
   /** Optional: the catalog product behind the current campaign facts. */
   getCatalogProduct?(): { handle: string; title: string; image?: string; sizesInStock?: string[] } | undefined;
+  /** Optional: ids of requests a shopper reported back as bought, so
+   * get_demand can show which groups already converted. */
+  getBoughtRequestIds?(): string[];
 }
 
 function ok(data: object = {}): ToolContent {
@@ -612,6 +621,32 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
             next: 'Confirm the offer facts are unlocked and the handle exists in the catalog, then retry import_product with a valid handle.',
           };
         }
+      },
+    });
+  }
+
+  if (cb.getRequests) {
+    tools.push({
+      name: 'get_demand',
+      description:
+        'Consented demand grouped by category and size, with the request ids to hand to propose_offer and, for each group, whether the locked offer can actually answer it (can-offer, size-not-in-stock, category-mismatch) and what to do about it. No shopper identifier travels; a `replace` count means those shoppers already own one and are past its replacement life.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: () => {
+        const requests = cb
+          .getRequests!()
+          .map((r) => toDemandSignalLike(r))
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+        const groups = demandInsight(
+          requests,
+          cb.getState().facts,
+          cb.getCatalogProduct?.(),
+          cb.getBoughtRequestIds?.() ?? [],
+        );
+        return {
+          ...ok({ demand: groups, requests: requests.length }),
+          note: UNTRUSTED_NOTE,
+        };
       },
     });
   }

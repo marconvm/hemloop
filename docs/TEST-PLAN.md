@@ -36,6 +36,11 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | F26 | `buyingPattern` per category | Derives `discountSensitivity` (code/percent/none), `spendBand` and `brandLoyalty` from purchase history for one category, optionally scoped to one brand; an empty match returns a neutral default rather than throwing | PASS (unit) |
 | F27 | `get_offers` tool | Returns only offers with `status: 'approved'` whose `requestId` matches a signal this closet already sent; nothing else | PASS (unit) |
 | F28 | `matchOffer` rules | Category mismatch and out-of-stock size refuse with a typed reason; `discountSensitivity: 'none'` caps the discount at 15; `brandLoyalty: 'switcher'` raises it to `maxDiscountPercent`; the discount trims in 5-point steps until `marginFloorPercent` holds or reaches 0; `occasion: 'gift'`/`'event'` shortens `validTo` to at most 7 days | PASS (unit) |
+| F30 | `find_gaps` replacement lifecycle | A category whose oldest garment is past `REPLACEMENT_MONTHS` returns a `due` block with the date, months elapsed and size; an undated garment never does; a missing or thin category is reported once, without a `due` block; the due row carries no merchant, price or purchase row | PASS (unit) |
+| F31 | `report_demand_gap` kind `replace` | Accepted, travels at level `need`; an unknown kind is still rejected without consuming the human's one-shot approval; `toSignal` accepts `replace` from storage and still drops junk kinds | PASS (unit) |
+| F32 | `get_demand` tool | Read-only, never mutates the campaign, drops malformed request rows, caps returned ids at 10 per group while keeping the true count, and is registered by `getRequests` alone so an agent can discover request ids before anything can be staged | PASS (unit) |
+| F33 | `demandInsight` verdicts agree with the matcher | For every group, `verdict === 'can-offer'` exactly when `matchOffer` on that group's request returns an offer; ordering is answerable-first, then needs, then newest | PASS (unit) |
+| F34 | `matchOffer` stock source | A size the imported product does not carry is refused even when `facts.sizesInStock` is unset, so an offer can never list as out of stock the size it just proposed | PASS (unit, regression) |
 | F29 | `propose_offer` tool | Matches one incoming request against the locked offer rules and stages the result via `stageOffer`; a no-match request returns a structured `no-match` refusal, never a throw | PASS (unit) |
 | F30 | Offer approval visibility | A `PersonalOffer` with `status: 'proposed'` or `'declined'` is never returned by `get_offer(requestId)` or `get_offers`; only `status: 'approved'` is | PASS (unit) |
 | F31 | Purchase attribution | `purchaseFromOffer` builds a `Purchase` with `source: 'offer'` and `offerId` set to the offer it came from; the wave-3 seed purchase `p10` demonstrates the same shape | PASS (unit) |
@@ -66,7 +71,7 @@ Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" h
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS (101/101 at HEAD) |
+| R1 | Full unit suite after every milestone | PASS (120/120 at HEAD) |
 | R2 | `tsc --noEmit` after each change | PASS (clean) |
 | R3 | `oxlint` after each change | PASS (clean) |
 | R4 | Production build after each change | PASS |
@@ -148,7 +153,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (101/101), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (120/120), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime

@@ -26,7 +26,7 @@ function hasWindow(): boolean {
   return typeof window !== 'undefined';
 }
 
-const KINDS = new Set(['gap', 'fit', 'want']);
+const KINDS = new Set(['gap', 'fit', 'want', 'replace']);
 const CATEGORIES = new Set(GARMENT_CATEGORIES);
 const LEVELS = new Set(['need', 'want']);
 const OCCASIONS = new Set(['everyday', 'season', 'gift', 'event']);

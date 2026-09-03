@@ -12,7 +12,13 @@ import {
   type WebMcpTool,
 } from '../lib/proofframe/webmcp';
 import { PLACEMENTS, formatForPlacement, type CampaignState, type Scene, type Violation } from '../lib/proofframe/types';
-import { matchOffer, offerIdFor, type PersonalOffer } from '../lib/proofframe/offers';
+import {
+  demandInsight,
+  matchOffer,
+  offerIdFor,
+  type DemandInsightRequest,
+  type PersonalOffer,
+} from '../lib/proofframe/offers';
 
 function makeStore(state: CampaignState = seedCampaign()) {
   let seekedTo: number | null = null;
@@ -723,7 +729,7 @@ void test('get_offer includes offerId built from the locked facts', async () => 
   assert.equal(result.offerId, offerIdFor(facts));
 });
 
-void test('buildTools registers 11 tools when every optional callback is present (propose_offer is the 11th)', () => {
+void test('buildTools registers 12 tools when every optional callback is present (get_demand and propose_offer are the wave-3/4 pair)', () => {
   const { cb } = makeStore();
   const fullCb: ProofFrameCallbacks = {
     ...cb,
@@ -734,6 +740,155 @@ void test('buildTools registers 11 tools when every optional callback is present
     getCatalogProduct: () => undefined,
   };
   const tools = buildTools(fullCb);
-  assert.equal(tools.length, 11);
+  assert.equal(tools.length, 12);
   assert.ok(tools.some((t) => t.name === 'propose_offer'));
+  assert.ok(tools.some((t) => t.name === 'get_demand'));
+});
+
+void test('get_demand is registered by getRequests alone, so an agent can discover request ids before any offer can be staged', () => {
+  const { cb } = makeStore();
+  const tools = buildTools({ ...cb, getRequests: () => [] });
+  assert.ok(tools.some((t) => t.name === 'get_demand'));
+  assert.ok(!tools.some((t) => t.name === 'propose_offer'));
+});
+
+void test('get_demand is read-only, drops junk rows, and hands back ids propose_offer accepts', () => {
+  const { cb } = makeStore();
+  const requests = [
+    { signalId: 'r1', category: 'hoodie', size: 'L', at: '2026-09-01T00:00:00.000Z', level: 'need', kind: 'gap' },
+    { signalId: 'r2', category: 'hoodie', size: 'L', at: '2026-09-02T00:00:00.000Z', level: 'need', kind: 'replace' },
+    { nope: true },
+    null,
+  ];
+  const tools = buildTools({
+    ...cb,
+    getRequests: () => requests,
+    getCatalogProduct: () => ({ handle: 'northlight-hoodie', title: 'Northlight Hoodie', sizesInStock: ['M', 'L'] }),
+    getBoughtRequestIds: () => ['r1'],
+  });
+  const tool = tools.find((t) => t.name === 'get_demand')!;
+  assert.equal(tool.annotations?.readOnlyHint, true);
+  const before = JSON.stringify(cb.getState());
+  const out = tool.execute({}) as {
+    ok: boolean;
+    requests: number;
+    demand: { size: string; total: number; replace: number; bought: number; requestIds: string[]; verdict: string }[];
+  };
+  assert.equal(out.ok, true);
+  assert.equal(out.requests, 2, 'the two malformed rows are dropped, not counted');
+  assert.equal(out.demand.length, 1);
+  assert.deepEqual(out.demand[0]?.requestIds, ['r1', 'r2']);
+  assert.equal(out.demand[0]?.replace, 1);
+  assert.equal(out.demand[0]?.bought, 1);
+  assert.equal(out.demand[0]?.verdict, 'can-offer');
+  assert.equal(JSON.stringify(cb.getState()), before, 'get_demand must not mutate the campaign');
+});
+
+// ---------- Wave 4: merchant inventory insight ----------
+
+function req(overrides: Partial<DemandInsightRequest> = {}): DemandInsightRequest {
+  return {
+    signalId: 's1',
+    category: 'hoodie',
+    size: 'L',
+    at: '2026-09-01T00:00:00.000Z',
+    level: 'need',
+    kind: 'gap',
+    ...overrides,
+  };
+}
+
+const HOODIE = { handle: 'northlight-hoodie', title: 'Northlight Hoodie', sizesInStock: ['M', 'L'] };
+
+void test('demandInsight groups by category and size and counts needs, wants, replacements and conversions', () => {
+  const { facts } = seedCampaign();
+  const rows = demandInsight(
+    [
+      req({ signalId: 'a' }),
+      req({ signalId: 'b', level: 'want', kind: 'want', at: '2026-09-03T00:00:00.000Z' }),
+      req({ signalId: 'c', kind: 'replace' }),
+      req({ signalId: 'd', size: 'XL' }),
+    ],
+    facts,
+    HOODIE,
+    ['b'],
+  );
+  const large = rows.find((r) => r.size === 'L')!;
+  assert.equal(large.total, 3);
+  assert.equal(large.need, 2);
+  assert.equal(large.want, 1);
+  assert.equal(large.replace, 1);
+  assert.equal(large.bought, 1);
+  assert.equal(large.newest, '2026-09-03T00:00:00.000Z');
+  assert.deepEqual(large.requestIds, ['a', 'b', 'c']);
+});
+
+void test('demandInsight verdicts match what matchOffer would actually do', () => {
+  const { facts } = seedCampaign();
+  const rows = demandInsight(
+    [req({ signalId: 'fits' }), req({ signalId: 'big', size: 'XXL' }), req({ signalId: 'other', category: 'footwear' })],
+    facts,
+    HOODIE,
+  );
+  const verdicts = new Map(rows.map((r) => [r.key, r.verdict]));
+  assert.equal(verdicts.get('hoodie|L'), 'can-offer');
+  assert.equal(verdicts.get('hoodie|XXL'), 'size-not-in-stock');
+  assert.equal(verdicts.get('footwear|L'), 'category-mismatch');
+
+  // The panel must never promise what the matcher then refuses.
+  for (const row of rows) {
+    const request = { signalId: row.requestIds[0]!, category: row.category, size: row.size };
+    const matched = 'offerId' in matchOffer({ request, facts, catalogProduct: HOODIE });
+    assert.equal(matched, row.verdict === 'can-offer', `${row.key}: verdict and matcher must agree`);
+  }
+});
+
+void test('demandInsight puts answerable groups first, then needs, then newest', () => {
+  const { facts } = seedCampaign();
+  const rows = demandInsight(
+    [
+      req({ signalId: 'stale', at: '2026-01-01T00:00:00.000Z' }),
+      req({ signalId: 'nostock', size: 'XXL', at: '2026-09-09T00:00:00.000Z' }),
+      req({ signalId: 'fresh', size: 'M', at: '2026-09-08T00:00:00.000Z' }),
+    ],
+    facts,
+    HOODIE,
+  );
+  assert.deepEqual(rows.map((r) => r.key), ['hoodie|M', 'hoodie|L', 'hoodie|XXL']);
+  assert.match(rows[2]!.action, /Restock/);
+});
+
+void test('demandInsight treats a sizeless request as any size, and caps the ids it hands back', () => {
+  const { facts } = seedCampaign();
+  const many = Array.from({ length: 14 }, (_, i) => req({ signalId: `s${i}`, size: null }));
+  const rows = demandInsight(many, facts, HOODIE);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0]?.size, 'any size');
+  assert.equal(rows[0]?.total, 14);
+  assert.equal(rows[0]?.requestIds.length, 10, 'ids are capped, the count is not');
+  assert.equal(rows[0]?.verdict, 'can-offer', 'no size means nothing to be out of stock for');
+});
+
+void test('demandInsight on no requests is an empty list, not a fabricated row', () => {
+  assert.deepEqual(demandInsight([], seedCampaign().facts, HOODIE), []);
+});
+
+void test("matchOffer checks the stock the offer will claim, not only the facts' own list", () => {
+  const { facts } = seedCampaign();
+  assert.equal(facts.sizesInStock, undefined, 'the seed locks no sizes of its own');
+  // Regression: with sizes coming only from the imported product, a size that
+  // product does not carry must be refused, not offered and then contradicted.
+  const refused = matchOffer({
+    request: { signalId: 'r', category: 'hoodie', size: 'XXL' },
+    facts,
+    catalogProduct: HOODIE,
+  });
+  assert.deepEqual(refused, { ok: false, reason: 'size not in stock' });
+  const matched = matchOffer({
+    request: { signalId: 'r', category: 'hoodie', size: 'L' },
+    facts,
+    catalogProduct: HOODIE,
+  });
+  assert.ok('offerId' in matched);
+  assert.deepEqual((matched as PersonalOffer).sizesInStock, HOODIE.sizesInStock);
 });

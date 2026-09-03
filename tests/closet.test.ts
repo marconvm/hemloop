@@ -7,6 +7,7 @@ import {
   findGaps,
   garmentsForProfile,
   makeSignal,
+  monthsBetween,
   seedPreferences,
   seedPurchases,
   seedWardrobe,
@@ -169,13 +170,18 @@ void test('signals are zero-ID and use an event-scoped random id', () => {
 
 // ---------- Profile filtering (Me / Partner / Kid) ----------
 
-void test('garmentsForProfile: self keeps exactly the two seed gaps (hoodie, thin jacket)', () => {
+void test('garmentsForProfile: self keeps exactly the three seed gaps (hoodie, thin jacket, worn-out footwear)', () => {
   const wardrobe = seedWardrobe();
   const selfOnly = garmentsForProfile(wardrobe, 'self');
-  const gaps = findGaps(selfOnly);
+  const gaps = findGaps(selfOnly, NOW);
   assert.deepEqual(
     gaps.map((g) => g.category).sort(),
-    ['hoodie', 'jacket'],
+    ['footwear', 'hoodie', 'jacket'],
+  );
+  // Only the footwear row is a lifecycle gap; the other two are absence.
+  assert.deepEqual(
+    gaps.filter((g) => g.due).map((g) => g.category),
+    ['footwear'],
   );
 });
 
@@ -1200,4 +1206,145 @@ void test('purchaseFromOffer: falls back to a default brand and keyword-guessed 
   assert.equal(p.category, 'jacket');
   assert.equal(p.size, 'OS');
   assert.equal(p.promoCode, null);
+});
+
+// ---------- Wave 4: purchase-date lifecycle (due for replacement) ----------
+
+const NOW = new Date('2026-09-03T00:00:00.000Z');
+
+function dated(category: Garment['category'], purchasedAt: string | undefined, size = 'M'): Garment {
+  return {
+    id: `g-${category}-${purchasedAt ?? 'undated'}`,
+    category,
+    brand: 'Test Brand',
+    size,
+    colour: 'black',
+    price: 30,
+    currency: 'CAD',
+    ...(purchasedAt ? { purchasedAt } : {}),
+  };
+}
+
+/** A wardrobe with every essential covered twice, so nothing is missing or
+ * thin and only the replacement scan can produce a gap. */
+function stockedWardrobe(extra: Garment[] = []) {
+  const base: Garment[] = [];
+  for (const category of ['hoodie', 'tee', 'denim', 'jacket'] as const) {
+    base.push(dated(category, '2026-08-01'), dated(category, '2026-08-02'));
+  }
+  return { garments: [...base, ...extra] };
+}
+
+void test('monthsBetween counts whole months and never goes negative', () => {
+  assert.equal(monthsBetween('2026-01-15', new Date('2026-03-15T00:00:00.000Z')), 2);
+  // Day-of-month aware: one day short of the anniversary is not a full month.
+  assert.equal(monthsBetween('2026-01-15', new Date('2026-02-14T00:00:00.000Z')), 0);
+  assert.equal(monthsBetween('2026-01-15', new Date('2025-01-15T00:00:00.000Z')), 0);
+  assert.equal(monthsBetween('not a date', new Date('2026-03-15T00:00:00.000Z')), 0);
+});
+
+void test('findGaps flags a category past its replacement life, carrying only date, months and size', () => {
+  const gaps = findGaps(stockedWardrobe([dated('footwear', '2024-11-05', '10')]), NOW);
+  const due = gaps.find((g) => g.category === 'footwear');
+  assert.ok(due, 'footwear is 22 months old against a 12-month life');
+  assert.deepEqual(due!.due, {
+    lastBoughtAt: '2024-11-05',
+    monthsSince: 21,
+    typicalMonths: 12,
+    size: '10',
+  });
+  assert.match(due!.reason, /21 months ago/);
+  // A due gap describes wear, never where or what it cost.
+  const asText = JSON.stringify(due);
+  assert.ok(!asText.includes('Test Brand'), 'no merchant or brand');
+  assert.ok(!asText.includes('30'), 'no price');
+});
+
+void test('findGaps does not flag a category still inside its replacement life', () => {
+  const gaps = findGaps(stockedWardrobe([dated('footwear', '2026-06-01', '10')]), NOW);
+  assert.equal(gaps.find((g) => g.category === 'footwear'), undefined);
+});
+
+void test('an undated garment is never called worn out', () => {
+  const gaps = findGaps(stockedWardrobe([dated('footwear', undefined, '10')]), NOW);
+  assert.equal(gaps.find((g) => g.category === 'footwear'), undefined);
+});
+
+void test('the oldest garment decides: a new pair does not excuse the old one', () => {
+  const gaps = findGaps(
+    stockedWardrobe([dated('footwear', '2024-11-05', '10'), dated('footwear', '2026-08-20', '10')]),
+    NOW,
+  );
+  const due = gaps.find((g) => g.category === 'footwear');
+  assert.ok(due);
+  assert.equal(due!.due?.lastBoughtAt, '2024-11-05');
+});
+
+void test('absence outranks wear: a missing or thin category is reported once, without a due block', () => {
+  const wardrobe = {
+    garments: stockedWardrobe().garments.filter((g) => g.category !== 'hoodie'),
+  };
+  wardrobe.garments.push(dated('hoodie', '2000-01-15'));
+  const gaps = findGaps(wardrobe, NOW);
+  const hoodie = gaps.filter((g) => g.category === 'hoodie');
+  assert.equal(hoodie.length, 1, 'one gap per category');
+  assert.equal(hoodie[0]?.due, undefined);
+  assert.match(hoodie[0]!.reason, /Only one hoodie/);
+});
+
+void test('the seed closet ships something actually worn out, so the lifecycle is visible', () => {
+  const due = findGaps(seedWardrobe(), NOW).filter((g) => g.due);
+  assert.equal(due.length, 1);
+  assert.equal(due[0]?.category, 'footwear');
+  assert.equal(due[0]?.due?.size, '10');
+});
+
+void test('find_gaps tool returns due rows', async () => {
+  const { cb } = makeStore();
+  const tools = buildClosetTools(cb);
+  const out = payload(await tools.find((t) => t.name === 'find_gaps')!.execute({}));
+  const gaps = out.gaps as { category: string; due?: unknown }[];
+  assert.ok(gaps.some((g) => g.category === 'footwear' && g.due !== undefined));
+});
+
+void test("report_demand_gap accepts kind 'replace' and sends it at level need", async () => {
+  const { cb, emitted, approve } = makeStore({ consentLevel: 1 });
+  const tools = buildClosetTools(cb);
+  approve();
+  const out = payload(
+    await tools.find((t) => t.name === 'report_demand_gap')!.execute({
+      kind: 'replace',
+      category: 'footwear',
+      size: '10',
+    }),
+  );
+  assert.equal(out.ok, true);
+  assert.equal(emitted[0]?.kind, 'replace');
+  assert.equal(emitted[0]?.level, 'need');
+});
+
+void test('report_demand_gap still rejects an unknown kind without burning the approval', async () => {
+  const { cb, emitted, approve } = makeStore({ consentLevel: 1 });
+  const tools = buildClosetTools(cb);
+  const report = tools.find((t) => t.name === 'report_demand_gap')!;
+  approve();
+  const bad = payload(await report.execute({ kind: 'refund', category: 'hoodie' }));
+  assert.equal(bad.ok, false);
+  assert.equal(emitted.length, 0);
+  // The approval survived, so a corrected call still goes through.
+  const good = payload(await report.execute({ kind: 'replace', category: 'hoodie' }));
+  assert.equal(good.ok, true);
+  assert.equal(emitted.length, 1);
+});
+
+void test("toSignal accepts 'replace' from storage and still rejects junk kinds", () => {
+  const base = {
+    signalId: 's1',
+    category: 'footwear',
+    at: '2026-09-01T00:00:00.000Z',
+    level: 'need',
+    consent: { level: 1, fields: ['category', 'level'] },
+  };
+  assert.equal(toSignal({ ...base, kind: 'replace' })?.kind, 'replace');
+  assert.equal(toSignal({ ...base, kind: 'refund' }), null);
 });

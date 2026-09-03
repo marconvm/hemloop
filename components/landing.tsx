@@ -33,8 +33,9 @@ const CLOSET_ROWS: ToolRow[] = [
     surface: 'Closet',
     tool: 'find_gaps',
     kind: 'read',
-    what: 'Categories missing or thin',
-    guarantee: 'readOnlyHint',
+    what: 'Categories missing or thin, plus categories whose oldest garment is past its typical replacement life',
+    guarantee:
+      'readOnlyHint; a due row carries the date, the months elapsed and the size to buy again, never a merchant, price or purchase row',
   },
   {
     surface: 'Closet',
@@ -148,6 +149,14 @@ const STUDIO_ROWS: ToolRow[] = [
   },
   {
     surface: 'Studio',
+    tool: 'get_demand',
+    kind: 'read',
+    what: 'Consented demand grouped by category and size, each group scored against the stock the merchant locked',
+    guarantee:
+      'readOnlyHint, untrustedContentHint; the verdict uses the same two predicates the matcher refuses on, so the panel cannot promise what propose_offer would decline',
+  },
+  {
+    surface: 'Studio',
     tool: 'propose_offer',
     kind: 'write',
     what: 'Proposes a personal offer for one incoming request inside the locked offer rules',
@@ -164,7 +173,7 @@ const ABSENT_ROW: ToolRow = {
   strong: true,
 };
 
-const TOTAL_TOOL_COUNT = 20;
+const TOTAL_TOOL_COUNT = 21;
 
 function HemLoopMark({ size = 20, className }: { size?: number; className?: string }) {
   return (
@@ -273,7 +282,7 @@ export function Landing() {
         <p className="landing-sub" data-reveal>
           The store answers with an offer that cannot lie about the price. Hemloop is the loop
           between a shopper&apos;s private closet and a merchant&apos;s campaign studio, built on
-          WebMCP: twenty typed tools on two web pages, running in the shopper&apos;s and
+          WebMCP: twenty-one typed tools on two web pages, running in the shopper&apos;s and
           merchant&apos;s own browsers.
         </p>
         <p className="landing-sub" data-reveal>
@@ -325,7 +334,7 @@ export function Landing() {
           <g fill="currentColor" fontSize="12" opacity="0.75">
             <text x="137" y="84" textAnchor="middle">9 tools, wardrobe stays here</text>
             <text x="137" y="103" textAnchor="middle">sharing dial 0 to 3</text>
-            <text x="480" y="84" textAnchor="middle">11 tools inside locked offer facts</text>
+            <text x="480" y="84" textAnchor="middle">12 tools inside locked offer facts</text>
             <text x="480" y="103" textAnchor="middle">false claims rejected before render</text>
             <text x="823" y="84" textAnchor="middle">reads get_offer</text>
             <text x="823" y="103" textAnchor="middle">buys on the store&apos;s own page</text>
@@ -346,8 +355,9 @@ export function Landing() {
           <Shirt aria-hidden="true" />
           <h2>Maya has a closet</h2>
           <p>
-            Her wardrobe, sizes and preferences stay in her own browser. Her agent can shop with
-            nine WebMCP tools, but only one of those tools can talk to a store.
+            Her wardrobe, sizes, purchase dates and preferences stay in her own browser. Her agent
+            can shop with nine WebMCP tools: what is missing, what is thin, and what she owns that
+            is past its replacement life. Only one of those tools can talk to a store.
           </p>
         </div>
         <div className="loop-step" data-reveal>
@@ -367,9 +377,10 @@ export function Landing() {
           <h2>The store answers inside locked facts</h2>
           <p>
             The merchant locks price, offer, code, dates and disclaimer first. The
-            merchant&apos;s agent builds the response with eleven tools, and copy that contradicts
-            the facts is rejected before it renders. The offer is also readable by shopping
-            agents as structured data, and a personal offer can be proposed inside the
+            merchant&apos;s agent builds the response with twelve tools, and copy that contradicts
+            the facts is rejected before it renders. Demand arrives grouped and scored against the
+            stock they locked, so they can see what they cannot fill. The offer is readable by
+            shopping agents as structured data, and a personal offer can be proposed inside the
             merchant&apos;s margin and approved by a human.
           </p>
         </div>
