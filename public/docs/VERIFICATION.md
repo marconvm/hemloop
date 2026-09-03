@@ -1,6 +1,6 @@
 # Hemloop Verification Record
 
-Last updated: 2026-09-03 (America/Toronto), after wave 3. Older entries quote the labels and tool counts as they stood at the time (Approve next signal is now Approve next request; Live Demand is now Incoming requests; wave 3 took the studio from 10 tools to 11 and the closet from 7 to 9).
+Last updated: 2026-09-03 (America/Toronto), after wave 4. Older entries quote the labels and tool counts as they stood at the time (Approve next signal is now Approve next request; Live Demand is now Incoming requests; wave 3 took the studio from 10 tools to 11 and the closet from 7 to 9; wave 4 took the studio to 12).
 
 This file separates verified behaviour from the remaining ChatGPT natural-language pairing check.
 
@@ -56,6 +56,44 @@ Seeded one sent request and one merchant-approved `PersonalOffer` for it into th
 ```
 
 The purchase count went 10 to 11, the matching `SignalOutcome` (`bought`) was recorded against the request id, the garment was inserted into the wardrobe, and the card's buttons collapsed to a **Bought** label. Attribution holds end to end: the offer that won the sale is on the purchase row. Seeded keys were cleared afterwards.
+
+
+## Wave 4 gates and live smoke, 2026-09-03
+
+Recorded by Claude, pending Codex's independent re-verification (same standing as the wave-3 entry above).
+
+- `npm test`: 120/120 pass. New coverage: the replacement lifecycle (due block contents, an undated garment never flagged, oldest-garment wins, absence outranks wear, the seed closet actually ships one worn-out item), `report_demand_gap` kind `replace` (accepted at level `need`; an unknown kind still refused without burning the one-shot approval; `toSignal` accepts `replace` and still drops junk), `get_demand` (read-only, drops malformed rows, ids capped at 10 per group, registered by `getRequests` alone), `demandInsight` verdicts asserted against `matchOffer` itself, and one regression test for the `matchOffer` stock-source fix.
+- `npx tsc --noEmit`: clean. `oxlint`: clean. `npm run build`: clean.
+- Documentation mirror: `public/docs/*` byte-identical to `docs/*` and `README.md`.
+- Deployed with Wrangler 4.127.0 as Worker version `0322742d-3f09-4660-9e98-3a6fac311518`.
+- Live smoke: `/`, `/closet`, `/studio`, `/docs/README.md` and `www.hemloop.app` all 200; security headers unchanged. The landing reads "twenty-one typed tools" and lists `get_demand`; the live `/docs/README.md` says 21 WebMCP tools.
+- Live badges on hemloop.app: `/closet` **9 WebMCP tools live**, `/studio` **12 WebMCP tools live**.
+
+### The lifecycle is visible (live, hemloop.app)
+
+`/closet` renders three gap rows out of the box, one of them a lifecycle gap:
+
+```
+Hoodie    No hoodie in the wardrobe.
+Jacket    Only one jacket in rotation.
+Footwear  due · size 10 · Bought 21 months ago; footwear is typically replaced after 12.
+```
+
+### The inventory insight is visible (live, hemloop.app)
+
+With four consented requests in the page's own storage, `/studio` grouped and scored them:
+
+```
+Hoodie · XXL     1 request (1 need, 0 wants)                                CAN OFFER
+Hoodie · L       2 requests (2 needs, 0 wants) · 1 replacing one they own   CAN OFFER
+Footwear · 10    1 request (1 need, 0 wants) · 1 replacing one they own     OTHER CATEGORY
+```
+
+XXL reads CAN OFFER here because the seed campaign locks no `sizesInStock`; once the merchant locks the sizes, the same function returns `size-not-in-stock` for it (covered by unit test). Seeded keys were cleared afterwards.
+
+### Defect found and fixed during this wave
+
+`matchOffer` checked `facts.sizesInStock` for the stock refusal but reported `catalogProduct?.sizesInStock ?? facts.sizesInStock` on the offer it emitted, so with sizes coming only from an imported product it could propose a size that very offer then listed as out of stock. Both now read one resolved source. Found by asserting `demandInsight`'s verdict against `matchOffer` rather than against a restatement of its rules.
 
 ## Remaining ChatGPT pairing check
 

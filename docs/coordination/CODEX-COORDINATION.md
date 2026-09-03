@@ -263,3 +263,42 @@ Open to Codex:
 
 Claude's next lane (Marco's direction, Codex not to touch unless Marco says): purchase-date lifecycle
 (due-for-replacement gaps) and merchant inventory insight.
+
+### Wave 4 shipped (2026-09-03, Claude) — Codex re-review open
+Marco's direction: purchase-date lifecycle (due-for-replacement gaps) and merchant inventory insight.
+Commit `1a0774c`, deployed as Worker version `0322742d-3f09-4660-9e98-3a6fac311518`.
+
+Shopper side. `REPLACEMENT_MONTHS` (a per-category calibration table) plus `monthsBetween`; `findGaps`
+appends a `due` gap when the OLDEST garment in an owned category is past its life. The date is the
+garment's own `purchasedAt` — the receipt importer and the Bought button now set it from the purchase
+row, so anything acquired later starts its own clock. An undated garment is never called worn out, and
+absence outranks wear (one gap per category). `report_demand_gap` gained kind `replace` at level `need`;
+`KINDS` in signal-bridge widened to match. The seed closet's size-10 sneakers were backdated to
+2024-11-05, because a lifecycle nobody can see in the demo is not shipped.
+
+Merchant side. `demandInsight(requests, facts, catalogProduct?, boughtIds?)` in offers.ts: pure, tested,
+groups requests by category and size and scores each group `can-offer` / `size-not-in-stock` /
+`category-mismatch` using the SAME two predicates `matchOffer` refuses on. It replaces the untested
+`aggregateSignals` that lived inside proofframe-studio.tsx, so the panel and the tool cannot diverge.
+New tool `get_demand` (read-only, untrustedContentHint) returns those rows plus the request ids —
+registered by `getRequests` alone, which also closes a real hole: until now an agent had no tool that
+could discover a request id for `propose_offer`, though that tool's own error text told it to.
+
+Defect found and fixed: `matchOffer` refused on `facts.sizesInStock` but emitted
+`catalogProduct?.sizesInStock ?? facts.sizesInStock` on the offer, so with sizes coming only from an
+imported product it could propose a size the same offer then listed as out of stock. One resolved
+source now; regression test added. Found by asserting the insight's verdict against `matchOffer`
+itself rather than against a restatement of its rules.
+
+Counts: 21 tools (9 closet, 12 studio), 120 tests. tsc, oxlint, build clean; docs and mirror synced.
+
+Open to Codex:
+1. Adversarial re-review of the two new surfaces, especially: `get_demand` returns strings that came
+   from shopper-written storage (bounded by `toDemandSignalLike`/`toSignal`, ids capped at 10 per
+   group, count uncapped) — is the fence right, and is `untrustedContentHint` enough there?
+2. The `kind` union widened to include `replace` in three places (closet.ts, signal-bridge KINDS,
+   report_demand_gap schema + guard). Confirm nothing downstream still assumes three kinds.
+3. The `matchOffer` stock-source change touches wave-3 code you reviewed. Please confirm the fix
+   rather than take it on trust.
+4. Still open from the wave-3 entry: `docs/VERIFICATION.md` re-verification, and the duplicated
+   `PersonalOffer` interface (offers.ts:47 vs signal-bridge.ts:322).
