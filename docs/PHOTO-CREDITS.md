@@ -9,7 +9,7 @@ real, recognizable retail brand logo or wordmark.
 
 | File | Unsplash photo | License |
 |---|---|---|
-| `public/products/northlight-hoodie.jpg` | https://unsplash.com/photos/52ff15e96348 (photo-1571821324176-52ff15e96348) | Unsplash License |
+| `public/products/northlight-hoodie.jpg` | https://unsplash.com/photos/photo-1746971054333-8b9610b397a5 (photo-1746971054333-8b9610b397a5) | Unsplash License |
 | `public/products/solstice-graphic-tee.jpg` | https://unsplash.com/photos/cb31e05da1c5 (photo-1766079234360-cb31e05da1c5) | Unsplash License |
 | `public/products/harborview-crew-tee.jpg` | https://unsplash.com/photos/df123a1eb820 (photo-1581655353564-df123a1eb820) | Unsplash License |
 | `public/products/east-side-straight-jean.jpg` | https://unsplash.com/photos/ddaf8b606da7 (photo-1714143136372-ddaf8b606da7) | Unsplash License |
