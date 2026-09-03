@@ -1,5 +1,27 @@
 # Cue sheet: one request end to end, 2:40
 
+> ## ⚠️ The v4 audio does not exist yet. Read this before cutting.
+>
+> `video/vo-clone/` holds **eight rendered segments totalling 1:58**, and they are the **v3**
+> narration, rendered 2026-09-03 02:22, before `docs/VOICEOVER.md` was rewritten for v4. Cutting the
+> v4 picture against that audio will not line up.
+>
+> The per-segment lengths in the table below are **word-count estimates at 150 wpm, not measurements**.
+> They were written that way by mistake: the numbers they replaced had been measured off the v3 files.
+>
+> One command fixes it, and it reads the v4 text straight out of `docs/VOICEOVER.md`:
+>
+> ```sh
+> video/generate-vo.sh elevenlabs-clone     # needs ELEVENLABS_VOICE_ID, already in ~/.config/hemloop-video/env
+> for f in video/vo-clone/vo-*.mp3; do printf "%s " "$f"; ffprobe -v error -show_entries format=duration -of csv=p=0 "$f"; done
+> ```
+>
+> Then replace the estimates below with what it prints. Until that is done, treat every duration in
+> this file as approximate. **This costs ElevenLabs credits, so it is left for Marco to run.**
+>
+> Measured v3 lengths, for reference: 9.15 / 11.33 / 22.20 / 15.37 / 10.68 / 17.18 / 18.76 / 13.65 s.
+
+
 ## Preflight, run 2026-09-02 on the live deployment, all green
 
 Chrome 151 with `chrome://flags/#enable-webmcp-testing`, after the dead-code removal:
@@ -38,22 +60,22 @@ Three things to know before you roll:
 
 ## The clock
 
-The clone VO runs 2:00 across a 2:40 timeline: about 39 s of headroom spread over eight beats, so
+The v4 script ESTIMATES at 2:00 across a 2:40 timeline: about 39 s of headroom over eight beats, so
 every line lands inside its slot with room for the action to breathe. Never type
 live: paste, and cut the wait.
 
 | t | VO (len) | On screen | Paste |
 |---|---|---|---|
-| 0:00 | VO-01 (18.0s) | Cold open **already on `/closet`**, live badge visible, first call firing. No title card. `find_gaps` returns **three** rows: no hoodie, only one jacket, footwear due at twenty one months. The narration names two of them and does not claim a count. Loop rail under the header: **Gap** lit, four steps ahead. | C1 |
-| 0:20 | VO-02 (18.8s) | Payload preview visible **before any click**. `report_demand_gap` returns `human-approval-required` and sends nothing. Human clicks **Approve next request (level 1)**. Retry succeeds: **hold on the returned payload** so a judge can read every field and see there is no identity column. Third call refused again, on screen, proving the approval was consumed. Rail advances to **Approved request**. | C2, human click, C3, C4 |
-| 0:50 | VO-03 (15.6s) | Cut to `/studio`. `get_demand` returns the grouped row with its verdict against locked stock. Human clicks **Answer this request**. | M1 |
-| 1:10 | VO-04 (16.8s) | `propose_offer` with the request id from `get_demand`. Proposal shows price, reasons, and the margin check against the locked floor. Human clicks **Approve**. Rail advances to **Matched offer**. | M2, human click |
-| 1:30 | VO-05 (8.0s) | Cut to `/closet`. `get_offers` returns it. Human clicks **Bought**. Shortest line in the take: about 12 s of air, spend it on the click and the row changing. | C5, human click |
-| 1:50 | VO-06 (12.4s) | Purchases row appears carrying the **offer id**, garment lands in the wardrobe, request shows its outcome. Rail reaches **Learned**; the next-line reads **Loop closed**. Cut to `/studio`: its rail is 5/5 too. | n/a |
-| 2:05 | VO-07 (21.2s) | The block: fifty per cent off rejected, red row in the activity log with its machine readable reason, canvas unchanged, agent self-corrects to twenty five. Three second flash of the export refusing while a violation stands. | M3, M4 |
-| 2:35 | VO-08 (9.2s) | Both surfaces side by side, both rails 5/5. Repo and docs flash. | n/a |
+| 0:00 | VO-01 (~18.0s est) | Cold open **already on `/closet`**, live badge visible, first call firing. No title card. `find_gaps` returns **three** rows: no hoodie, only one jacket, footwear due at twenty one months. The narration names two of them and does not claim a count. Loop rail under the header: **Gap** lit, four steps ahead. | C1 |
+| 0:20 | VO-02 (~18.8s est) | Payload preview visible **before any click**. `report_demand_gap` returns `human-approval-required` and sends nothing. Human clicks **Approve next request (level 1)**. Retry succeeds: **hold on the returned payload** so a judge can read every field and see there is no identity column. Third call refused again, on screen, proving the approval was consumed. Rail advances to **Approved request**. | C2, human click, C3, C4 |
+| 0:50 | VO-03 (~15.6s est) | Cut to `/studio`. `get_demand` returns the grouped row with its verdict against locked stock. Human clicks **Answer this request**. | M1 |
+| 1:10 | VO-04 (~16.8s est) | `propose_offer` with the request id from `get_demand`. Proposal shows price, reasons, and the margin check against the locked floor. Human clicks **Approve**. Rail advances to **Matched offer**. | M2, human click |
+| 1:30 | VO-05 (~8.0s est) | Cut to `/closet`. `get_offers` returns it. Human clicks **Bought**. Shortest line in the take: about 12 s of air, spend it on the click and the row changing. | C5, human click |
+| 1:50 | VO-06 (~12.4s est) | Purchases row appears carrying the **offer id**, garment lands in the wardrobe, request shows its outcome. Rail reaches **Learned**; the next-line reads **Loop closed**. Cut to `/studio`: its rail is 5/5 too. | n/a |
+| 2:05 | VO-07 (~21.2s est) | The block: fifty per cent off rejected, red row in the activity log with its machine readable reason, canvas unchanged, agent self-corrects to twenty five. Three second flash of the export refusing while a violation stands. | M3, M4 |
+| 2:35 | VO-08 (~9.2s est) | Both surfaces side by side, both rails 5/5. Repo and docs flash. | n/a |
 
-Spoken total 2:00 against a 2:40 runtime: about 39 s of air across the take, concentrated at 1:30
+Estimated spoken total 2:00 against a 2:40 runtime: about 39 s of air across the take, concentrated at 1:30
 (the Bought click) and 0:20 (the refusal, the approval, the refusal again). That air is the demo.
 
 ## Optional beats, only if ahead of time
