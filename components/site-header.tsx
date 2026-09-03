@@ -1,0 +1,54 @@
+import type { ReactNode } from 'react';
+
+import { BRAND } from '@/lib/proofframe/brand';
+
+export type SiteSection = 'loop' | 'closet' | 'studio' | 'docs';
+
+export interface SiteHeaderProps {
+  active: SiteSection;
+  status?: ReactNode;
+  actions?: ReactNode;
+}
+
+const LINKS: { key: SiteSection; label: string; href: string }[] = [
+  { key: 'loop', label: 'Loop', href: '/' },
+  { key: 'closet', label: 'Closet', href: '/closet' },
+  { key: 'studio', label: 'Studio', href: '/studio' },
+  { key: 'docs', label: 'Docs', href: '/docs/' },
+];
+
+/** Persistent navigation shared by every Hemloop surface.
+ *
+ * The page supplies runtime status and contextual actions. The header owns
+ * only identity and navigation, so it never reaches into bridge or tool state.
+ */
+export function SiteHeader({ active, status, actions }: SiteHeaderProps) {
+  return (
+    <header className="site-header">
+      <a className="site-brand" href="/" aria-label={`${BRAND.name} loop room`}>
+        <span className="site-brand-mark" aria-hidden="true">
+          <span />
+        </span>
+        <span>{BRAND.name.toLowerCase()}</span>
+      </a>
+
+      <nav className="site-nav" aria-label="Hemloop surfaces">
+        {LINKS.map((link) => (
+          <a
+            aria-current={active === link.key ? 'page' : undefined}
+            className={active === link.key ? 'is-active' : undefined}
+            href={link.href}
+            key={link.key}
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+
+      <div className="site-header-meta">
+        {status ? <div className="site-header-status">{status}</div> : null}
+        {actions ? <div className="site-header-actions">{actions}</div> : null}
+      </div>
+    </header>
+  );
+}

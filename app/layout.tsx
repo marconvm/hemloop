@@ -1,8 +1,19 @@
 import type { Metadata } from 'next';
+import { DM_Sans, Manrope } from 'next/font/google';
 
 import { BRAND, WEBMCP_ORIGIN_TRIAL_TOKENS } from '@/lib/proofframe/brand';
 
 import './globals.css';
+
+const bodyFont = DM_Sans({
+  subsets: ['latin'],
+  variable: '--font-body',
+});
+
+const displayFont = Manrope({
+  subsets: ['latin'],
+  variable: '--font-display',
+});
 
 export const metadata: Metadata = {
   title: 'Hemloop: the closet stays private, the demand gets through',
@@ -26,7 +37,9 @@ export default function RootLayout({
           <meta key={token.slice(0, 12)} httpEquiv="origin-trial" content={token} />
         ))}
       </head>
-      <body>{children}</body>
+      <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+        {children}
+      </body>
     </html>
   );
 }

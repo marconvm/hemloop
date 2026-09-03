@@ -21,12 +21,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-ui);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-code);
-  --radius-sm: 0.35rem;
-  --radius-md: 0.55rem;
-  --radius-lg: 0.8rem;
-  --radius-xl: 1rem;
+  --radius-sm: 0.54rem;
+  --radius-md: 0.72rem;
+  --radius-lg: 0.9rem;
+  --radius-xl: 1.18rem;
 }
 
 :root {
@@ -46,7 +46,8 @@
   --border: #303433;
   --input: #303433;
   --ring: #d9ff5c;
-  --font-ui: Arial, Helvetica, sans-serif;
+  --font-ui: var(--font-body), 'Avenir Next', Arial, Helvetica, sans-serif;
+  --font-heading: var(--font-display), var(--font-ui);
   --font-code: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --surface: #171919;
   --canvas: #ece8dc;
@@ -54,6 +55,19 @@
   --acid: #d9ff5c;
   --coral: #ff765f;
   --blue: #3f5fa8;
+  /* Loop Room design system. Existing surface tokens stay intact until the
+     closet/studio reskin lands; these named tokens are safe to adopt one
+     component at a time. */
+  --forest: #183e30;
+  --moss: #346b45;
+  --loop: #b9f227;
+  --cream: #f4f0e6;
+  --paper: #fbfaf5;
+  --paper-strong: #ffffff;
+  --loop-ink: #17211c;
+  --loop-muted: #687169;
+  --loop-line: rgb(23 33 28 / 13%);
+  --loop-shadow: 0 24px 64px rgb(23 33 28 / 12%);
 }
 
 * {
@@ -77,6 +91,151 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+/* Shared frame ----------------------------------------------------------- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+  align-items: center;
+  min-height: 72px;
+  padding: 10px clamp(18px, 3vw, 48px);
+  border-bottom: 1px solid var(--loop-line);
+  background: rgb(251 250 245 / 92%);
+  color: var(--loop-ink);
+  backdrop-filter: blur(18px);
+}
+
+.site-brand {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  gap: 10px;
+  color: inherit;
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  text-decoration: none;
+}
+
+.site-brand-mark {
+  position: relative;
+  display: inline-grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.site-brand-mark::after {
+  position: absolute;
+  top: 2px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  border-top: 2px solid currentColor;
+  content: '';
+  transform: rotate(35deg);
+}
+
+.site-brand-mark > span {
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--loop);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--loop-line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 78%);
+  box-shadow: 0 8px 24px rgb(23 33 28 / 5%);
+}
+
+.site-nav a {
+  padding: 8px 13px;
+  border-radius: 999px;
+  color: #566159;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  background: #eef1e9;
+  color: var(--loop-ink);
+  outline: none;
+}
+
+.site-nav a.is-active,
+.site-nav a[aria-current='page'] {
+  background: var(--loop-ink);
+  color: #fff;
+}
+
+.site-header-meta,
+.site-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.site-header-status {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  .site-header {
+    position: relative;
+    grid-template-columns: 1fr auto;
+    gap: 8px 14px;
+    padding-block: 12px;
+  }
+
+  .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+    overflow-x: auto;
+  }
+
+  .site-header-status {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-header {
+    padding-inline: 13px;
+  }
+
+  .site-nav {
+    justify-content: stretch;
+  }
+
+  .site-nav a {
+    flex: 1;
+    padding-inline: 8px;
+    text-align: center;
+  }
 }
 
 .studio-shell {
