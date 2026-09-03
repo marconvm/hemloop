@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
+import { SiteHeader } from '@/components/site-header';
 import { BRAND } from '@/lib/proofframe/brand';
 
 import '@/app/studio.css';
@@ -914,34 +915,9 @@ export function ProofFrameStudio() {
 
   return (
     <main className="studio-shell">
-      <header className="studio-header">
-        <div className="brand-lockup">
-          <div className="brand-mark" aria-hidden="true">
-            {BRAND.name.slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <p className="eyebrow">Agent-native campaign studio</p>
-            <h1>{BRAND.name}</h1>
-          </div>
-        </div>
-
-        <div className="campaign-title">
-          <span className="status-dot" aria-hidden="true" />
-          Northlight Apparel / Back to school
-          <Badge className="status-badge">Fictional merchant</Badge>
-        </div>
-
-        <div className="header-actions">
-          <a className="cross-link" href="/closet">
-            <Shirt data-icon="inline-start" aria-hidden="true" />
-            Shopper closet
-          </a>
-          {/* See the note in closet-studio.tsx: one nav on every surface. */}
-          <nav className="surface-nav" aria-label="Hemloop surfaces">
-            <a href="/">Home</a>
-            <a href="/merchant">Merchant</a>
-            <a href="/docs/">Docs</a>
-          </nav>
+      <SiteHeader
+        active="studio"
+        status={
           <Badge
             variant="outline"
             className={`webmcp-badge status-${webMcpStatus}`}
@@ -950,16 +926,24 @@ export function ProofFrameStudio() {
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
-          <Button
-            className="export-button"
-            onClick={downloadComposition}
-            disabled={violations.length > 0}
-          >
-            <Download data-icon="inline-start" />
-            Export
-          </Button>
-        </div>
-      </header>
+        }
+        actions={
+          <>
+            <a className="cross-link" href="/closet">
+              <Shirt data-icon="inline-start" aria-hidden="true" />
+              Shopper closet
+            </a>
+            <Button
+              className="export-button"
+              onClick={downloadComposition}
+              disabled={violations.length > 0}
+            >
+              <Download data-icon="inline-start" />
+              Export
+            </Button>
+          </>
+        }
+      />
 
       <LoopRail surface="studio" flags={loopFlags} />
 

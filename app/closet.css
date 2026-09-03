@@ -412,6 +412,33 @@
   box-shadow: none;
 }
 
+.studio-shell .receipt-downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 4px;
+}
+
+.studio-shell .receipt-download {
+  color: var(--moss);
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.studio-shell .receipt-download:hover,
+.studio-shell .receipt-download:focus-visible {
+  color: var(--ink);
+}
+
+/* SiteHeader chrome: keep badges/pills readable inside the shared meta slot */
+.studio-shell .site-header-status .webmcp-badge,
+.studio-shell .site-header-actions .cross-link,
+.studio-shell .site-header-actions .export-button {
+  white-space: nowrap;
+}
+
 /* ── Human-only gates: coral ── */
 
 .studio-shell .share-approval {

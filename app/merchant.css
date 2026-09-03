@@ -89,7 +89,7 @@
   font-weight: 750;
 }
 
-.merchant-product {
+.merchant-shell .merchant-product {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -98,6 +98,11 @@
   font-weight: 600;
 }
 
+.merchant-shell .site-header-actions .cross-link {
+  white-space: nowrap;
+}
+
+/* Legacy local header removed; SiteHeader owns chrome. Keep product chip styles. */
 .merchant-shell .status-dot {
   width: 7px;
   height: 7px;

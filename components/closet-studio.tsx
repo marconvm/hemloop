@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { LoopRail } from '@/components/loop-rail';
-import { BRAND } from '@/lib/proofframe/brand';
+import { SiteHeader } from '@/components/site-header';
 
 import '@/app/closet.css';
 import {
@@ -191,7 +191,7 @@ export function ClosetStudio() {
       id: 1,
       actor: 'ME',
       title: 'Wardrobe seeded',
-      detail: 'Private to this page, stored in this browser only.',
+      detail: 'Ten garments for Me, shared with the Loop Room in this browser.',
     },
   ]);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
@@ -763,24 +763,9 @@ export function ClosetStudio() {
 
   return (
     <main className="studio-shell">
-      <header className="studio-header">
-        <div className="brand-lockup">
-          <div className="brand-mark closet-mark" aria-hidden="true">
-            {BRAND.name.slice(0, 2).toUpperCase()}
-          </div>
-          <div>
-            <p className="eyebrow">Private shopper surface</p>
-            <h1>Your Closet</h1>
-          </div>
-        </div>
-
-        <div className="campaign-title">
-          <span className="status-dot" aria-hidden="true" />
-          Demo shopper · outbound sharing is human-gated
-          <Badge className="status-badge">Demo data, real brands</Badge>
-        </div>
-
-        <div className="header-actions">
+      <SiteHeader
+        active="closet"
+        status={
           <Badge
             variant="outline"
             className={`webmcp-badge status-${webMcpStatus}`}
@@ -789,20 +774,14 @@ export function ClosetStudio() {
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
+        }
+        actions={
           <a className="cross-link" href="/studio">
             <Store data-icon="inline-start" aria-hidden="true" />
             Merchant studio
           </a>
-          {/* Every surface reaches every other one. Before this the closet
-              could only reach the studio and the studio only the closet, so
-              the two pages read as separate prototypes (wave-4 review). */}
-          <nav className="surface-nav" aria-label="Hemloop surfaces">
-            <a href="/">Home</a>
-            <a href="/merchant">Merchant</a>
-            <a href="/docs/">Docs</a>
-          </nav>
-        </div>
-      </header>
+        }
+      />
 
       <LoopRail surface="closet" flags={loopFlags} />
 
@@ -1086,6 +1065,22 @@ export function ClosetStudio() {
                 <Import aria-hidden="true" />
                 Import
               </button>
+            </div>
+            <div className="receipt-downloads">
+              <a
+                className="receipt-download"
+                href="/receipts/northlight-till-receipt.png"
+                download="northlight-till-receipt.png"
+              >
+                Download sample receipt: Till (Northlight)
+              </a>
+              <a
+                className="receipt-download"
+                href="/receipts/harborview-order-email.png"
+                download="harborview-order-email.png"
+              >
+                Download sample receipt: Order email (Harborview)
+              </a>
             </div>
           </div>
         </aside>

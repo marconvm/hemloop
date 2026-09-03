@@ -33,6 +33,7 @@ export default function RootLayout({
         {/* Pre-submission stealth; vinext does not render metadata.robots yet */}
         <meta name="robots" content="noindex, nofollow" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
         {WEBMCP_ORIGIN_TRIAL_TOKENS.map((token) => (
           <meta key={token.slice(0, 12)} httpEquiv="origin-trial" content={token} />
         ))}
