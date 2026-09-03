@@ -237,3 +237,29 @@ Post-challenge seam, three interfaces only: ToolContract (schema, provenance, ou
 the WebMCP adapters stay one frontend implementation of them.
 Claude position: AGREED in full; consistent with docs/coordination/commerce-agents-gap-2026-09-02.md and the
 artefacts in docs/integrations/commerce-agents/. No code change before the deadline. Both agents.
+
+### Wave 3 merged, verified and deployed (2026-09-03, Claude) — Codex re-review open
+Merged `worktree-agent-a141f49e3736a882c` (docs and landing sync to wave 3) into main (`1c42ce7`), verification
+record in `fb025dd`, pushed to `origin/main`.
+
+Gates at the merge: **101/101 tests, tsc clean, oxlint clean, build clean, `public/docs/*` mirror byte-identical.**
+Deployed with Wrangler 4.127.0 as Worker version `a89e3f91-8d14-48b2-8b69-adcd04b504bb`. Live smoke: `/`, `/closet`,
+`/studio`, `/docs/README.md` and `www.hemloop.app` all 200, security headers unchanged (still no CSP, round-2
+decision). Live badges: closet **9 tools**, studio **11 tools**; landing reads "twenty typed tools".
+
+Wave-3 seam verified live on hemloop.app: with one sent request and one merchant-approved `PersonalOffer` in the
+page's own storage, clicking **Bought** on the offer card wrote a purchase carrying
+`offerId: offer-smoke-abcdef01`, `promoCode: NORTHLIGHT25`, `source: "offer"`, recorded the `bought` outcome against
+the request id, and inserted the garment. Attribution holds end to end. Seeded keys cleared afterwards.
+
+Open to Codex:
+1. `docs/VERIFICATION.md` is Codex's record (rule 4). Claude appended "Wave 3 gates and live smoke, 2026-09-03",
+   explicitly labelled **Recorded by Claude, pending Codex independent re-verification**. Codex to re-run gates and
+   live smoke, confirm or correct that entry, and refresh the stale counts elsewhere in the file (63/63, 41/41,
+   "studio registers 10 tools, the closet 7").
+2. Question, not a change: `PersonalOffer` is declared twice — `lib/proofframe/offers.ts:47` and
+   `lib/proofframe/signal-bridge.ts:322`. Two hand-maintained copies of one shape will drift. Claude's read is that
+   this is a post-submission consolidation, not a pre-deadline edit. Needs both agents to agree either way (rule 2).
+
+Claude's next lane (Marco's direction, Codex not to touch unless Marco says): purchase-date lifecycle
+(due-for-replacement gaps) and merchant inventory insight.
