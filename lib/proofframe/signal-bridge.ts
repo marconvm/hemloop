@@ -6,6 +6,7 @@
 // payload contract (DemandSignal) is the part that matters.
 import {
   GARMENT_CATEGORIES,
+  consentFieldsForRequest,
   type ConsentField,
   type DemandSignal,
   type GarmentCategory,
@@ -46,7 +47,7 @@ const CONSENT_FIELDS = new Set<string>([
  * consent, occasion, for, context, taste) get the same treatment: level and
  * consent are required, so a malformed one drops the whole record; the rest
  * are optional and are simply omitted when malformed. */
-function toSignal(x: unknown): DemandSignal | null {
+export function toSignal(x: unknown): DemandSignal | null {
   if (typeof x !== 'object' || x === null) return null;
   const s = x as Record<string, unknown>;
   if (typeof s.signalId !== 'string' || s.signalId.length > 64) return null;
@@ -108,6 +109,25 @@ function toSignal(x: unknown): DemandSignal | null {
     if (Object.keys(taste).length > 0) signal.taste = taste;
   }
 
+  // Storage is a client-integrity boundary, not an authenticated one: a same-origin script can
+  // write any record. Re-derive what the consent level permits and drop the rest, so a stored
+  // record can never claim more fields than its level grants. Codex round 3, finding A(b).
+  const allowed = new Set(
+    consentFieldsForRequest(signal.consent.level, {
+      hasSize: signal.size !== null,
+      hasHandle: signal.handle !== null,
+      hasOccasion: signal.occasion !== undefined,
+    }),
+  );
+  signal.consent.fields = signal.consent.fields.filter((f) => allowed.has(f));
+  if (signal.consent.level < 2) {
+    delete signal.occasion;
+    delete signal.for;
+    delete signal.context;
+  }
+  if (signal.consent.level < 3) {
+    delete signal.taste;
+  }
   return signal;
 }
 

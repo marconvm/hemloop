@@ -16,6 +16,7 @@ import {
   type ClosetCallbacks,
 } from '../lib/proofframe/webmcp-closet';
 import { fence, type ToolContent } from '../lib/proofframe/webmcp';
+import { toSignal } from '../lib/proofframe/signal-bridge';
 import type {
   DemandSignal,
   Garment,
@@ -224,34 +225,46 @@ void test('closet tool surface: 7 tools, reads flagged readOnly', () => {
   }
 });
 
-void test('get_wardrobe fences brand/colour as untrusted content, carries no identity field, scoped to active profile', async () => {
+void test('get_wardrobe returns one fenced compact block, carries no identity field, scoped to active profile', async () => {
   const { cb, wardrobe } = makeStore({ activeProfile: 'self' });
   const tool = buildClosetTools(cb).find((t) => t.name === 'get_wardrobe')!;
   const result = payload(await tool.execute({})) as {
-    garments: (Garment & { brand: string; colour: string })[];
+    count: number;
+    truncated: number;
+    columns: string;
+    garments: string;
     note: string;
   };
   const selfGarments = garmentsForProfile(wardrobe, 'self').garments;
-  assert.equal(result.garments.length, selfGarments.length);
-  result.garments.forEach((g, i) => {
-    assert.equal(g.id, selfGarments[i].id);
-    assert.equal(g.category, selfGarments[i].category);
-    assert.equal(g.size, selfGarments[i].size);
-    assert.ok(g.brand.startsWith('<closet_data>'), 'brand is fenced');
-    assert.ok(g.brand.includes(selfGarments[i].brand));
-    assert.ok(g.colour.startsWith('<closet_data>'), 'colour is fenced');
-    assert.ok(g.colour.includes(selfGarments[i].colour));
+  assert.equal(result.count, selfGarments.length);
+  assert.equal(result.truncated, 0);
+  assert.ok(result.garments.startsWith('<closet_data>') && result.garments.endsWith('</closet_data>'));
+  const rows = result.garments.slice('<closet_data>'.length, -'</closet_data>'.length).split('\n');
+  assert.equal(rows.length, selfGarments.length);
+  rows.forEach((row, i) => {
+    const [id, category, brand, size, colour, who] = row.split(' | ');
+    assert.equal(id, selfGarments[i].id);
+    assert.equal(category, selfGarments[i].category);
+    assert.equal(brand, selfGarments[i].brand);
+    assert.equal(size, selfGarments[i].size);
+    assert.equal(colour, selfGarments[i].colour);
+    assert.equal(who, selfGarments[i].for ?? 'self');
   });
   assert.equal('shopperId' in result, false);
+  assert.ok(!JSON.stringify(result).includes('/products/'), 'image paths stay on the page');
   assert.match(result.note, /closet_data/);
+  assert.ok(JSON.stringify(result).length <= 1500);
 });
 
-void test('get_wardrobe scopes to the kid profile', async () => {
+void test('get_wardrobe scopes to the kid profile and filters by category', async () => {
   const { cb } = makeStore({ activeProfile: 'kid' });
   const tool = buildClosetTools(cb).find((t) => t.name === 'get_wardrobe')!;
-  const result = payload(await tool.execute({})) as { garments: Garment[] };
-  assert.equal(result.garments.length, 2);
-  assert.ok(result.garments.every((g) => g.for === 'kid'));
+  const result = payload(await tool.execute({})) as { count: number; garments: string };
+  assert.equal(result.count, 2);
+  const rows = result.garments.replace(/<\/?closet_data>/g, '').split('\n');
+  assert.ok(rows.every((r) => r.endsWith('| kid')));
+  const tees = payload(await tool.execute({ category: 'tee' })) as { count: number };
+  assert.equal(tees.count, 1);
 });
 
 void test('get_preferences returns fenced strings, plain numbers/enums, under 1.5K chars', async () => {
@@ -640,4 +653,66 @@ void test('outcomes: readConsentLevel/writeConsentLevel round-trip via a fake st
   writeConsentLevel(0);
   assert.equal(readConsentLevel(), 0);
   delete (globalThis as { window?: unknown }).window;
+});
+
+void test('round 3 A(f): get_wardrobe stays under the 1.5K budget against a hostile wardrobe', async () => {
+  const hostile: Garment[] = Array.from({ length: 50 }, (_, i) => ({
+    id: `g${i}-${'x'.repeat(40)}`,
+    category: 'tee' as const,
+    brand: 'B'.repeat(80),
+    size: 'S'.repeat(20),
+    colour: 'C'.repeat(60),
+    image: '/products/' + 'p'.repeat(200) + '.jpg',
+    price: 999999.99,
+    currency: 'CAD',
+    retailer: 'R'.repeat(120),
+    material: 'M'.repeat(120),
+    purchasedAt: '2026-01-01',
+  }));
+  const tools = buildClosetTools({
+    getWardrobe: () => ({ garments: hostile }),
+    getActiveProfile: () => 'self',
+    addGarment: () => hostile[0],
+    consumeShareApproval: () => false,
+    emitSignal: () => undefined,
+    getConsentLevel: () => 1,
+    getPreferences: () => seedPreferences(),
+  } as unknown as Parameters<typeof buildClosetTools>[0]);
+  const gw = tools.find((x) => x.name === 'get_wardrobe')!;
+  const result = await gw.execute({});
+  const text = JSON.stringify(result);
+  assert.ok(text.length <= 1500, `get_wardrobe result is ${text.length} chars`);
+  const r = result as { count: number; truncated: number; garments: string };
+  assert.equal(r.count, 50);
+  assert.equal(r.truncated, 38);
+  assert.ok(r.garments.startsWith('<closet_data>') && r.garments.endsWith('</closet_data>'));
+  assert.ok(!text.includes('/products/pppp'), 'image paths never enter the result');
+});
+
+void test('round 3 A(b): a stored record cannot claim more consent fields than its level grants', () => {
+  const stored = {
+    signalId: 'abc',
+    kind: 'gap',
+    category: 'hoodie',
+    size: 'M',
+    handle: null,
+    at: '2026-09-02T12:00:00.000Z',
+    level: 'need',
+    consent: { level: 1, fields: ['category', 'level', 'size', 'priceCeiling', 'for', 'occasion'] },
+    occasion: 'gift',
+    for: 'kid',
+    context: { fitPreference: 'slim' },
+    taste: { colourFamily: 'neutrals', avoidMaterials: ['wool'], priceCeiling: 120 },
+  };
+  const sig = toSignal(stored)!;
+  assert.deepEqual(sig.consent.fields.sort(), ['category', 'level', 'size']);
+  assert.equal(sig.occasion, undefined);
+  assert.equal(sig.for, undefined);
+  assert.equal(sig.context, undefined);
+  assert.equal(sig.taste, undefined);
+
+  const level3 = toSignal({ ...stored, consent: { level: 3, fields: stored.consent.fields } })!;
+  assert.ok(level3.consent.fields.includes('priceCeiling'));
+  assert.equal(level3.for, 'kid');
+  assert.deepEqual(level3.taste, { colourFamily: 'neutrals', avoidMaterials: ['wool'], priceCeiling: 120 });
 });
