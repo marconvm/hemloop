@@ -45,6 +45,13 @@ const CLOSET_ROWS: ToolRow[] = [
   },
   {
     surface: 'Closet',
+    tool: 'get_preferences',
+    kind: 'read',
+    what: "Reads the shopper's stated preferences: fit, colour family, materials to avoid, price ceiling, liked brands",
+    guarantee: 'readOnlyHint, closet_data fence, a field travels only if the sharing level allows it',
+  },
+  {
+    surface: 'Closet',
     tool: 'add_garment',
     kind: 'write',
     what: 'Adds one garment to the local wardrobe',
@@ -131,12 +138,12 @@ const ABSENT_ROW: ToolRow = {
   surface: 'Both',
   tool: '(absent by design)',
   kind: 'none',
-  what: 'There is no lock_facts, no unlock_facts, no approve_share',
-  guarantee: 'Locking facts and releasing wardrobe data are human-only acts. This row is the product.',
+  what: 'There is no lock_facts, no unlock_facts, no approve_share, no set_sharing_level',
+  guarantee: 'Locking facts, releasing wardrobe data, and the consent dial are human-only acts. This row is the product.',
   strong: true,
 };
 
-const TOTAL_TOOL_COUNT = 16;
+const TOTAL_TOOL_COUNT = 17;
 
 function HemLoopMark({ size = 20, className }: { size?: number; className?: string }) {
   return (
@@ -245,7 +252,7 @@ export function Landing() {
         <p className="landing-sub" data-reveal>
           The store answers with an offer that cannot lie about the price. Hemloop is the loop
           between a shopper&apos;s private closet and a merchant&apos;s campaign studio, built on
-          WebMCP: sixteen typed tools on two web pages, running in the shopper&apos;s and
+          WebMCP: seventeen typed tools on two web pages, running in the shopper&apos;s and
           merchant&apos;s own browsers.
         </p>
         <div className="landing-ctas" data-reveal>
@@ -276,7 +283,7 @@ export function Landing() {
           <h2>Maya has a closet</h2>
           <p>
             Her wardrobe, sizes and preferences stay in her own browser. Her agent can shop with
-            six WebMCP tools, but only one of those tools can talk to a store.
+            seven WebMCP tools, but only one of those tools can talk to a store.
           </p>
         </div>
         <div className="loop-step" data-reveal>

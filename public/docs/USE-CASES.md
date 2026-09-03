@@ -27,6 +27,19 @@ Concrete scenarios showing where the loop earns its place. Personas are syntheti
 **Outcome:** the merchant sees a Want alongside any Needs, grouped separately by category and size, so "four people need a hoodie in M" and "one person wants a jacket colourway" read as two different kinds of demand, not one undifferentiated list.
 **Why WebMCP:** the same tool and the same schema carry both levels of demand; the `kind` field, not a separate tool, is what tells the merchant which one they are looking at.
 
+### UC-2b: the shopper buying a gift, at level 2 Context (a Need)
+
+**Actor:** Priya, shopping for her partner.
+**Trigger:** "My partner needs a hoodie for a trip next week. Ask the store, but keep it at Context level, don't send colour or budget."
+**Flow:**
+1. Priya switches the closet's **Shopping for** control to Partner; her agent now reads and reasons over the partner's wardrobe rows only.
+2. It calls `find_gaps` on that profile and confirms hoodie is missing, then `get_my_sizes` for the partner's known size.
+3. Priya raises her sharing level to 2 Context (from the default 1 Basics) and sets the request's occasion to "gift" when asked; the payload preview shows exactly six fields: category, level, size, for, fitPreference, occasion, no colour, no price ceiling.
+4. The agent calls `report_demand_gap` with `occasion: "gift"`; the tool refuses `human-approval-required` until Priya presses **Approve next request (level 2)**.
+5. She approves once; the retry succeeds and the requests-sent list shows the exact payload, `for: "partner"` included, no name, id or wardrobe rows.
+**Outcome:** the merchant learns "a gift-occasion hoodie, size L, for a partner profile" and nothing about who Priya or her partner are; a level below (1 Basics) could not have carried occasion or the for field at all.
+**Why WebMCP:** the sharing level and the sub-profile switch are both human-only state the tool schema reads, never something the agent can raise or widen itself.
+
 ### UC-3: the merchant who finally sees owned-inventory demand
 
 **Actor:** a Hemloop merchant.
@@ -46,6 +59,17 @@ Concrete scenarios showing where the loop earns its place. Personas are syntheti
 **Flow:** the tool call is validated against the locked 25% offer and the banned-phrase list; it is rejected before anything changes, with a machine-readable reason and a `next` instruction telling the agent what the compliant retry looks like; the agent rewrites its own copy to the true 25%.
 **Outcome:** the non-compliant frame never exists. The agent activity log shows the block for auditors.
 **Why WebMCP:** validation lives inside the tool layer, so "the agent cannot publish a false claim" is structural.
+
+### UC-4b: the merchant who fills the missing fact to unlock an agent action
+
+**Actor:** the Hemloop merchant, mid-campaign.
+**Trigger:** a shopping agent calls `get_offer` and the result shows `completeness: { locked: 8, total: 9, missing: ["sizesInStock"] }`.
+**Flow:**
+1. The merchant checks the studio's completeness meter, "8 of 9 facts locked", and reads the one entry left in the missing list: "Sizes in stock, unlocks: agents can skip sizes you cannot fill."
+2. They unlock the offer facts, add the sizes currently in stock, and lock the facts again.
+3. The next `get_offer` call returns `sizesInStock: ["S", "M", "L"]` and `completeness: { locked: 9, total: 9, missing: [] }`.
+**Outcome:** the one missing fact was named in the tool's own output before the merchant went looking for it, and filling it is what turns "agents can skip sizes you cannot fill" from a locked-out action into a live one.
+**Why WebMCP:** `get_offer` and the studio's completeness meter share one `computeCompleteness` function, so what an agent sees as missing and what a human sees as missing can never drift apart.
 
 ## Secondary and edge
 

@@ -18,11 +18,19 @@ Legend: PASS / FAIL / N-A (not applicable to a client-side synthetic-data hackat
 | F8 | `import_product` while locked / unlocked | Blocked when locked; imports when unlocked | PASS (unit + browser) |
 | F9 | `export_composition` clean campaign | Delivers standalone HyperFrames HTML to the page (download) and returns `{ delivered, chars, scenes, durationSec }` under 1.5K chars | PASS (unit; `hyperframes check` 0 errors) |
 | F10 | Disclaimer footer in export | Present for full duration, not a clip, not removable | PASS (unit) |
-| F11 | `get_offer` on a locked offer | Returns product, prices, promo code, validity dates, disclaimer and purchase link as structured data; `readOnlyHint` | manual (unit coverage to confirm) |
+| F11 | `get_offer` on a locked offer | Returns product, prices, promo code, validity dates, disclaimer, sizes in stock, purchase link and offer completeness as structured data; `readOnlyHint` | manual (unit coverage to confirm) |
 | F12 | `next` field on a rejection | Every `human-approval-required` and `locked-fact-violation` rejection carries a `next` string naming the retry | manual (unit coverage to confirm) |
 | F13 | Untrusted-content fences | `get_wardrobe` and `import_product` wrap third-party text in source-labelled fences (`<closet_data>` for shopper-entered rows, `<storefront_data>` for catalog text, the labels Anthropic's commerce-agents harness already reads) with a do-not-follow preamble | manual (unit coverage to confirm) |
 | F14 | Need/Want labelling | `DemandSignal.kind` `gap`/`fit` render as **Need**, `want` renders as **Want**, on both the closet and studio surfaces | manual (UI-only) |
 | F15 | Tool-call counter | The studio panel heading ticks a count of tool calls, including blocked ones | manual (UI-only) |
+| F16 | `get_preferences` | Returns fit, colour family, materials to avoid, price ceiling, liked brands; `colourFamily`, `avoidMaterials` and `likedBrands` are fenced `<closet_data>` | PASS (unit) |
+| F17 | Consent gating on `report_demand_gap`, level 0 | Returns `sharing-disabled`, emits nothing, does not touch the approval gate | PASS (unit) |
+| F18 | Consent gating on `report_demand_gap`, levels 1-3 | `consent.fields` matches `consentFieldsForRequest` exactly for that level and the given optional arguments; occasion/for/context appear only at level >= 2, taste only at level 3 | PASS (unit) |
+| F19 | `consentFieldsForRequest` never widens beyond the `ConsentField` enum | Every returned field is a member of the fixed enum; no free string reaches `consent.fields` | PASS (unit) |
+| F20 | `garmentsForProfile` (Me / Partner / Kid) | Scopes wardrobe rows, and every closet read tool, to the active profile; a garment with no `for` reads as `self` | PASS (unit) |
+| F21 | Bought / Passed outcomes | `recordOutcome` appends and verifies against a readback, same pattern as `appendSignal`; `readOutcomes` drops malformed rows | PASS (unit) |
+| F22 | Placement presets | `formatForPlacement` maps `story`/`feed`/`display` to the correct width, height, fps and ratio; no WebMCP tool reads or writes `format.placement` | PASS (unit) |
+| F23 | Offer completeness | `computeCompleteness` counts locked vs. the fixed 9-check list and names the missing keys; `get_offer` returns the same object plus `sizesInStock` | PASS (unit) |
 
 ## 2. Smoke Test: does the deployed thing come up at all
 
@@ -50,7 +58,7 @@ Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" h
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS (42/42 at HEAD) |
+| R1 | Full unit suite after every milestone | PASS (63/63 at HEAD) |
 | R2 | `tsc --noEmit` after each change | PASS (clean) |
 | R3 | `oxlint` after each change | PASS (clean) |
 | R4 | Production build after each change | PASS |
@@ -60,7 +68,7 @@ Regression guard = the committed test suite; each commit was gated on it.
 
 ## 5. User Acceptance Test (UAT): does it meet the brief
 
-Mapped to the Devpost judging criteria and the PRD acceptance criteria (AC-1…AC-12).
+Mapped to the Devpost judging criteria and the PRD acceptance criteria (AC-1...AC-15).
 
 | # | Acceptance statement | Result |
 |---|---|---|
@@ -132,7 +140,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (42/42), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (63/63), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime
