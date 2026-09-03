@@ -56,7 +56,7 @@ import {
 } from '@/lib/proofframe/loop-room';
 import { demandInsight, slug, toDemandSignalLike } from '@/lib/proofframe/offers';
 import { SAMPLE_RECEIPTS } from '@/lib/proofframe/receipts';
-import { seedCampaign } from '@/lib/proofframe/seed';
+import { readCampaign, seedCampaign, writeCampaign } from '@/lib/proofframe/seed';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import {
   appendSignal,
@@ -163,8 +163,12 @@ export function LoopRoomPage() {
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
 
   // ----- Merchant side: locked campaign -----
+  // One campaign for every page (Loop Room and /studio): read the stored one
+  // once mounted, write on every change after that. The seed only lands in a
+  // browser that has nothing stored; factsLocked travels with it.
   const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
   const campaignRef = useRef(campaign);
+  const campaignHydratedRef = useRef(false);
 
   // ----- The bridge -----
   const [signals, setSignals] = useState<DemandSignal[]>([]);
@@ -219,6 +223,23 @@ export function LoopRoomPage() {
   useEffect(() => {
     if (hydratedRef.current) writeWardrobe(wardrobe);
   }, [wardrobe]);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const stored = readCampaign();
+      campaignRef.current = stored;
+      setCampaign(stored);
+      campaignHydratedRef.current = true;
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (campaignHydratedRef.current) writeCampaign(campaign);
+  }, [campaign]);
 
   const addGarments = useCallback((rows: Garment[]) => {
     if (rows.length === 0) return;
