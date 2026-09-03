@@ -21,8 +21,8 @@ Chrome 151 with `chrome://flags/#enable-webmcp-testing`, after the dead-code rem
 |---|---|
 | `/closet` badge | **9 WebMCP tools live** |
 | closet tools registered | `add_garment`, `check_fit`, `find_gaps`, `get_my_sizes`, `get_offers`, `get_preferences`, `get_wardrobe`, `import_receipt`, `report_demand_gap` |
-| `/studio` badge | **11 WebMCP tools live** |
-| studio tools registered | `add_scene`, `export_composition`, `get_campaign_state`, `get_offer`, `import_product`, `propose_offer`, `reorder_scenes`, `seek_preview`, `set_brief`, `update_scene`, `validate_claims` |
+| `/studio` badge | **12 WebMCP tools live** |
+| studio tools registered | `add_scene`, `export_composition`, `get_campaign_state`, `get_demand`, `get_offer`, `import_product`, `propose_offer`, `reorder_scenes`, `seek_preview`, `set_brief`, `update_scene`, `validate_claims` |
 | clean state | `localStorage` empty · closet "Nothing sent yet" · studio "No signals yet" |
 | sharing level | set to **2 Context**, **Shopping for: Me** |
 | gates | campaign truth **locked** · **Approve next request (level 2)** armed and visible |
