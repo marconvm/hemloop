@@ -1525,16 +1525,16 @@ select {
   border-bottom: none;
 }
 .tool-table-fold {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 420ms ease;
+  /* max-height, not grid 0fr/1fr: a grid track inside a table cell resolved to 0 in Chrome, hiding the rows. */
+  display: block;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 420ms ease;
 }
 .tool-table-fold[data-expanded='true'] {
-  grid-template-rows: 1fr;
+  max-height: 1600px;
 }
 .tool-table-fold-inner {
-  overflow: hidden;
-  min-height: 0;
   opacity: 0;
   transition: opacity 320ms ease;
 }
