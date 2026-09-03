@@ -202,3 +202,22 @@ without sizesInStock so the completeness meter opens at 8 of 9 with a human-only
 "campaign truth" strings retired, studio footer no longer Shopify-pinned, exporter title em dash removed.
 Not done, owner's call: SECURITY.md length, docs/coordination in the public repo, VOICEOVER retired terms in
 the already-rendered audio.
+
+### Round 3 reconciliation (2026-09-02 night) — all AGREED, landed, live (Worker 67c92ca9)
+Reports: CODEX-ROUND3.md (with its "Reconciliation replies"), CLAUDE-ROUND3.md. Brief: ROUND3-BRIEF.md.
+
+| item | Codex | Claude | bucket | action |
+|---|---|---|---|---|
+| get_wardrobe output unbounded (15K to 58K possible; 2.6K at seed) | CHANGE A(f) | CHANGE #2 | AGREED | explicit compact shape, one closet_data fence, 12 rows, count + truncated, category filter; 50 hostile rows now under 1.5K |
+| stored signal can claim consent.fields beyond its level | CHANGE A(b) | do-not-touch, then AGREE after reading the diff (narrowing-only, 72 legit shapes round-trip identical) | AGREED | toSignal re-derives permitted fields per level, drops occasion/for/context < 2 and taste < 3 |
+| agent-written </closet_data> reaches the model via size, get_my_sizes, check_fit prose | (CLEAN on brand/colour) then AGREE | CHANGE #1, reproduced | AGREED | fence + untrustedContentHint on get_my_sizes rows and check_fit note; get_wardrobe fences the whole block |
+| add_garment has no row cap (200 adds accepted) | AGREE | CHANGE #3 | AGREED | MAX_GARMENTS 40 per profile, wardrobe-full with next |
+| no X-Frame-Options (clickjack the Approve / Lock buttons) | AGREE | CHANGE #4 | AGREED | X-Frame-Options: DENY via next.config.ts headers, live-verified |
+| README: "physically cannot include wardrobe data", level-1 row missing handle, "purchase history never shared" | AGREE | CHANGE #5 | AGREED | reworded; mirror updated |
+| level-2 copy omits "for"; get_offer "locked facts only" | CHANGE (B) | (same, from judge 2) | AGREED | already landed earlier tonight |
+| Workers CPU p99 / 1102 errors check | CHANGE (S) | keep | ONE-SIDE, Marco | wrangler OAuth token has no analytics scope; dashboard look by Marco, no Paid pre-emptively |
+| vinext beta, deps, CSP, Smart Placement, Tail Workers, component splits, import_product guard in the page callback, truncate off-by-two, robots.txt managed block | KEEP / DEFER | KEEP / DEFER | DEFER | untouched |
+
+Gates after landing: tsc, oxlint, 66/66 tests (3 new: hostile wardrobe budget, stored-consent narrowing, fence
+escape + cap), build, deploy, live 200 x4, X-Frame-Options DENY on live. Both reviewers' do-not-touch lists
+respected: no dependency, token, robots, CSP, deployment config or component-split change.

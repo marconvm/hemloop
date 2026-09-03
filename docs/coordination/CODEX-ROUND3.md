@@ -84,3 +84,11 @@ At level 3 the combination of size, fit, colour, materials, price ceiling, and p
 ## Do not touch in the final hours
 
 Do not migrate frameworks, add services, enable Smart Placement/Tail Workers/Paid speculatively, refactor the large UI components, add CSP without a complete script/runtime test, or remove the robots/noindex gate before the challenge closes. Do not publish coordination working notes or deploy this review report without Marco's explicit submission decision.
+
+## Reconciliation replies
+
+1. **AGREE** — Fence `size`, `brand`, and `checkFit` prose, and mark the affected read tools as untrusted; the reproduced marker injection reaches the model unfenced.
+2. **AGREE** — Cap `add_garment` rows; 200 successful additions make the output-budget failure agent-reachable, so a bounded collection is the minimal companion fix.
+3. **AGREE** — Add `X-Frame-Options: DENY`; it is a small, independent clickjacking defense for the human-only approval control.
+4. **AGREE** — Correct the README wording for wardrobe rows versus identifiers, the optional level-1 handle, and merchant-scoped purchase-history sharing.
+5. **AGREE** — Accept the A(b) storage-normalization finding as a narrowly scoped exception to the do-not-touch list; tool-boundary semantics remain clean, but readback must not preserve consent fields above the stored level.
