@@ -91,3 +91,22 @@ missing fact unlocks.
 
 Both sides log every consent change and every request in the activity log. Roadmap: consent
 receipts the shopper can export, and per-merchant levels.
+
+## Wave 3 (2026-09-03, owner): the roadmap becomes the MVP
+
+Owner's call: capture orders across brands (rivals included), record which offer a purchase came from as a
+shopper attribute, and let the merchant auto-match a personal offer inside a pre-set margin. Right product,
+right price, right time. The shopper only consents to send; the merchant only approves offers.
+
+Shopper side (stays in the browser): a purchase log across merchants (seeded across four brands plus a rival),
+imported from pasted receipts or order emails (local parser, no OCR), from catalog lookup, or automatically
+when the shopper marks an offer Bought (which records the offer id). From that log a coarse buying pattern is
+derived per category: discount sensitivity (code / percent / none), spend band, brand loyalty (loyal /
+switcher). At level 3 the pattern travels with a request; the raw purchases never do.
+
+Merchant side: locked offer rules (cost, margin floor, max discount) beside the offer facts. A pure matcher
+turns an incoming request plus its shared context into a proposed personal offer within the floor, with the
+validity window shaped by the occasion. The merchant's agent can propose (`propose_offer`), or auto-propose
+can be switched on; a human approves before anything becomes visible. Approved offers travel back over the
+bridge, addressed to the request id, never to a person; the shopper sees them in the closet and answers
+Bought or Passed, which closes the loop and feeds the pattern.
