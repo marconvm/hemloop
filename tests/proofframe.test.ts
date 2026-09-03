@@ -12,6 +12,7 @@ import {
   type WebMcpTool,
 } from '../lib/proofframe/webmcp';
 import { PLACEMENTS, formatForPlacement, type CampaignState, type Scene, type Violation } from '../lib/proofframe/types';
+import { matchOffer, offerIdFor, type PersonalOffer } from '../lib/proofframe/offers';
 
 function makeStore(state: CampaignState = seedCampaign()) {
   let seekedTo: number | null = null;
@@ -530,4 +531,209 @@ void test('PF5-1: update_scene rejects a duration that pushes the total over 60s
   assert.equal(over.violations?.[0]?.rule, 'total-duration');
   assert.equal(state.scenes.find((s) => s.id === 'product')?.durationSec, 4, 'unchanged');
   assert.equal(state.scenes.reduce((s, x) => s + x.durationSec, 0), 41);
+});
+
+// ---------- offers (wave 3) ----------
+
+const NOW = new Date('2026-09-03T00:00:00.000Z');
+
+function isOffer(result: ReturnType<typeof matchOffer>): result is PersonalOffer {
+  return 'offerId' in result;
+}
+
+void test('matchOffer: basic hoodie match at 25% with margin ok', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: { signalId: 'sig-0001-aaaa', category: 'hoodie', size: 'M' },
+    facts,
+    now: NOW,
+  });
+  assert.ok(isOffer(result), 'expected a proposed offer');
+  const offer = result as PersonalOffer;
+  assert.equal(offer.discountPercent, 25);
+  assert.equal(offer.price, 44.93);
+  assert.equal(offer.status, 'proposed');
+  assert.equal(offer.requestId, 'sig-0001-aaaa');
+  assert.equal(offer.size, 'M');
+  assert.equal(offer.validFrom, '2026-09-03');
+  assert.equal(offer.validTo, facts.endDate);
+  assert.ok(offer.marginCheck.ok, 'margin should be above the floor');
+  assert.ok(offer.reasons.length > 0 && offer.reasons.length <= 3);
+  assert.ok(offer.reasons.every((r) => r.length <= 120));
+});
+
+void test('matchOffer: discountSensitivity "none" caps the discount at 15', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: {
+      signalId: 'sig-none-0001',
+      category: 'hoodie',
+      size: 'M',
+      pattern: { discountSensitivity: 'none', spendBand: 'under-50', brandLoyalty: 'loyal' },
+    },
+    facts,
+    now: NOW,
+  });
+  assert.ok(isOffer(result));
+  assert.equal((result as PersonalOffer).discountPercent, 15);
+});
+
+void test('matchOffer: a switcher gets up to the locked max discount, never above it', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: {
+      signalId: 'sig-switch-01',
+      category: 'hoodie',
+      size: 'M',
+      pattern: { discountSensitivity: 'code', spendBand: '100-plus', brandLoyalty: 'switcher' },
+    },
+    facts,
+    now: NOW,
+  });
+  assert.ok(isOffer(result));
+  assert.equal((result as PersonalOffer).discountPercent, facts.maxDiscountPercent);
+});
+
+void test('matchOffer: the margin floor trims the discount, and says so', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: { signalId: 'sig-margin-01', category: 'hoodie', size: 'M' },
+    facts: { ...facts, costPrice: 30 }, // higher cost than the seed: 25% off no longer clears the floor
+    now: NOW,
+  });
+  assert.ok(isOffer(result));
+  const offer = result as PersonalOffer;
+  assert.ok(offer.discountPercent < 25, 'discount must be trimmed below the requested 25%');
+  assert.ok(offer.marginCheck.ok, 'trimming should land back above the floor');
+  assert.ok(
+    offer.reasons.some((r) => r.includes('margin floor')),
+    'must explain the trim',
+  );
+});
+
+void test('matchOffer: a gift or event shortens validTo to one week out', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: { signalId: 'sig-gift-01', category: 'hoodie', size: 'M', occasion: 'gift' },
+    facts: { ...facts, endDate: '2026-12-31' },
+    now: NOW,
+  });
+  assert.ok(isOffer(result));
+  const offer = result as PersonalOffer;
+  assert.equal(offer.validTo, '2026-09-10');
+  assert.ok(offer.reasons.some((r) => r.includes('occasion')));
+});
+
+void test('matchOffer: refuses when the requested size is not in stock', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: { signalId: 'sig-size-01', category: 'hoodie', size: 'XL' },
+    facts: { ...facts, sizesInStock: ['S', 'M'] },
+    now: NOW,
+  });
+  assert.ok(!isOffer(result));
+  assert.equal((result as { ok: false; reason: string }).reason, 'size not in stock');
+});
+
+void test('matchOffer: refuses when the request category does not match the campaign product', () => {
+  const { facts } = seedCampaign();
+  const result = matchOffer({
+    request: { signalId: 'sig-cat-01', category: 'denim', size: '32' },
+    facts,
+    now: NOW,
+  });
+  assert.ok(!isOffer(result));
+  assert.equal((result as { ok: false; reason: string }).reason, 'category mismatch');
+});
+
+void test('propose_offer stages a matched offer through a fake callback, under budget', async () => {
+  const { cb } = makeStore();
+  let staged: PersonalOffer | null = null;
+  const request = { signalId: 'req-aaaa1111', category: 'hoodie', size: 'M' };
+  const fullCb: ProofFrameCallbacks = {
+    ...cb,
+    getRequests: () => [request],
+    stageOffer: (o) => {
+      staged = o;
+    },
+    getCatalogProduct: () => ({
+      handle: 'northlight-hoodie',
+      title: 'Northlight Hoodie',
+      sizesInStock: ['S', 'M', 'L'],
+    }),
+  };
+  const tools = buildTools(fullCb);
+  const result = await tool(tools, 'propose_offer').execute({ requestId: 'req-aaaa1111' });
+  const p = payload(result) as ToolPayload & { offer?: PersonalOffer };
+  assert.equal(p.ok, true);
+  assert.ok(staged, 'stageOffer must be called on a match');
+  assert.equal((staged as unknown as PersonalOffer).requestId, 'req-aaaa1111');
+  assert.equal(p.offer?.requestId, 'req-aaaa1111');
+  assert.ok(JSON.stringify(result).length <= 1500);
+});
+
+void test('propose_offer reports no-match without staging when nothing fits', async () => {
+  const { cb } = makeStore();
+  let staged = false;
+  const fullCb: ProofFrameCallbacks = {
+    ...cb,
+    getRequests: () => [{ signalId: 'req-nope-0001', category: 'denim', size: '32' }],
+    stageOffer: () => {
+      staged = true;
+    },
+  };
+  const result = payload(
+    await tool(buildTools(fullCb), 'propose_offer').execute({ requestId: 'req-nope-0001' }),
+  );
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'no-match');
+  assert.equal(staged, false);
+});
+
+void test('get_offer with requestId returns the approved personal offer, or no-approved-offer', async () => {
+  const { cb } = makeStore();
+  const { facts } = seedCampaign();
+  const matched = matchOffer({
+    request: { signalId: 'req-approved-01', category: 'hoodie', size: 'M' },
+    facts,
+    now: NOW,
+  });
+  assert.ok(isOffer(matched));
+  const approvedOffer: PersonalOffer = { ...(matched as PersonalOffer), status: 'approved', approvedAt: NOW.toISOString() };
+  const withOffers: ProofFrameCallbacks = { ...cb, getOffers: () => [approvedOffer] };
+  const tools = buildTools(withOffers);
+
+  const found = payload(
+    await tool(tools, 'get_offer').execute({ requestId: 'req-approved-01' }),
+  ) as ToolPayload & { offer?: PersonalOffer };
+  assert.equal(found.ok, true);
+  assert.equal(found.offer?.requestId, 'req-approved-01');
+
+  const missing = payload(await tool(tools, 'get_offer').execute({ requestId: 'req-unknown' }));
+  assert.equal(missing.ok, false);
+  assert.equal(missing.error, 'no-approved-offer');
+});
+
+void test('get_offer includes offerId built from the locked facts', async () => {
+  const { cb } = makeStore();
+  const { facts } = seedCampaign();
+  const result = payload(await tool(buildTools(cb), 'get_offer').execute({})) as ToolPayload & {
+    offerId?: string;
+  };
+  assert.equal(result.offerId, offerIdFor(facts));
+});
+
+void test('buildTools registers 11 tools when every optional callback is present (propose_offer is the 11th)', () => {
+  const { cb } = makeStore();
+  const fullCb: ProofFrameCallbacks = {
+    ...cb,
+    importProduct: () => seedCampaign().facts,
+    getRequests: () => [],
+    getOffers: () => [],
+    stageOffer: () => {},
+    getCatalogProduct: () => undefined,
+  };
+  const tools = buildTools(fullCb);
+  assert.equal(tools.length, 11);
+  assert.ok(tools.some((t) => t.name === 'propose_offer'));
 });

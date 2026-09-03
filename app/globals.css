@@ -2351,3 +2351,151 @@ select {
   margin: 0;
   font-size: 24px;
 }
+
+/* ===== studio wave 3 ===== */
+
+/* Offer rules: cost, margin floor, max discount. Same visual language as the
+   locked-facts rows above it (.truth-row), inside its own labelled block so
+   the merchant can tell "what the copy says" from "what the matcher may do". */
+.offer-rules {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.offer-rules-head {
+  margin: 0 0 8px;
+  color: #9a9f9b;
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: help;
+}
+
+.offer-rules .truth-list {
+  gap: 10px;
+}
+
+/* Auto-propose: human-only toggle above the incoming-requests list. */
+.auto-propose-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: #9a9f9b;
+  font-size: 12px;
+  cursor: help;
+}
+
+.auto-propose-toggle input {
+  accent-color: var(--accent, #ff7a45);
+  cursor: pointer;
+}
+
+/* Propose / proposal / approved / declined states on one incoming request row. */
+.propose-offer-button {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.propose-offer-button:hover {
+  opacity: 0.8;
+}
+
+.offer-proposal {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent, #ff7a45) 6%, transparent);
+}
+
+.offer-proposal-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.offer-proposal-summary strong {
+  font-size: 15px;
+}
+
+.offer-code {
+  padding: 1px 7px;
+  border: 1px dashed currentColor;
+  border-radius: 999px;
+  font-family: var(--font-code);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.offer-reasons {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0 0 0 16px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.offer-margin {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.offer-margin.margin-ok {
+  color: #b7f0ad;
+}
+
+.offer-margin.margin-bad {
+  color: #ffd166;
+}
+
+.offer-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.offer-badge {
+  display: inline-block;
+  justify-self: start;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.offer-badge.offer-live {
+  border: 1px solid #6fae5a;
+  background: color-mix(in srgb, #6fae5a 16%, transparent);
+  color: #b7f0ad;
+}
+
+.offer-badge.offer-declined {
+  border: 1px solid #6f746f;
+  background: color-mix(in srgb, #6f746f 16%, transparent);
+  color: #c7ccc8;
+  opacity: 0.75;
+}
+
+.pattern-meta {
+  opacity: 0.7;
+}

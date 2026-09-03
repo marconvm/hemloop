@@ -14,6 +14,13 @@ export interface CampaignFacts {
   purchaseUrl?: string;
   productImage?: string;
   sizesInStock?: string[];
+  // Wave 3: locked offer rules a matcher uses to build a personal offer.
+  // Human-only, same as every other CampaignFacts field: no WebMCP tool
+  // writes these.
+  costPrice?: number;
+  marginFloorPercent?: number;
+  maxDiscountPercent?: number;
+  offerId?: string;
 }
 
 export type SceneKind = 'hero' | 'product' | 'offer' | 'cta';

@@ -21,8 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BRAND } from '@/lib/proofframe/brand';
 import { exportComposition } from '@/lib/proofframe/exporter';
+import { matchOffer, slug, toDemandSignalLike, type PersonalOffer } from '@/lib/proofframe/offers';
 import { seedCampaign } from '@/lib/proofframe/seed';
-import { makeCatalogImporter } from '@/lib/proofframe/shopify';
+import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
 // Namespace import so this component compiles even before a sibling branch
@@ -62,6 +63,17 @@ type SignalView = DemandSignal & {
   occasion?: 'everyday' | 'season' | 'gift' | 'event';
   for?: 'self' | 'partner' | 'kid';
   consent?: { level: 0 | 1 | 2 | 3; fields: string[] };
+  pattern?: {
+    discountSensitivity: 'code' | 'percent' | 'none';
+    spendBand: 'under-50' | '50-100' | '100-plus';
+    brandLoyalty: 'loyal' | 'switcher';
+  };
+};
+
+const SENSITIVITY_LABEL: Record<string, string> = {
+  code: 'code-sensitive',
+  percent: 'percent-sensitive',
+  none: 'not discount-sensitive',
 };
 
 const CONSENT_LEVEL_LABEL: Record<number, string> = {
@@ -89,6 +101,33 @@ function subscribeOutcomesSafe(onChange: () => void): () => void {
   return typeof mod.subscribeOutcomes === 'function'
     ? mod.subscribeOutcomes(onChange)
     : () => {};
+}
+
+// Same defensive-access pattern for the wave-3 personal-offer store: another
+// agent is adding readOffers/upsertOffer/subscribeOffers to signal-bridge.ts,
+// so this component must compile and render correctly whether or not that
+// landed yet.
+function readOffersSafe(): PersonalOffer[] {
+  const mod = signalBridgeModule as unknown as {
+    readOffers?: () => PersonalOffer[];
+  };
+  return typeof mod.readOffers === 'function' ? mod.readOffers() : [];
+}
+
+function subscribeOffersSafe(onChange: () => void): () => void {
+  const mod = signalBridgeModule as unknown as {
+    subscribeOffers?: (cb: () => void) => () => void;
+  };
+  return typeof mod.subscribeOffers === 'function'
+    ? mod.subscribeOffers(onChange)
+    : () => {};
+}
+
+function upsertOfferSafe(offer: PersonalOffer): boolean {
+  const mod = signalBridgeModule as unknown as {
+    upsertOffer?: (o: PersonalOffer) => boolean;
+  };
+  return typeof mod.upsertOffer === 'function' ? mod.upsertOffer(offer) : false;
 }
 
 type Activity = {
@@ -236,9 +275,19 @@ export function ProofFrameStudio() {
   const [registeredCount, setRegisteredCount] = useState(0);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
   const [outcomes, setOutcomes] = useState<SignalOutcome[]>([]);
+  const [offers, setOffers] = useState<PersonalOffer[]>([]);
+  const [autoPropose, setAutoPropose] = useState(false);
   const [toolCallCount, setToolCallCount] = useState(0);
   const [blockedCount, setBlockedCount] = useState(0);
   const [inspectorOpen, setInspectorOpen] = useState(true);
+
+  // A stable, always-current view of `signals` for the getRequests callback
+  // handed to WebMCP tools, so a tool registered once still sees fresh
+  // incoming requests without re-registering every time a signal arrives.
+  const signalsRef = useRef<DemandSignal[]>([]);
+  useEffect(() => {
+    signalsRef.current = signals;
+  }, [signals]);
 
   // Row ids that just appeared, so the GA-debugger flash plays once and only
   // once (never re-derived from a ref read during render).
@@ -288,6 +337,47 @@ export function ProofFrameStudio() {
       active = false;
       unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setOffers(readOffersSafe());
+    });
+    const unsubscribe = subscribeOffersSafe(() => setOffers(readOffersSafe()));
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+
+  // Auto-propose is human-only and lives only in this browser, same as the
+  // consent dial (hemloop.consent) and outcomes.
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        setAutoPropose(window.localStorage.getItem('hemloop.autoPropose') === '1');
+      } catch {
+        /* ignore */
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const toggleAutoPropose = useCallback(() => {
+    setAutoPropose((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem('hemloop.autoPropose', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
   }, []);
 
   const pushActivity = useCallback((entry: Omit<Activity, 'id' | 'at'>) => {
@@ -428,6 +518,125 @@ export function ProofFrameStudio() {
     URL.revokeObjectURL(url);
   }, []);
 
+  // The catalog product behind the current campaign facts: matched by
+  // product name against the demo catalog snapshot, falling back to a
+  // synthetic product built from the facts alone. Reads campaignRef.current
+  // directly so it stays correct even if this function is captured once.
+  const getCatalogProductForCampaign = useCallback(() => {
+    const f = campaignRef.current.facts as FactsView;
+    const match = demoCatalog.products.find((p) => p.title === f.productName);
+    return {
+      handle: match?.handle ?? slug(f.productName),
+      title: match?.title ?? f.productName,
+      image: match?.image ?? f.productImage,
+      sizesInStock: f.sizesInStock,
+    };
+  }, []);
+
+  // Called only by the propose_offer WebMCP tool: an agent staged a
+  // proposal. A human still has to approve it before a shopper sees it.
+  const stageOfferFromAgent = useCallback(
+    (offer: PersonalOffer) => {
+      upsertOfferSafe(offer);
+      pushActivity({
+        actor: 'AI',
+        title: `Proposed an offer for request #${offer.requestId.slice(0, 8)}`,
+        detail: `${offer.discountPercent}% off, ${money(offer.price, offer.currency)}. Waiting for merchant approval.`,
+        status: 'agent',
+      });
+    },
+    [pushActivity],
+  );
+
+  // Human-initiated: the "Propose offer" button on one incoming request row.
+  const proposeOfferAsHuman = useCallback(
+    (signal: DemandSignal) => {
+      const request = toDemandSignalLike(signal);
+      if (!request) return;
+      const result = matchOffer({
+        request,
+        facts: campaignRef.current.facts,
+        catalogProduct: getCatalogProductForCampaign(),
+      });
+      if (!('offerId' in result)) {
+        pushActivity({
+          actor: 'MC',
+          title: 'Could not propose an offer',
+          detail: result.reason,
+          status: 'human',
+        });
+        return;
+      }
+      const offer: PersonalOffer = { ...result, proposedBy: 'human' };
+      upsertOfferSafe(offer);
+      pushActivity({
+        actor: 'MC',
+        title: `Proposed an offer for request #${signal.signalId.slice(0, 8)}`,
+        detail: `${offer.discountPercent}% off, ${money(offer.price, offer.currency)}.`,
+        status: 'human',
+      });
+    },
+    [getCatalogProductForCampaign, pushActivity],
+  );
+
+  const approveOffer = useCallback(
+    (offer: PersonalOffer) => {
+      const approved: PersonalOffer = {
+        ...offer,
+        status: 'approved',
+        approvedAt: new Date().toISOString(),
+      };
+      upsertOfferSafe(approved);
+      pushActivity({
+        actor: 'MC',
+        title: `Approved the offer for request #${offer.requestId.slice(0, 8)}`,
+        detail: `${offer.discountPercent}% off, ${money(offer.price, offer.currency)}, valid to ${offer.validTo}.`,
+        status: 'human',
+      });
+    },
+    [pushActivity],
+  );
+
+  const declineOffer = useCallback(
+    (offer: PersonalOffer) => {
+      upsertOfferSafe({ ...offer, status: 'declined' });
+      pushActivity({
+        actor: 'MC',
+        title: `Declined the offer for request #${offer.requestId.slice(0, 8)}`,
+        detail: 'The proposal will not be shown to the shopper.',
+        status: 'human',
+      });
+    },
+    [pushActivity],
+  );
+
+  // Auto-propose: when the human-only toggle is on, every incoming request
+  // that has no offer yet gets a matched proposal, proposedBy 'auto'. The
+  // merchant still has to approve it before a shopper sees anything.
+  useEffect(() => {
+    if (!autoPropose) return;
+    const alreadyOffered = new Set(readOffersSafe().map((o) => o.requestId));
+    for (const signal of signals) {
+      if (alreadyOffered.has(signal.signalId)) continue;
+      const request = toDemandSignalLike(signal);
+      if (!request) continue;
+      const result = matchOffer({
+        request,
+        facts: campaignRef.current.facts,
+        catalogProduct: getCatalogProductForCampaign(),
+      });
+      if (!('offerId' in result)) continue;
+      const offer: PersonalOffer = { ...result, proposedBy: 'auto' };
+      upsertOfferSafe(offer);
+      pushActivity({
+        actor: 'PF',
+        title: `Auto-proposed an offer for request #${signal.signalId.slice(0, 8)}`,
+        detail: `${offer.discountPercent}% off, ${money(offer.price, offer.currency)}. Waiting for merchant approval.`,
+        status: 'system',
+      });
+    }
+  }, [autoPropose, signals, getCatalogProductForCampaign, pushActivity]);
+
   const callbacks = useMemo<ProofFrameCallbacks>(
     () => ({
       getState: () => campaignRef.current,
@@ -438,6 +647,10 @@ export function ProofFrameStudio() {
       seekPreview: agentSeekPreview,
       importProduct: agentImportProduct,
       deliverExport: saveComposition,
+      getRequests: () => signalsRef.current,
+      getOffers: () => readOffersSafe(),
+      stageOffer: stageOfferFromAgent,
+      getCatalogProduct: getCatalogProductForCampaign,
     }),
     [
       agentAddScene,
@@ -447,6 +660,8 @@ export function ProofFrameStudio() {
       agentSeekPreview,
       agentSetBrief,
       agentUpdateScene,
+      getCatalogProductForCampaign,
+      stageOfferFromAgent,
     ],
   );
 
@@ -507,6 +722,16 @@ export function ProofFrameStudio() {
     () => aggregateSignals(signals, outcomeById),
     [signals, outcomeById],
   );
+  // The most recent offer per request (a request can be re-proposed after a
+  // decline). proposedAt is an ISO timestamp, so string comparison sorts.
+  const latestOfferByRequest = useMemo(() => {
+    const map = new Map<string, PersonalOffer>();
+    for (const o of offers) {
+      const existing = map.get(o.requestId);
+      if (!existing || o.proposedAt > existing.proposedAt) map.set(o.requestId, o);
+    }
+    return map;
+  }, [offers]);
 
   useEffect(() => {
     if (!playing || totalDuration <= 0) return;
@@ -818,6 +1043,76 @@ export function ProofFrameStudio() {
                 <UnlockKeyhole aria-label="Editable fact" />
               )}
             </label>
+          </div>
+
+          <div
+            className="offer-rules"
+            title="Human-only, no WebMCP tool can read or write the offer rules. propose_offer only stays inside them."
+          >
+            <p className="offer-rules-head">Offer rules</p>
+            <div className="truth-list">
+              <label className="truth-row">
+                <span>Cost price</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={campaign.facts.costPrice ?? ''}
+                  disabled={campaign.factsLocked}
+                  aria-label="Cost price"
+                  onChange={(event) =>
+                    updateFact(
+                      'costPrice',
+                      event.target.value === '' ? undefined : Number(event.target.value),
+                    )
+                  }
+                />
+                {campaign.factsLocked ? (
+                  <LockKeyhole aria-label="Locked fact" />
+                ) : (
+                  <UnlockKeyhole aria-label="Editable fact" />
+                )}
+              </label>
+              <label className="truth-row">
+                <span>Margin floor %</span>
+                <input
+                  type="number"
+                  value={campaign.facts.marginFloorPercent ?? ''}
+                  disabled={campaign.factsLocked}
+                  aria-label="Margin floor percent"
+                  onChange={(event) =>
+                    updateFact(
+                      'marginFloorPercent',
+                      event.target.value === '' ? undefined : Number(event.target.value),
+                    )
+                  }
+                />
+                {campaign.factsLocked ? (
+                  <LockKeyhole aria-label="Locked fact" />
+                ) : (
+                  <UnlockKeyhole aria-label="Editable fact" />
+                )}
+              </label>
+              <label className="truth-row">
+                <span>Max discount %</span>
+                <input
+                  type="number"
+                  value={campaign.facts.maxDiscountPercent ?? ''}
+                  disabled={campaign.factsLocked}
+                  aria-label="Max discount percent"
+                  onChange={(event) =>
+                    updateFact(
+                      'maxDiscountPercent',
+                      event.target.value === '' ? undefined : Number(event.target.value),
+                    )
+                  }
+                />
+                {campaign.factsLocked ? (
+                  <LockKeyhole aria-label="Locked fact" />
+                ) : (
+                  <UnlockKeyhole aria-label="Editable fact" />
+                )}
+              </label>
+            </div>
           </div>
 
           <div className="completeness-meter">
@@ -1156,6 +1451,17 @@ export function ProofFrameStudio() {
             <p className="panel-subtitle">
               No shopper identifier, one per approval.
             </p>
+            <label
+              className="auto-propose-toggle"
+              title="Human-only, no WebMCP tool can flip this."
+            >
+              <input
+                type="checkbox"
+                checked={autoPropose}
+                onChange={toggleAutoPropose}
+              />
+              Auto-propose incoming requests
+            </label>
             {aggregatedSignals.length > 0 && (
               <div className="demand-aggregate">
                 {aggregatedSignals.map((row) => (
@@ -1228,6 +1534,12 @@ export function ProofFrameStudio() {
                         Shared at level {view.consent.level}: {view.consent.fields.join(', ')}
                       </small>
                     )}
+                    {view.pattern && (
+                      <small className="signal-meta pattern-meta">
+                        Buying pattern: {SENSITIVITY_LABEL[view.pattern.discountSensitivity] ?? view.pattern.discountSensitivity},{' '}
+                        {view.pattern.spendBand}, {view.pattern.brandLoyalty}
+                      </small>
+                    )}
                     {signal.handle && (
                       <button
                         type="button"
@@ -1245,6 +1557,67 @@ export function ProofFrameStudio() {
                           : 'Answer this request'}
                       </button>
                     )}
+                    {(() => {
+                      const offer = latestOfferByRequest.get(signal.signalId);
+                      if (!offer) {
+                        return (
+                          <button
+                            type="button"
+                            className="propose-offer-button"
+                            onClick={() => proposeOfferAsHuman(signal)}
+                          >
+                            Propose offer
+                          </button>
+                        );
+                      }
+                      if (offer.status === 'proposed') {
+                        return (
+                          <div className="offer-proposal">
+                            <div className="offer-proposal-summary">
+                              <strong>{money(offer.price, offer.currency)}</strong>
+                              {offer.promoCode && (
+                                <span className="offer-code">{offer.promoCode}</span>
+                              )}
+                              <span>valid to {offer.validTo}</span>
+                            </div>
+                            <ul className="offer-reasons">
+                              {offer.reasons.map((reason, i) => (
+                                // Fixed proposal, fixed order: index is a stable key here.
+                                // oxlint-disable-next-line no-array-index-key
+                                <li key={i}>{reason}</li>
+                              ))}
+                            </ul>
+                            <p
+                              className={`offer-margin ${offer.marginCheck.ok ? 'margin-ok' : 'margin-bad'}`}
+                            >
+                              Margin {offer.marginCheck.resultingMarginPercent.toFixed(1)}%{' '}
+                              {offer.marginCheck.ok ? 'above the floor' : 'below the floor'}
+                            </p>
+                            <div className="offer-actions">
+                              <Button size="sm" onClick={() => approveOffer(offer)}>
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => declineOffer(offer)}
+                              >
+                                Decline
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      }
+                      if (offer.status === 'approved') {
+                        return (
+                          <span className="offer-badge offer-live">
+                            Offer live for this request: {money(offer.price, offer.currency)},
+                            valid to {offer.validTo}
+                          </span>
+                        );
+                      }
+                      return <span className="offer-badge offer-declined">Offer declined</span>;
+                    })()}
                   </div>
                 );
               })

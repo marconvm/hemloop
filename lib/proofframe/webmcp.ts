@@ -12,6 +12,7 @@ import type {
 } from './types';
 import { MAX_TOTAL_SECONDS, validateCampaign, validateScene, validateText } from './validator';
 import { exportComposition } from './exporter';
+import { matchOffer, offerIdFor, toDemandSignalLike, type PersonalOffer } from './offers';
 
 // A tool result is a plain JSON object. The browser serialises whatever
 // `execute` returns (spec: executeTool resolves to the JSON string of the
@@ -144,6 +145,16 @@ export interface ProofFrameCallbacks {
   importProduct?(handle: string): Promise<CampaignFacts> | CampaignFacts;
   /** Optional: hand the exported HTML to the page (e.g. trigger the download the human would). */
   deliverExport?(html: string): void;
+  /** Optional: the page's current incoming requests (raw, defensively
+   * parsed by propose_offer via toDemandSignalLike before use). */
+  getRequests?(): unknown[];
+  /** Optional: all personal offers the page knows about (any status). */
+  getOffers?(): PersonalOffer[];
+  /** Optional: stage a freshly matched offer (status 'proposed'). A human
+   * still approves it before a shopper ever sees it. */
+  stageOffer?(offer: PersonalOffer): void;
+  /** Optional: the catalog product behind the current campaign facts. */
+  getCatalogProduct?(): { handle: string; title: string; image?: string; sizesInStock?: string[] } | undefined;
 }
 
 function ok(data: object = {}): ToolContent {
@@ -526,13 +537,29 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'get_offer',
       description:
-        'Read the current offer as structured data a shopping agent can act on: product, prices, promo code, validity dates, the disclaimer that must accompany any claim, and the purchase link. Values come from facts a human locked; nothing an agent writes can change them.',
-      inputSchema: { type: 'object', properties: {} },
+        'Read the current offer as structured data a shopping agent can act on: product, prices, promo code, validity dates, the disclaimer that must accompany any claim, and the purchase link. Values come from facts a human locked; nothing an agent writes can change them. Pass requestId to read the approved personal offer for one incoming request instead of the general offer.',
+      inputSchema: { type: 'object', properties: { requestId: { type: 'string' } } },
       annotations: { readOnlyHint: true },
-      execute: () => {
+      execute: (args) => {
         const state = cb.getState();
         const facts = state.facts as CampaignFacts & { purchaseUrl?: string };
+        const requestId = typeof args.requestId === 'string' ? args.requestId : undefined;
+        if (requestId) {
+          const offers = cb.getOffers?.() ?? [];
+          const approved = offers.find(
+            (o) => o.requestId === requestId && o.status === 'approved',
+          );
+          if (!approved) {
+            return {
+              ok: false,
+              error: 'no-approved-offer',
+              next: 'Ask the merchant to approve a proposal for this request in the studio, or call get_offer without requestId for the general offer.',
+            };
+          }
+          return ok({ offer: approved });
+        }
         return ok({
+          offerId: facts.offerId ?? offerIdFor(facts),
           product: facts.productName,
           currency: facts.currency,
           regularPrice: facts.regularPrice,
@@ -585,6 +612,50 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
             next: 'Confirm the offer facts are unlocked and the handle exists in the catalog, then retry import_product with a valid handle.',
           };
         }
+      },
+    });
+  }
+
+  if (cb.getRequests && cb.stageOffer) {
+    tools.push({
+      name: 'propose_offer',
+      description:
+        'Propose a personal offer for one incoming request, inside the locked offer rules (cost, margin floor, max discount). The proposal is staged; a human approves it before the shopper can see it. Returns the proposal and its margin check.',
+      inputSchema: {
+        type: 'object',
+        properties: { requestId: { type: 'string' } },
+        required: ['requestId'],
+      },
+      execute: (args) => {
+        const requestId = typeof args.requestId === 'string' ? args.requestId : '';
+        const rawRequests = cb.getRequests!();
+        const raw = rawRequests.find((r) => toDemandSignalLike(r)?.signalId === requestId);
+        const request = raw ? toDemandSignalLike(raw) : null;
+        if (!request) {
+          return {
+            ok: false,
+            error: 'no-match',
+            message: `No incoming request with id "${requestId}".`,
+            next: 'Call get_campaign_state or check the studio for a valid incoming request id, then retry propose_offer.',
+          };
+        }
+        const state = cb.getState();
+        const catalogProduct = cb.getCatalogProduct?.();
+        const result = matchOffer({ request, facts: state.facts, catalogProduct });
+        if (!('offerId' in result)) {
+          return {
+            ok: false,
+            error: 'no-match',
+            message: result.reason,
+            next: 'Ask the merchant to adjust the offer rules, unlock more sizes, or check back once the request fits the locked offer rules.',
+          };
+        }
+        cb.stageOffer!(result);
+        return {
+          ok: true,
+          offer: result,
+          next: 'Tell the merchant the proposal is waiting for their approval in the studio.',
+        };
       },
     });
   }
