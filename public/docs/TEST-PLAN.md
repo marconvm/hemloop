@@ -71,7 +71,7 @@ Command: `for p in "" studio closet; do curl -s -o /dev/null -w "%{http_code}" h
 
 | # | Case | Result |
 |---|---|---|
-| R1 | Full unit suite after every milestone | PASS (120/120 at HEAD) |
+| R1 | Full unit suite after every milestone | PASS (127/127 at HEAD) |
 | R2 | `tsc --noEmit` after each change | PASS (clean) |
 | R3 | `oxlint` after each change | PASS (clean) |
 | R4 | Production build after each change | PASS |
@@ -153,7 +153,7 @@ Recovery objective for a prototype: redeploy from git + `wrangler deploy` in min
 
 ## 10. Go-Live Checklist
 
-- [x] All unit tests green (120/120), tsc clean, oxlint clean, production build clean
+- [x] All unit tests green (127/127), tsc clean, oxlint clean, production build clean
 - [x] Live deployment reachable on HTTPS, all three routes 200
 - [x] Real WebMCP runtime verified on the live URL (Chrome 151)
 - [x] Disclaimer/claim trust boundaries verified in the real runtime

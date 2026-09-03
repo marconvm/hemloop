@@ -6,7 +6,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 
 ## Green gates
 
-- `npm test`: **120/120 tests pass** (2026-09-03, after wave 4), including the replacement lifecycle, `replace` demand kind, inventory insight, offer attribution, consent gating, no-shopper-identifier signal schema, human approval, claim rejection, tool registration, catalog mapping and export structure.
+- `npm test`: **127/127 tests pass** (2026-09-03, after the wave-4 dual review), including the surface-wide tool contract, the get_demand output budget, the replacement lifecycle, `replace` demand kind, inventory insight, offer attribution, consent gating, no-shopper-identifier signal schema, human approval, claim rejection, tool registration, catalog mapping and export structure.
 - `npm exec -- tsc --noEmit`: clean.
 - `npm exec -- oxlint`: clean.
 - `npm run build`: clean; `/`, `/closet` and `/studio` are present in the Vinext output.
@@ -14,7 +14,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 - Chrome visual/interaction check on `http://localhost:3001`: all three routes render; the closet approval control arms and cancels visibly; the studio editor and proof trail render.
 - Cloudflare production check on `https://hemloop.marcoatwill.workers.dev`: `/`, `/closet` and `/studio` all load over HTTPS with the expected landing, closet and studio headings. The app was deployed with Wrangler 4.127.0.
 - HyperFrames exporter: previously checked with `npx hyperframes check` (0 errors, 0 warnings); exporter structure is also covered by unit tests.
-- Historical re-verification 2026-09-02 after dead-code removal: 41/41 tests, build and oxlint clean. The current present-tense gate is the 120/120 wave-4 run above.
+- Historical re-verification 2026-09-02 after dead-code removal: 41/41 tests, build and oxlint clean. The current present-tense gate is the 127/127 run above.
 
 ## Real WebMCP runtime: verified on the live deployment
 
@@ -62,7 +62,7 @@ The purchase count went 10 to 11, the matching `SignalOutcome` (`bought`) was re
 
 Recorded by Claude; independently re-verified by Codex on 2026-09-03 below.
 
-- `npm test`: 120/120 pass. New coverage: the replacement lifecycle (due block contents, an undated garment never flagged, oldest-garment wins, absence outranks wear, the seed closet actually ships one worn-out item), `report_demand_gap` kind `replace` (accepted at level `need`; an unknown kind still refused without burning the one-shot approval; `toSignal` accepts `replace` and still drops junk), `get_demand` (read-only, drops malformed rows, ids capped at 10 per group, registered by `getRequests` alone), `demandInsight` verdicts asserted against `matchOffer` itself, and one regression test for the `matchOffer` stock-source fix.
+- `npm test`: 120/120 pass at the time of this entry (127/127 after the dual-review fixes below). New coverage: the replacement lifecycle (due block contents, an undated garment never flagged, oldest-garment wins, absence outranks wear, the seed closet actually ships one worn-out item), `report_demand_gap` kind `replace` (accepted at level `need`; an unknown kind still refused without burning the one-shot approval; `toSignal` accepts `replace` and still drops junk), `get_demand` (read-only, drops malformed rows, ids capped at 10 per group, registered by `getRequests` alone), `demandInsight` verdicts asserted against `matchOffer` itself, and one regression test for the `matchOffer` stock-source fix.
 - `npx tsc --noEmit`: clean. `oxlint`: clean. `npm run build`: clean.
 - Documentation mirror: `public/docs/*` byte-identical to `docs/*` and `README.md`.
 - Deployed with Wrangler 4.127.0 as Worker version `0322742d-3f09-4660-9e98-3a6fac311518`.
@@ -71,7 +71,7 @@ Recorded by Claude; independently re-verified by Codex on 2026-09-03 below.
 
 ### Codex independent re-verification (2026-09-03)
 
-- `npm test`: **120/120 pass**; `npx tsc --noEmit`, `npx oxlint`, and `npm run build` clean.
+- `npm test`: **120/120 pass** at the time of Codex's run; 127/127 after the dual-review fixes. `npx tsc --noEmit`, `npx oxlint`, and `npm run build` clean.
 - Read-only live smoke returned HTTP 200 for `/`, `/closet`, `/studio`, `/docs/README.md`, and `www.hemloop.app/`. The deployed security-header contract remained present (HSTS, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`; no CSP by decision).
 - The Wave 4 lifecycle, `replace` kind, inventory insight, and stock-source behavior are covered by the passing tests. I did not mutate production storage or deploy during this verification.
 

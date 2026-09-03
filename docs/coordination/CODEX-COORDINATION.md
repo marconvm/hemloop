@@ -329,3 +329,37 @@ Still open, and deliberately not marked done:
    about the change against the wave-3 code it reviewed.
 
 Neither is a submission blocker: both are review depth on code whose behaviour is tested and live.
+
+### Dual review, wave 4 pre-submission (2026-09-03) — reconciliation
+Brief: `docs/coordination/DUAL-REVIEW-WAVE4-BRIEF.md` (handoff-safe; carries the extracted spec rules,
+a script audit of all 21 tools, and a facts run). Reviewer 1: Codex (`webmcp-help`, cmux surface:19).
+Reviewer 2: Claude general-purpose subagent. Only items both marked CHANGE were executed.
+
+| item | Codex | Claude-2 | bucket | action |
+|---|---|---|---|---|
+| `toDemandSignalLike` weaker than `toSignal` (unbounded signalId/category/size/handle) | CHANGE (found it) | CHANGE (fix correct) | AGREED | bounded to match the bridge; hostile row dropped outright |
+| `get_demand` has no output budget | CHANGE (found it) | CHANGE (**first fix insufficient**) | AGREED | fixed counts replaced with the running size guard `get_offers` already used |
+| Budget test measured the wrong axis | — | CHANGE | ONE-SIDE, measured | three shapes now, including 36-char UUID ids; the old fixture passed a broken tool |
+| `get_demand` description silent on the id cap | — | CHANGE | ONE-SIDE, measured | description says counts are exact and ids are capped |
+| `report_demand_gap` description 542 > 500 | — | keep (fix correct) | AGREED | trimmed to 412; surface-wide contract test added |
+| Stale 120 test count in 5 files | — | CHANGE | ONE-SIDE, factual | now 127 everywhere + mirror |
+| Brief's "no cache-control" claim | — | **CHANGE: the brief was wrong** | ONE-SIDE, measured | corrected in the brief; immutable chunks were already `max-age=31536000, immutable`, `cf-cache-status: HIT` |
+| `tsconfig target: ES2017` vs \p{Cf} / `.at()` / `color-mix()` | — | keep | no action | `noEmit: true`, so the target ships nothing; vite 8's `baseline-widely-available` (Chrome 111+/Safari 16.4+) governs and every API clears it |
+| `monthsBetween` DST / month-end | — | keep (executed) | no action | pure UTC calendar-field arithmetic, no ms math; Jan 31 to Feb 28 = 0 verified |
+| `findGaps`: never both missing and due | — | keep (executed) | no action | the `reported` set makes it structurally impossible |
+| Single old garment gets "only one in rotation", no `due` block | — | DEFER | DEFER | under-reports, never over-reports; the seed cannot reach it |
+| `shadcn` in dependencies, `@openai/sites-vite-plugin`, 1697-line studio component | — | DEFER | DEFER | real, cosmetic, in the build path — post-submission |
+| `cache-control` on un-hashed `public/*` | — | DEFER | DEFER | etag revalidation already works; the `_headers` merge mechanism is unverified |
+| Dependency versions incl. betas, `compatibility_date`, bindings, Smart Placement, observability, CSP | — | keep / do NOT touch | no action | all already at the right setting; changing any of them today is blank-page risk |
+
+**The dual review paid for itself twice.** Codex found a class of bug I could not see because I wrote
+both the tool and its tests in one pass. Reviewer 2 then found that my *fix* for it was wrong: fixed
+group/id counts passed a group-heavy fixture while still returning 1,670 chars on the ordinary
+production shape (36-char UUID ids over four sizes), because the dominant term is ids x id length,
+not group count. The repo already had the right pattern in `get_offers` — with a comment explicitly
+saying "rather than trusting a fixed row count" — and I reinvented the thing this codebase had
+already rejected. Reviewer 2 also caught that the brief's own cache-control fact was false, because
+`facts.sh` probes only `/`.
+
+**`crypto.randomUUID` caveat, no code change:** it is `undefined` outside a secure context, so
+`add_garment` breaks if the demo is run from `http://<LAN-IP>:5173`. Demo on hemloop.app or localhost.

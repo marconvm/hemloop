@@ -993,29 +993,66 @@ void test('every read-only tool declares readOnlyHint, and no writing tool claim
   }
 });
 
-void test('get_demand stays inside the output budget on the worst legitimate input', () => {
-  // The bridge stores at most 50 signals (MAX_STORED). Fifty distinct groups,
-  // every id at the 64-char cap toDemandSignalLike allows, is the worst case
-  // ordinary use can produce - no attacker involved. Before the caps landed
-  // this returned 19,291 chars against a ~1.5K budget.
-  const CATS = ['hoodie', 'tee', 'denim', 'jacket', 'footwear', 'accessory'];
-  const rows = Array.from({ length: 50 }, (_, i) => ({
-    signalId: `sig-${i}-${'a'.repeat(60)}`.slice(0, 64),
-    category: CATS[i % CATS.length],
-    size: `size-${i}`,
-    at: '2026-09-03T00:00:00.000Z',
-    level: 'need',
-    kind: 'gap',
-  }));
-  const { cb } = makeStore();
-  const t = buildTools({ ...cb, getRequests: () => rows }).find((x) => x.name === 'get_demand')!;
-  const out = t.execute({}) as { demand: unknown[]; groups: number; omitted: number };
-  const json = JSON.stringify(out);
-  assert.ok(json.length <= 1500, `get_demand returned ${json.length} chars`);
-  // Truncation must be visible, and the true totals must survive it.
-  assert.equal(out.groups, 50);
-  assert.equal(out.demand.length + out.omitted, 50);
-});
+// The bridge stores at most 50 signals (MAX_STORED), so these are the shapes
+// ordinary use can actually produce - no attacker involved. The first fix for
+// this used fixed group/id counts and passed the group-heavy fixture while
+// still returning 1,670 chars on the ordinary one, because the term that
+// dominates is ids x id length, not group count (wave-4 review, reviewer 2).
+// Production ids are 36-char UUIDs, so that case is the one that matters.
+const CATS = ['hoodie', 'tee', 'denim', 'jacket', 'footwear', 'accessory'];
+
+const BUDGET_SHAPES: [string, () => Record<string, unknown>[]][] = [
+  [
+    'many groups, ids at the 64-char cap toDemandSignalLike allows',
+    () =>
+      Array.from({ length: 50 }, (_, i) => ({
+        signalId: `sig-${i}-${'a'.repeat(60)}`.slice(0, 64),
+        category: CATS[i % CATS.length],
+        size: `size-${i}`,
+        at: '2026-09-03T00:00:00.000Z',
+        level: 'need',
+        kind: 'gap',
+      })),
+  ],
+  [
+    'the production shape: 36-char UUID ids over four real sizes',
+    () =>
+      Array.from({ length: 50 }, (_, i) => ({
+        signalId: crypto.randomUUID(),
+        category: CATS[i % CATS.length],
+        size: ['S', 'M', 'L', 'XL'][i % 4],
+        at: '2026-09-03T00:00:00.000Z',
+        level: 'need',
+        kind: 'gap',
+      })),
+  ],
+  [
+    'few groups, so every group is spelled out with its full id allowance',
+    () =>
+      Array.from({ length: 50 }, (_, i) => ({
+        signalId: crypto.randomUUID(),
+        category: CATS[i % 2],
+        size: `s${i % 4}`.padEnd(20, 'x'),
+        at: '2026-09-03T00:00:00.000Z',
+        level: 'need',
+        kind: 'gap',
+      })),
+  ],
+];
+
+for (const [label, build] of BUDGET_SHAPES) {
+  void test(`get_demand stays inside the output budget: ${label}`, () => {
+    const rows = build();
+    const { cb } = makeStore();
+    const t = buildTools({ ...cb, getRequests: () => rows }).find((x) => x.name === 'get_demand')!;
+    const out = t.execute({}) as { demand: unknown[]; groups: number; omitted: number };
+    const json = JSON.stringify(out);
+    assert.ok(json.length <= 1500, `get_demand returned ${json.length} chars for ${label}`);
+    // Truncation must be visible, and the true totals must survive it.
+    assert.ok(out.groups > 0);
+    assert.equal(out.demand.length + out.omitted, out.groups);
+  });
+}
 
 void test('toDemandSignalLike is no weaker than the bridge: a row that never came through storage is dropped', () => {
   // Wave-4 review (Codex): the second parse was looser than the first, so a

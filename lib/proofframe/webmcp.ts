@@ -130,10 +130,10 @@ export function truncate(value: string, max = 200): string {
   return value.length > max ? `${value.slice(0, max - 1)}...` : value;
 }
 
-/** get_demand result caps, sized so the worst case (50 stored signals, all
- * distinct groups) stays inside Chrome's ~1.5K tool-output budget. The counts
- * are never capped, only how many groups and ids are spelled out. */
-const MAX_DEMAND_GROUPS = 6;
+/** How many request ids get_demand spells out per group. Bounded for the
+ * agent's sake, not the budget's: three is enough to act on while the true
+ * total stays in `total`. How many GROUPS come back is decided by the running
+ * size guard in the tool, never by a fixed count. */
 const MAX_DEMAND_IDS = 3;
 
 export const UNTRUSTED_NOTE =
@@ -635,7 +635,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     tools.push({
       name: 'get_demand',
       description:
-        'Consented demand grouped by category and size, with the request ids to hand to propose_offer and, for each group, whether the locked offer can actually answer it (can-offer, size-not-in-stock, category-mismatch) and what to do about it. No shopper identifier travels; a `replace` count means those shoppers already own one and are past its replacement life.',
+        'Consented demand grouped by category and size, with request ids to hand to propose_offer and, per group, whether the locked offer can answer it (can-offer, size-not-in-stock, category-mismatch). Counts are exact; at most 3 ids are listed per group and low-priority groups are omitted to fit the output budget, so read `total`, `groups` and `omitted` rather than counting ids. No shopper identifier travels; `replace` counts shoppers who already own one.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: () => {
@@ -649,23 +649,31 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
           cb.getCatalogProduct?.(),
           cb.getBoughtRequestIds?.() ?? [],
         );
-        // Chrome's secure-tools guidance budgets a tool result at ~1.5K chars,
+        // Chrome's secure-tools guidance budgets a tool output at ~1.5K chars,
         // and the bridge stores up to 50 signals: the full grouping blows that
-        // budget on ordinary data, no attacker needed (wave-4 review). So the
-        // tool projects a bounded view - the groups worth acting on first,
-        // already ordered answerable/need/newest - and says what it left out.
+        // on ordinary data, no attacker needed (wave-4 review). Groups arrive
+        // already ordered answerable/need/newest, so take them in that order
+        // and stop on measured size, NOT on a fixed count - a fixed count is
+        // wrong on the axis that actually dominates here, ids x id length, and
+        // 36-char UUIDs put the real shape over budget while a group-heavy
+        // fixture stayed under. Same discipline as get_offers and get_wardrobe.
         // `action` is a constant per verdict and stays in the UI, not here.
-        const shown = groups.slice(0, MAX_DEMAND_GROUPS).map((g) => ({
-          category: g.category,
-          size: g.size,
-          total: g.total,
-          need: g.need,
-          want: g.want,
-          replace: g.replace,
-          bought: g.bought,
-          verdict: g.verdict,
-          requestIds: g.requestIds.slice(0, MAX_DEMAND_IDS),
-        }));
+        const shown: object[] = [];
+        for (const g of groups) {
+          const row = {
+            category: g.category,
+            size: g.size,
+            total: g.total,
+            need: g.need,
+            want: g.want,
+            replace: g.replace,
+            bought: g.bought,
+            verdict: g.verdict,
+            requestIds: g.requestIds.slice(0, MAX_DEMAND_IDS),
+          };
+          if (JSON.stringify([...shown, row]).length > 1150) break;
+          shown.push(row);
+        }
         return {
           ...ok({
             demand: shown,

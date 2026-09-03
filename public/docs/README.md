@@ -50,7 +50,7 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 ```sh
 npm install
 npm run dev                       # landing on /, studio on /studio, closet on /closet
-npm test                          # 120 tests
+npm test                          # 127 tests
 ```
 
 To connect an agent in a challenge-supported Chrome build: Chrome 149+ carries an origin-trial token for this domain, so no flag is needed there. On an older build, enable `chrome://flags/#enable-webmcp-testing` in the exact profile you will use, press **Relaunch**, then reopen the live URL. Or open the deployed URL in ChatGPT's desktop browser (GPT-5.6 Sol/Terra), where nothing needs enabling. Each page's header badge switches from "preview mode" to "tools live".
