@@ -59,7 +59,7 @@ live: paste, and cut the wait.
 | 0:00 | VO-01 (7.3s) | Cold open **already on `/closet`**, live badge visible, first call firing. No title card. | C1 |
 | 0:12 | VO-02 (10.6s) | `find_gaps` result: hoodie absent. Wardrobe grid visible, never read aloud. | n/a |
 | 0:35 | VO-03 (22.6s) | Sharing level already **2 Context**; payload preview visible before any click. `report_demand_gap` → `human-approval-required`. Human clicks **Approve next request (level 2)**. Retry succeeds; **hold on the payload**: this is the longest line, use it to let a judge read the fields and see no identity column. | C2, human click, C3 |
-| 1:00 | VO-04 (14.3s) | Cut to `/studio`. New event top of Incoming requests, its Occasion / For / "Shared at level 2" line visible. Human: **Unlock offer facts** → **Answer this request** → **Lock offer facts**; completeness meter visible. Agent never clicks. | n/a |
+| 1:00 | VO-04 (14.3s) | Cut to `/studio`. New event top of Incoming requests, its Occasion / For / "Shared at level 2" line visible. Human: **Unlock offer facts** → **Answer this request** → **Add sizes in stock** (meter 8 of 9 → 9 of 9) → **Lock offer facts**. Agent never clicks. | n/a |
 | 1:20 | VO-05 (10.5s) | Agent runs the five-call chain; human edits the hero heading by hand in the same canvas. 14 s of headroom here: the widest beat, spend it on the two-editors shot. | M1 |
 | 1:45 | VO-06 (15.1s) | The block: 50% off rejected, red row in the proof trail with the reason, canvas unchanged, agent self-corrects to 25%. | M2 |
 | 2:10 | VO-07 (15.2s) | `validate_claims` → `export_composition`; the downloaded composition plays with the disclaimer footer visible. | M3 |
