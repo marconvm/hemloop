@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Import,
   Pencil,
   Radio,
   Shirt,
@@ -8,6 +9,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Store,
+  Tag,
   ThumbsDown,
   ThumbsUp,
   Trash2,
@@ -22,27 +24,37 @@ import {
   findGaps,
   garmentsForProfile,
   readPreferences,
+  readPurchases,
   seedPreferences,
+  seedPurchases,
   seedWardrobe,
   sizesOwned,
   writePreferences,
+  writePurchases,
   type ConsentField,
   type DemandSignal,
   type Garment,
+  type GarmentCategory,
   type Preferences,
+  type Purchase,
   type ShopperProfile,
   type Wardrobe,
 } from '@/lib/proofframe/closet';
+import { SAMPLE_RECEIPTS, parseReceipt } from '@/lib/proofframe/receipts';
 import {
   appendSignal,
   clearSignals,
+  purchaseFromOffer,
   readConsentLevel,
+  readOffers,
   readOutcomes,
   readSignals,
   recordOutcome,
+  subscribeOffers,
   subscribeOutcomes,
   subscribeSignals,
   writeConsentLevel,
+  type PersonalOffer,
   type SignalOutcome,
 } from '@/lib/proofframe/signal-bridge';
 import {
@@ -111,7 +123,8 @@ const CONSENT_LEVELS: {
   {
     level: 3,
     label: 'Taste',
-    leaves: '+ colour family, materials to avoid, price ceiling',
+    leaves:
+      '+ colour family, materials to avoid, price ceiling, buying pattern (discount sensitivity, spend band, brand loyalty)',
     gains: 'creatives that match, no wasted offers',
   },
 ];
@@ -127,6 +140,7 @@ const FIELD_LABEL: Record<ConsentField, string> = {
   colourFamily: 'Colour family',
   avoidMaterials: 'Materials to avoid',
   priceCeiling: 'Price ceiling',
+  buyingPattern: 'Buying pattern',
 };
 
 const PROFILE_LABEL: Record<ShopperProfile, string> = {
@@ -207,6 +221,34 @@ export function ClosetStudio() {
 
   const [outcomes, setOutcomes] = useState<SignalOutcome[]>([]);
 
+  // Purchases across every merchant (including rivals). Same
+  // deterministic-seed-then-swap pattern as preferences: SSR-safe seed on
+  // first render, then whatever is already in this browser once mounted.
+  const [purchases, setPurchases] = useState<Purchase[]>(seedPurchases);
+  const purchasesRef = useRef(purchases);
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const stored = readPurchases();
+      purchasesRef.current = stored;
+      setPurchases(stored);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Approved personal offers, read from the bridge like signals/outcomes.
+  const [offers, setOffers] = useState<PersonalOffer[]>([]);
+  const prevOfferIdsRef = useRef<Set<string> | null>(null);
+  const [newOfferIds, setNewOfferIds] = useState<Set<string>>(new Set());
+  // Mirrors `signals` without becoming a callback dependency, so
+  // applyOffers can check "is this offer addressed to me" at call time.
+  const sentSignalIdsRef = useRef<Set<string>>(new Set());
+
+  const [receiptText, setReceiptText] = useState('');
+
   // Row ids that just appeared, so the GA-debugger flash plays once and only
   // once (never re-derived from a ref read during render).
   const prevSignalIdsRef = useRef<Set<string> | null>(null);
@@ -219,19 +261,31 @@ export function ClosetStudio() {
     setNewTrailIds((current) => new Set(current).add(id));
   }, []);
 
+  const garmentSeqRef = useRef(0);
+
+  // Low-level insert, no trail entry - shared by the AI-attributed
+  // addGarment below and any human-initiated path (receipt import, an
+  // offer marked Bought) that wants its own single summary trail entry
+  // instead of one per garment.
+  const insertGarment = useCallback((input: GarmentInput): Garment => {
+    garmentSeqRef.current += 1;
+    const garment: Garment = {
+      id: `g-${Date.now().toString(36)}-${garmentSeqRef.current}`,
+      ...input,
+      for: activeProfileRef.current,
+    };
+    const next = {
+      ...wardrobeRef.current,
+      garments: [...wardrobeRef.current.garments, garment],
+    };
+    wardrobeRef.current = next;
+    setWardrobe(next);
+    return garment;
+  }, []);
+
   const addGarment = useCallback(
     (input: GarmentInput): Garment => {
-      const garment: Garment = {
-        id: `g-${Date.now().toString(36)}`,
-        ...input,
-        for: activeProfileRef.current,
-      };
-      const next = {
-        ...wardrobeRef.current,
-        garments: [...wardrobeRef.current.garments, garment],
-      };
-      wardrobeRef.current = next;
-      setWardrobe(next);
+      const garment = insertGarment(input);
       pushTrail({
         actor: 'AI',
         title: `Added ${input.category} to the wardrobe`,
@@ -239,8 +293,16 @@ export function ClosetStudio() {
       });
       return garment;
     },
-    [pushTrail],
+    [insertGarment, pushTrail],
   );
+
+  const addPurchases = useCallback((newPurchases: Purchase[]) => {
+    if (newPurchases.length === 0) return;
+    const next = [...newPurchases, ...purchasesRef.current];
+    purchasesRef.current = next;
+    setPurchases(next);
+    writePurchases(next);
+  }, []);
 
   const emitSignal = useCallback(
     (signal: DemandSignal) => {
@@ -275,8 +337,10 @@ export function ClosetStudio() {
       getActiveProfile: () => activeProfileRef.current,
       getConsentLevel: () => consentLevelRef.current,
       getPreferences: () => preferencesRef.current,
+      getPurchases: () => purchasesRef.current,
+      addPurchases,
     }),
-    [addGarment, consumeShareApproval, emitSignal],
+    [addGarment, addPurchases, consumeShareApproval, emitSignal],
   );
 
   const handleToolCall = useCallback((name: string, result: ToolContent) => {
@@ -356,6 +420,47 @@ export function ClosetStudio() {
     };
   }, []);
 
+  useEffect(() => {
+    sentSignalIdsRef.current = new Set(signals.map((s) => s.signalId));
+  }, [signals]);
+
+  const applyOffers = useCallback(
+    (next: PersonalOffer[]) => {
+      const prev = prevOfferIdsRef.current;
+      const fresh =
+        prev === null ? [] : next.filter((o) => !prev.has(o.offerId));
+      setNewOfferIds(
+        prev === null ? new Set() : new Set(fresh.map((o) => o.offerId)),
+      );
+      prevOfferIdsRef.current = new Set(next.map((o) => o.offerId));
+      setOffers(next);
+      if (prev !== null) {
+        for (const o of fresh) {
+          if (o.status === 'approved' && sentSignalIdsRef.current.has(o.requestId)) {
+            pushTrail({
+              actor: 'AI',
+              title: 'Offer received for one of your requests',
+              detail: `${o.title}${o.size ? ` · ${o.size}` : ''} · ${o.discountPercent}% off`,
+            });
+          }
+        }
+      }
+    },
+    [pushTrail],
+  );
+
+  useEffect(() => {
+    let active = true;
+    queueMicrotask(() => {
+      if (active) applyOffers(readOffers());
+    });
+    const unsubscribe = subscribeOffers(() => applyOffers(readOffers()));
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [applyOffers]);
+
   const setProfile = useCallback(
     (profile: ShopperProfile) => {
       if (profile === activeProfileRef.current) return;
@@ -415,6 +520,98 @@ export function ClosetStudio() {
     [pushTrail],
   );
 
+  const importReceiptText = useCallback(
+    (text: string) => {
+      const parsed = parseReceipt(text);
+      if (!parsed) {
+        pushTrail({
+          actor: 'ME',
+          title: 'Could not import',
+          detail:
+            'Paste the receipt or order email text as-is, including the merchant name and item lines.',
+        });
+        return false;
+      }
+      const looksLikeEmail =
+        /^order\s*#/im.test(text) || /thank you for your order/i.test(text);
+      const source: Purchase['source'] = looksLikeEmail ? 'order-email' : 'receipt';
+      const stamp = Date.now().toString(36);
+      const newPurchases: Purchase[] = parsed.items.map((item, i) => ({
+        id: `import-${stamp}-${i}`,
+        at: parsed.at,
+        merchant: parsed.merchant,
+        brand: parsed.merchant,
+        title: item.title,
+        category: (item.category ?? 'accessory') as GarmentCategory,
+        size: item.size ?? 'OS',
+        price: item.price,
+        currency: parsed.currency,
+        promoCode: parsed.promoCode,
+        source,
+      }));
+      addPurchases(newPurchases);
+      let garmentsAdded = 0;
+      for (const item of parsed.items) {
+        if (!item.category) continue;
+        insertGarment({
+          category: item.category,
+          brand: parsed.merchant,
+          size: item.size ?? 'OS',
+          colour: 'unspecified',
+        });
+        garmentsAdded++;
+      }
+      pushTrail({
+        actor: 'ME',
+        title: `Imported ${parsed.items.length} item${parsed.items.length === 1 ? '' : 's'} from ${parsed.merchant}`,
+        detail: `${newPurchases.length} purchase${newPurchases.length === 1 ? '' : 's'} logged, ${garmentsAdded} added to the wardrobe.`,
+      });
+      return true;
+    },
+    [addPurchases, insertGarment, pushTrail],
+  );
+
+  const handleImportSubmit = useCallback(() => {
+    const text = receiptText.trim();
+    if (!text) return;
+    const imported = importReceiptText(text);
+    if (imported) setReceiptText('');
+  }, [receiptText, importReceiptText]);
+
+  const recordOfferOutcome = useCallback(
+    (offer: PersonalOffer, outcome: SignalOutcome['outcome']) => {
+      const at = new Date().toISOString();
+      const stamped: SignalOutcome = { signalId: offer.requestId, outcome, at };
+      const delivered = recordOutcome(stamped);
+      if (delivered) setOutcomes((current) => [stamped, ...current]);
+      if (outcome === 'bought') {
+        garmentSeqRef.current += 1;
+        const purchase = purchaseFromOffer(
+          offer,
+          `offer-${Date.now().toString(36)}-${garmentSeqRef.current}`,
+          at,
+        );
+        addPurchases([purchase]);
+        insertGarment({
+          category: purchase.category,
+          brand: purchase.brand,
+          size: purchase.size,
+          colour: 'unspecified',
+        });
+      }
+      pushTrail({
+        actor: 'ME',
+        title: delivered
+          ? outcome === 'bought'
+            ? 'Marked bought from an offer'
+            : 'Passed on an offer'
+          : `Could not record ${outcome}`,
+        detail: `${offer.title}${offer.size ? ` · ${offer.size}` : ''} · offer #${offer.offerId.slice(0, 8)}`,
+      });
+    },
+    [addPurchases, insertGarment, pushTrail],
+  );
+
   const profileWardrobe = useMemo(
     () => garmentsForProfile(wardrobe, activeProfile),
     [wardrobe, activeProfile],
@@ -426,6 +623,18 @@ export function ClosetStudio() {
     for (const o of outcomes) if (!map.has(o.signalId)) map.set(o.signalId, o);
     return map;
   }, [outcomes]);
+  const sortedPurchases = useMemo(
+    () => [...purchases].sort((a, b) => b.at.localeCompare(a.at)),
+    [purchases],
+  );
+  const sentSignalIdSet = useMemo(
+    () => new Set(signals.map((s) => s.signalId)),
+    [signals],
+  );
+  const myOffers = useMemo(
+    () => offers.filter((o) => o.status === 'approved' && sentSignalIdSet.has(o.requestId)),
+    [offers, sentSignalIdSet],
+  );
   const previewFields = useMemo(
     () =>
       consentFieldsForRequest(consentLevel, {
@@ -496,13 +705,17 @@ export function ClosetStudio() {
     const empty: Wardrobe = { garments: [] };
     wardrobeRef.current = empty;
     setWardrobe(empty);
+    purchasesRef.current = [];
+    setPurchases([]);
+    writePurchases([]);
     clearSignals();
     setSignals([]);
     setEditingId(null);
+    setReceiptText('');
     pushTrail({
       actor: 'ME',
-      title: 'Cleared wardrobe and requests sent',
-      detail: 'Both were removed from this browser only.',
+      title: 'Cleared wardrobe, purchases and requests sent',
+      detail: 'All three were removed from this browser only.',
     });
   };
 
@@ -729,6 +942,93 @@ export function ClosetStudio() {
               />
             </label>
           </div>
+
+          <div className="panel-heading preferences-heading">
+            <div>
+              <p className="eyebrow">Private</p>
+              <h2>Purchases across stores · {purchases.length}</h2>
+            </div>
+            <Tag aria-hidden="true" />
+          </div>
+          <p className="panel-intro">
+            What you bought, from any merchant, including{' '}
+            <span title="A rival store, seeded here to show the log works across brands, not just this one.">
+              rivals
+            </span>
+            . Never leaves this page as a raw row - only a{' '}
+            <span title="A summary derived from these rows: how you tend to get a discount, how much you tend to spend, whether you stick to one brand. Only travels at sharing level 3.">
+              buying pattern
+            </span>{' '}
+            can, at sharing level 3.
+          </p>
+          <div className="purchases-table">
+            {sortedPurchases.length === 0 ? (
+              <p className="panel-intro">No purchases logged yet.</p>
+            ) : (
+              sortedPurchases.map((p) => (
+                <div className="purchase-row" key={p.id}>
+                  <div>
+                    <strong>{p.title}</strong>
+                    <span className="purchase-meta">
+                      {p.merchant} · {p.size} · {p.currency} {p.price.toFixed(2)}
+                      {p.promoCode ? ` · code ${p.promoCode}` : ''}
+                      {p.offerId ? ` · offer #${p.offerId.slice(0, 8)}` : ''}
+                    </span>
+                  </div>
+                  <span
+                    className={`source-badge source-${p.source}`}
+                    title="How this purchase entered the log: a pasted till receipt, a pasted order email, added by hand, a catalog lookup, or an approved personal offer."
+                  >
+                    {p.source}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="panel-heading preferences-heading">
+            <div>
+              <p className="eyebrow">Human path</p>
+              <h2>Import a receipt or order email</h2>
+            </div>
+            <Import aria-hidden="true" />
+          </div>
+          <p className="panel-intro">
+            Paste a till receipt or an order-confirmation email. Parsed on
+            this page, no OCR, no network - it adds purchases and, for
+            recognised items, garments to the wardrobe.
+          </p>
+          <div className="import-form">
+            <textarea
+              className="import-textarea"
+              value={receiptText}
+              onChange={(e) => setReceiptText(e.target.value)}
+              placeholder="Paste receipt or order email text here"
+              maxLength={4000}
+              aria-label="Receipt or order email text"
+            />
+            <div className="import-actions">
+              {SAMPLE_RECEIPTS.map((sample) => (
+                <button
+                  key={sample.label}
+                  type="button"
+                  className="import-sample-button"
+                  onClick={() => setReceiptText(sample.text)}
+                >
+                  Paste sample: {sample.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                className="import-submit-button"
+                onClick={handleImportSubmit}
+                disabled={receiptText.trim().length === 0}
+              >
+                <Import aria-hidden="true" />
+                Import
+              </button>
+            </div>
+          </div>
         </aside>
 
         <section className="panel" aria-label="Fit and gaps">
@@ -944,6 +1244,85 @@ export function ClosetStudio() {
               })
             )}
           </div>
+
+          <div className="panel-heading preferences-heading">
+            <div>
+              <p className="eyebrow">Merchant approved</p>
+              <h2>Offers for your requests · {myOffers.length}</h2>
+            </div>
+            <Tag aria-hidden="true" />
+          </div>
+          <p className="panel-intro">
+            A human on the merchant side approved these for one of your
+            requests. Nothing here can buy for you.
+          </p>
+          <div className="activity-list">
+            {myOffers.length === 0 ? (
+              <p className="panel-intro">
+                No approved offers yet. They will appear here once a request
+                is answered.
+              </p>
+            ) : (
+              myOffers.map((o) => {
+                const outcome = outcomeBySignal.get(o.requestId);
+                const isNew = newOfferIds.has(o.offerId);
+                return (
+                  <div className={`activity-item ${isNew ? 'is-new' : ''}`} key={o.offerId}>
+                    <span
+                      className="activity-marker want-marker"
+                      title="A personal offer a human approved on the merchant side, answering one of your requests."
+                    >
+                      Offer
+                    </span>
+                    <div>
+                      <strong>
+                        {o.title}
+                        {o.size ? ` · Size: ${o.size}` : ''}
+                      </strong>
+                      <p>
+                        {o.currency} {o.price.toFixed(2)}
+                        {o.regularPrice > o.price
+                          ? ` (was ${o.currency} ${o.regularPrice.toFixed(2)})`
+                          : ''}
+                        {o.promoCode ? ` · code ${o.promoCode}` : ''}
+                      </p>
+                      <small>
+                        Valid until {new Date(o.validTo).toLocaleDateString()} · offer #
+                        {o.offerId.slice(0, 8)}
+                      </small>
+                      <div className="outcome-row">
+                        {outcome ? (
+                          <span className={`outcome-label outcome-${outcome.outcome}`}>
+                            {outcome.outcome === 'bought' ? 'Bought' : 'Passed'}
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="outcome-button outcome-bought"
+                              onClick={() => recordOfferOutcome(o, 'bought')}
+                            >
+                              <ThumbsUp aria-hidden="true" />
+                              Bought
+                            </button>
+                            <button
+                              type="button"
+                              className="outcome-button outcome-passed"
+                              onClick={() => recordOfferOutcome(o, 'passed')}
+                            >
+                              <ThumbsDown aria-hidden="true" />
+                              Passed
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
           <div className="activity-list closet-trail">
             <p className="eyebrow">Activity log</p>
             {trail.map((item) => {
@@ -968,11 +1347,11 @@ export function ClosetStudio() {
           </div>
           <button type="button" className="clear-all-button" onClick={clearAll}>
             <Trash2 aria-hidden="true" />
-            Clear wardrobe and requests sent
+            Clear wardrobe, purchases and requests
           </button>
           <p className="human-only-note">
-            Wardrobe rows and the request log live in this browser only.
-            Nothing is stored on a server. Clearing removes both.
+            Wardrobe rows, purchases and the request log live in this browser only.
+            Nothing is stored on a server. Clearing removes all three.
           </p>
         </aside>
       </section>

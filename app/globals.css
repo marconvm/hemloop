@@ -2400,6 +2400,91 @@ select {
   margin-top: 4px;
   padding: 4px 10px;
   border: 1px solid currentColor;
+}
+
+/* ===== closet wave 3 ===== */
+
+.purchases-table {
+  margin-top: 14px;
+  display: grid;
+  gap: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.purchase-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.purchase-row strong {
+  display: block;
+  color: #e8e8e2;
+  font-size: 13px;
+}
+
+.purchase-meta {
+  display: block;
+  margin-top: 2px;
+  color: #9a9f9b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.source-badge {
+  align-self: start;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #9a9f9b;
+  white-space: nowrap;
+}
+
+.source-badge.source-offer {
+  border-color: var(--acid);
+  color: var(--acid);
+}
+
+.import-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.import-textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgb(0 0 0 / 25%);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.import-sample-button,
+.import-submit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
   border-radius: 999px;
   background: transparent;
   color: inherit;
@@ -2498,4 +2583,27 @@ select {
 
 .pattern-meta {
   opacity: 0.7;
+}
+
+.import-submit-button {
+  border-color: var(--acid);
+  color: var(--acid);
+  font-weight: 700;
+}
+
+.import-submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.import-submit-button svg,
+.import-sample-button svg {
+  width: 13px;
+  height: 13px;
+}
+
+@media (max-width: 760px) {
+  .purchase-row {
+    grid-template-columns: 1fr;
+  }
 }
