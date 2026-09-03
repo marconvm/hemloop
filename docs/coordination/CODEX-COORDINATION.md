@@ -162,3 +162,16 @@ vocabulary + Instant Checkout lesson + roadmap, PRD roadmap, guides). Codex lane
 is FIXED pending peer re-review. Next: wave 2 (consent dial 0-3, preferences + get_preferences, occasion,
 Me/Partner/Kid, placement selector, completeness meter, bought/passed), judge re-review, video, public repo,
 Devpost.
+
+### Revamp wave 2 live (2026-09-02, Worker 3bcd95fb) — consent as the product mechanic
+Two Sonnet worktree agents (closet, studio) on a shared contract; Claude merged (one EOF CSS conflict), fixed a
+canvas-panel grid row the placement control had displaced, ran gates (tsc, oxlint, 63/63 tests, build), and
+smoked end to end in Chrome 151 on the local Worker: consent dial set to 2 Context, Approve (level 2), the
+agent's report_demand_gap crossed the bridge with occasion=gift, for=self, context.fitPreference and
+consent.fields listing exactly what left; the immediate retry was blocked again (one-shot intact); the studio
+showed the grouped count, the Need pill, Occasion/For/Shared-at-level lines, completeness 9 of 9 and the
+placement control. Shipped: consent levels 0-3 with payload preview and sharing-disabled at 0; preferences
+card + get_preferences (7th closet tool, closet_data fence); Shopping for Me/Partner/Kid across UI and tools;
+Bought/Passed outcomes via signal-bridge; placements Story/Feed/Display (human-only); offer completeness meter
+(9 facts, also in get_offer); Need/Want sorting in grouped view. Docs pass running as a third agent. Codex lane
+still dormant: everything since a80f9c4 is FIXED pending peer re-review.
