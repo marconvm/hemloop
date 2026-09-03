@@ -22,6 +22,7 @@ import {
 } from '../lib/proofframe/offers';
 import { buildClosetTools } from '../lib/proofframe/webmcp-closet';
 import { loopProgress, loopSteps } from '../lib/proofframe/loop';
+import { currentStation, stationOrder, stationStates } from '../lib/proofframe/loop-room';
 import { seedPreferences, seedPurchases, seedWardrobe } from '../lib/proofframe/closet';
 
 function makeStore(state: CampaignState = seedCampaign()) {
@@ -1201,4 +1202,32 @@ void test('loopSteps: every step names a real surface and a next action', () => 
     assert.ok(s.next.length > 0, `${s.key} needs a next action`);
     assert.ok(['/closet', '/studio'].includes(s.href), `${s.key} href`);
   }
+});
+
+// ---------- The Loop Room station model ----------
+
+void test('stationStates: a purchase starts the loop, and later flags cannot skip an earlier station', () => {
+  const none = { itemAdded: false, gapFound: false, requestSent: false, offerApproved: false, bought: false, attributed: false };
+  const s0 = stationStates(none, 1);
+  assert.equal(currentStation(s0), 'item');
+  assert.deepEqual(stationOrder().map((k) => s0[k]), ['current', 'todo', 'todo', 'todo', 'todo', 'todo', 'todo']);
+
+  // bought+attributed with nothing before them: still waiting on the item.
+  const late = { ...none, bought: true, attributed: true };
+  assert.equal(currentStation(stationStates(late, 1)), 'item');
+
+  const mid = { ...none, itemAdded: true, gapFound: true, requestSent: true };
+  const sm = stationStates(mid, 1);
+  assert.equal(currentStation(sm), 'offer');
+  assert.deepEqual(stationOrder().map((k) => sm[k]), ['done', 'done', 'done', 'current', 'todo', 'todo', 'todo']);
+});
+
+void test("stationStates: 'again' is done only when a second loop has actually started", () => {
+  const all = { itemAdded: true, gapFound: true, requestSent: true, offerApproved: true, bought: true, attributed: true };
+  const first = stationStates(all, 1);
+  assert.equal(first.learned, 'done');
+  assert.equal(first.again, 'current', 'the loop is closed and waiting to run again');
+  const second = stationStates(all, 2);
+  assert.equal(second.again, 'done');
+  assert.equal(currentStation(second), 'again', 'nothing is current once every station is done');
 });
