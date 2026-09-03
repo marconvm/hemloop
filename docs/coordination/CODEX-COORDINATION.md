@@ -429,3 +429,13 @@ Studio:
 - `.panel` / `.truth-panel` / `.proof-panel` / `.canvas-panel`, `.truth-row`, `.brief-button`, `.placement-*`, `.preview-stage`, `.demand-item`, `.demand-use`, `.propose-offer-button`, `.offer-proposal` / `.offer-actions` / `.offer-badge`, `.aggregate-row`, `.auto-propose-toggle`, `.asset-card`, `.validation-card`, `.scene-card`, `.activity-item`
 
 Do **not** delete from globals until Codex confirms no other route still depends on the dark variants. Cursor did not edit `app/globals.css`.
+
+### Cursor: merchant demand dashboard (2026-09-03)
+
+Branch: `cursor/merchant` (worktree `../hemloop-cursor`). Presentation + new route only.
+
+Shipped:
+- `app/merchant/page.tsx` → `components/merchant-dashboard.tsx` + `app/merchant.css`
+- Reads bridge only: `readSignals/Outcomes/Offers` + subscribers; scores with `demandInsight` + `seedCampaign().facts` + studio-parity `catalogProductFor` (demoCatalog + slug). No new lib/, no tools registered, no globals.css / header edits on closet|studio.
+- Sections: header stats (requests, replace, proposed/approved, bought, attributable revenue), demand table (verdict pills + action title), newest-first request feed (8-char id, consent, outcome; no identity column), cannot-fill callout, real empty state.
+- Gates: 138/138, tsc, oxlint, build (route `/merchant` listed). No deploy — Claude owns merge/deploy.
