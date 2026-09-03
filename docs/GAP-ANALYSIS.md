@@ -153,7 +153,7 @@ request id it could only get out of band.
 - [x] Fixed while building it: `matchOffer` checked `facts.sizesInStock` but reported
       `catalogProduct?.sizesInStock ?? facts.sizesInStock` on the offer it emitted, so it could
       propose a size the same offer then listed as out of stock. Both now read one resolved source
-- [x] 21 WebMCP tools total (9 closet, 12 studio), 127 unit tests
+- [x] 21 WebMCP tools total (9 closet, 12 studio), 135 unit tests
 
 Roadmap items unchanged by this wave: receipt OCR, real order-email connectors, a browser extension
 surface, aggregation before disclosure (k-anonymity floor), the outcome written back into the

@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
+import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
 import { BRAND } from '@/lib/proofframe/brand';
 import { exportComposition } from '@/lib/proofframe/exporter';
@@ -724,6 +725,20 @@ export function ProofFrameStudio() {
     () => new Map(outcomes.map((o) => [o.signalId, o.outcome])),
     [outcomes],
   );
+  const loopFlags = useMemo(
+    () => ({
+      // The studio never sees the wardrobe; a request arriving is proof enough
+      // that the closet found a gap.
+      gapFound: signals.length > 0,
+      requestSent: signals.length > 0,
+      offerApproved: offers.some((o) => o.status === 'approved'),
+      bought: outcomes.some((o) => o.outcome === 'bought'),
+      // Attribution is recorded on the shopper's page, which the merchant
+      // cannot read. The outcome is the furthest the merchant can see.
+      attributed: false,
+    }),
+    [signals, offers, outcomes],
+  );
   const aggregatedSignals = useMemo(
     () =>
       aggregateSignals(
@@ -903,7 +918,7 @@ export function ProofFrameStudio() {
         <div className="campaign-title">
           <span className="status-dot" aria-hidden="true" />
           Northlight Apparel / Back to school
-          <Badge className="status-badge">Synthetic demo</Badge>
+          <Badge className="status-badge">Fictional merchant</Badge>
         </div>
 
         <div className="header-actions">
@@ -934,6 +949,8 @@ export function ProofFrameStudio() {
           </Button>
         </div>
       </header>
+
+      <LoopRail surface="studio" flags={loopFlags} />
 
       <section
         className="studio-grid"

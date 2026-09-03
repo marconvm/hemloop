@@ -50,7 +50,7 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 ```sh
 npm install
 npm run dev                       # landing on /, studio on /studio, closet on /closet
-npm test                          # 127 tests
+npm test                          # 135 tests
 ```
 
 To connect an agent in a challenge-supported Chrome build: Chrome 149+ carries an origin-trial token for this domain, so no flag is needed there. On an older build, enable `chrome://flags/#enable-webmcp-testing` in the exact profile you will use, press **Relaunch**, then reopen the live URL. Or open the deployed URL in ChatGPT's desktop browser (GPT-5.6 Sol/Terra), where nothing needs enabling. Each page's header badge switches from "preview mode" to "tools live".
@@ -117,7 +117,7 @@ npm run deploy:worker
 
 ## Provenance
 
-All data is synthetic: "Northlight Apparel" is a fictional demo brand, the wardrobe is seeded, and the catalog is a synthetic apparel catalog (8 products) shaped like a Shopify store export, with photos sourced from Unsplash (credits in docs/PHOTO-CREDITS.md). The exported composition uses the open HyperFrames HTML composition shape; the exporter here was written for this entry. Work in this repository was created during the challenge submission window.
+The merchant side is entirely synthetic: "Northlight Apparel" is a fictional demo brand, and its catalog (8 products, Unsplash photos) is shaped like a Shopify store export. The shopper side mixes the two: the shopper, her purchase history and her sizes are seeded and fictional, but the brands and product photos in her wardrobe are real, from the author's own Shopify catalogs and used with permission. The split is deliberate. The studio is the surface that makes promotional claims, so no real brand's name is attached to a synthetic claim anywhere in this project. Full provenance in docs/PHOTO-CREDITS.md. The exported composition uses the open HyperFrames HTML composition shape; the exporter here was written for this entry. Work in this repository was created during the challenge submission window.
 
 ## License
 

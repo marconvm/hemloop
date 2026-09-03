@@ -1,6 +1,6 @@
 # Hemloop Use Cases
 
-Concrete scenarios showing where the loop earns its place. Personas are synthetic; every product, price and shopper is fictional.
+Concrete scenarios showing where the loop earns its place. Personas are synthetic and the merchant, its prices and its offer are fictional; the brands and photos in the shopper's wardrobe are real (see PHOTO-CREDITS.md).
 
 ## Primary loop
 

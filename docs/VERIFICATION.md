@@ -6,7 +6,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 
 ## Green gates
 
-- `npm test`: **127/127 tests pass** (2026-09-03, after the wave-4 dual review), including the surface-wide tool contract, the get_demand output budget, the replacement lifecycle, `replace` demand kind, inventory insight, offer attribution, consent gating, no-shopper-identifier signal schema, human approval, claim rejection, tool registration, catalog mapping and export structure.
+- `npm test`: **135/135 tests pass** (2026-09-03, after the wave-4 dual review and the presentation pass), including the surface-wide tool contract, the get_demand output budget, the replacement lifecycle, `replace` demand kind, inventory insight, offer attribution, consent gating, no-shopper-identifier signal schema, human approval, claim rejection, tool registration, catalog mapping and export structure.
 - `npm exec -- tsc --noEmit`: clean.
 - `npm exec -- oxlint`: clean.
 - `npm run build`: clean; `/`, `/closet` and `/studio` are present in the Vinext output.
@@ -14,7 +14,7 @@ This file separates verified behaviour from the remaining ChatGPT natural-langua
 - Chrome visual/interaction check on `http://localhost:3001`: all three routes render; the closet approval control arms and cancels visibly; the studio editor and proof trail render.
 - Cloudflare production check on `https://hemloop.marcoatwill.workers.dev`: `/`, `/closet` and `/studio` all load over HTTPS with the expected landing, closet and studio headings. The app was deployed with Wrangler 4.127.0.
 - HyperFrames exporter: previously checked with `npx hyperframes check` (0 errors, 0 warnings); exporter structure is also covered by unit tests.
-- Historical re-verification 2026-09-02 after dead-code removal: 41/41 tests, build and oxlint clean. The current present-tense gate is the 127/127 run above.
+- Historical re-verification 2026-09-02 after dead-code removal: 41/41 tests, build and oxlint clean. The current present-tense gate is the 135/135 run above.
 
 ## Real WebMCP runtime: verified on the live deployment
 
@@ -100,6 +100,20 @@ XXL reads CAN OFFER here because the seed campaign locks no `sizesInStock`; once
 ### Defect found and fixed during this wave
 
 `matchOffer` checked `facts.sizesInStock` for the stock refusal but reported `catalogProduct?.sizesInStock ?? facts.sizesInStock` on the offer it emitted, so with sizes coming only from an imported product it could propose a size that very offer then listed as out of stock. Both now read one resolved source. Found by asserting `demandInsight`'s verdict against `matchOffer` rather than against a restatement of its rules.
+
+
+## Presentation pass and loop rail, 2026-09-03
+
+Owner-directed after the dual review. Recorded by Claude; not independently re-verified.
+
+- Fixed a live 404: `/products/black-hoodie.jpg` was referenced by seed garment `g11` and had never been in the repo. A test now asserts every image path the seed wardrobe or the catalog references resolves to a file in `public/`, and a failed image hides itself rather than showing a broken icon.
+- The closet had been inheriting `.studio-grid`'s column ratios, putting the wardrobe in the narrowest track at 142px per card; inside a card the 56px thumbnail defined an implicit column that the brand name and the Edit/Delete pair fell into. Both fixed; `.closet-grid` had existed on the element with no rule behind it.
+- Every surface now carries the same navigation. Previously the closet could only reach the studio, the studio only the closet, and the docs only home.
+- Real product photography from the author's own Shopify catalogs (Bluenotes, Aeropostale) replaces stock imagery in the shopper's wardrobe and on the merchant's product. Provenance and the deliberate split, real brands on the shopper side, a fictional merchant on the claim-making side, are documented in `docs/PHOTO-CREDITS.md`. The "Synthetic demo" badges and the landing footer claim that "every brand, product and shopper is fictional" were true before this change and are not now; both were corrected rather than left standing.
+- New: a five-step loop rail (Gap, Approved request, Matched offer, Bought, Learned) on both surfaces, from a pure `loopSteps()` with 5 tests. A later flag cannot skip an earlier step, so an unauthenticated storage write cannot present the loop as further along than it is.
+- `docs/DEMO-SCRIPT.md` reframed to v4: one request's complete lifecycle is the spine, the trust proof is a 25-second supporting beat, and the export is a three-second flash. `video/CUE-SHEET.md` carries a banner saying its rows were timed against v3 and need re-timing.
+
+Gates: 135/135 tests, tsc clean, oxlint clean, build clean, mirror byte-identical.
 
 ## Remaining ChatGPT pairing check
 

@@ -21,6 +21,7 @@ import {
   type PersonalOffer,
 } from '../lib/proofframe/offers';
 import { buildClosetTools } from '../lib/proofframe/webmcp-closet';
+import { loopProgress, loopSteps } from '../lib/proofframe/loop';
 import { seedPreferences, seedPurchases, seedWardrobe } from '../lib/proofframe/closet';
 
 function makeStore(state: CampaignState = seedCampaign()) {
@@ -1137,4 +1138,57 @@ void test('fencing the size does not push get_demand over the output budget', ()
   const t = buildTools({ ...cb, getRequests: () => rows }).find((x) => x.name === 'get_demand')!;
   const json = JSON.stringify(t.execute({}));
   assert.ok(json.length <= 1500, `get_demand returned ${json.length} chars with fenced sizes`);
+});
+
+// ---------- The loop rail ----------
+
+void test('loopSteps: nothing done yet makes the first step current and the rest to do', () => {
+  const steps = loopSteps({
+    gapFound: false, requestSent: false, offerApproved: false, bought: false, attributed: false,
+  });
+  assert.deepEqual(steps.map((s) => s.state), ['current', 'todo', 'todo', 'todo', 'todo']);
+  assert.equal(steps[0]?.key, 'gap');
+  assert.deepEqual(loopProgress(steps), { done: 0, total: 5 });
+});
+
+void test('loopSteps: the first incomplete step is the current one', () => {
+  const steps = loopSteps({
+    gapFound: true, requestSent: true, offerApproved: false, bought: false, attributed: false,
+  });
+  assert.deepEqual(steps.map((s) => s.state), ['done', 'done', 'current', 'todo', 'todo']);
+  assert.equal(steps[2]?.key, 'offer');
+  assert.equal(steps[2]?.surface, 'studio', 'the next action is on the merchant surface');
+  assert.equal(steps[2]?.href, '/studio');
+  assert.deepEqual(loopProgress(steps), { done: 2, total: 5 });
+});
+
+void test('loopSteps: a later flag does not skip an earlier step', () => {
+  // Storage is not authenticated, and a page can be opened mid-flow. A "bought"
+  // with no request behind it must not present the loop as further along than
+  // it is.
+  const steps = loopSteps({
+    gapFound: false, requestSent: false, offerApproved: false, bought: true, attributed: true,
+  });
+  assert.equal(steps[0]?.state, 'current', 'still waiting on the gap');
+  assert.deepEqual(steps.map((s) => s.state), ['current', 'todo', 'todo', 'done', 'done']);
+});
+
+void test('loopSteps: all five done leaves no current step, which is the closed loop', () => {
+  const steps = loopSteps({
+    gapFound: true, requestSent: true, offerApproved: true, bought: true, attributed: true,
+  });
+  assert.ok(steps.every((s) => s.state === 'done'));
+  assert.equal(steps.find((s) => s.state === 'current'), undefined);
+  assert.deepEqual(loopProgress(steps), { done: 5, total: 5 });
+});
+
+void test('loopSteps: every step names a real surface and a next action', () => {
+  const steps = loopSteps({
+    gapFound: false, requestSent: false, offerApproved: false, bought: false, attributed: false,
+  });
+  for (const s of steps) {
+    assert.ok(s.label.length > 0, `${s.key} needs a label`);
+    assert.ok(s.next.length > 0, `${s.key} needs a next action`);
+    assert.ok(['/closet', '/studio'].includes(s.href), `${s.key} href`);
+  }
 });

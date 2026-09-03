@@ -1,5 +1,15 @@
 # Cue sheet: one-take demo, 2:50
 
+> **v4 reframe (2026-09-03).** DEMO-SCRIPT.md moved from "export is the climax" to
+> "one request's complete lifecycle is the spine", target 2:40. The cue rows below were
+> timed against v3 and no longer match beat for beat: the loop close (propose_offer →
+> merchant approve → get_offers → Bought → attribution) moved from an optional tail beat
+> to 1:10-2:05, and the trust proof shrank to a 25-second supporting beat at 2:05. Re-time
+> against the v4 table before recording. The on-screen device for the join is the loop rail
+> that now runs under the header on both surfaces.
+
+
+
 The timed layer over `docs/DEMO-SCRIPT.md`. That file holds the prompts and the
 argument; this one holds the clock and what preflight actually found.
 

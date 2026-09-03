@@ -455,10 +455,11 @@ select {
 .preview-product {
   position: absolute;
   right: -4%;
-  bottom: 10%;
-  width: 79%;
-  height: 64%;
+  bottom: 6%;
+  width: 62%;
+  height: 44%;
   transform: rotate(-7deg);
+  opacity: 0.55;
 }
 
 .preview-leg {
@@ -1788,21 +1789,33 @@ select {
 
 .facts-product-photo {
   width: 100%;
-  height: 96px;
+  /* Taller than a 96px band: a 96px slice of a full-length product shot can
+     only ever show a face or a hip, never the garment. */
+  height: 168px;
   margin-bottom: 14px;
   border-radius: 12px;
   object-fit: cover;
+  object-position: 50% 34%;
 }
 
+/* The product was a 72px corner thumbnail while abstract pills filled 79% of
+   the frame: the decoration was the hero and the thing being sold was a stamp
+   (wave-4 review). Reversed. */
 .preview-product-photo {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
-  border: 1px solid rgb(255 255 255 / 25%);
+  top: 8%;
+  right: 0;
+  width: 66%;
+  height: 62%;
+  border-radius: 14px 0 0 14px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-right: 0;
   object-fit: cover;
+  object-position: 50% 18%;
+  /* The copy sits left of the product; a soft scrim on that edge keeps the
+     headline readable over a light product-on-white shot without dimming the
+     garment itself. */
+  mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 45%) 12%, #000 34%);
   box-shadow: 0 12px 26px rgb(0 0 0 / 30%);
 }
 
@@ -2717,4 +2730,92 @@ select {
 .surface-nav a:focus-visible {
   opacity: 1;
   border-bottom-color: currentColor;
+}
+
+/* The loop rail: one request's lifecycle, identical on both surfaces, so the
+   two pages read as one workflow instead of two prototypes. */
+.loop-rail {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgb(23 25 25 / 60%);
+  font-size: 12px;
+}
+.loop-rail ol {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A global list-item rule elsewhere in this sheet gives li a border, 24px of
+   padding and a radius; the rail is not a card list. */
+.loop-rail li {
+  border: 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  /* The connector is a flex child of the step, not an inline pseudo-element:
+     inline-block left the dash and the label overlapping. */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.loop-step + .loop-step::before {
+  content: '';
+  flex: none;
+  width: 24px;
+  height: 1px;
+  background: color-mix(in srgb, currentColor 25%, transparent);
+}
+.loop-step > * {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.loop-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.loop-step.is-done {
+  opacity: 0.75;
+}
+.loop-step.is-done .loop-dot {
+  background: var(--accent, #c8f169);
+  border-color: var(--accent, #c8f169);
+}
+.loop-step.is-current {
+  opacity: 1;
+  font-weight: 600;
+}
+.loop-step.is-current .loop-dot {
+  background: transparent;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
+}
+.loop-step.is-todo {
+  opacity: 0.42;
+}
+.loop-step a:hover .loop-label,
+.loop-step a:focus-visible .loop-label {
+  text-decoration: underline;
+}
+.loop-next {
+  margin: 0;
+  opacity: 0.72;
+}
+@media (max-width: 900px) {
+  .loop-next {
+    flex-basis: 100%;
+  }
 }

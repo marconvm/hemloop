@@ -506,7 +506,9 @@ export function Landing() {
           Cloudflare Workers · domain registered with Vercel
         </p>
         <p>
-          Synthetic demo: every brand, product and shopper is fictional. Open source under MIT. ·{' '}
+          The shopper, her history and the merchant (Northlight Apparel) are fictional; the brands
+          and product photos in her wardrobe are real, used with their owner&apos;s permission. No real
+          brand makes a claim anywhere in this demo. Open source under MIT. ·{' '}
           {/* eslint-disable-next-line next/no-html-link-for-pages -- /docs is a static asset, not a Next route */}
           <a href="/docs/">Documentation</a> · Photos via Unsplash
         </p>
