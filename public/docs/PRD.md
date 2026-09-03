@@ -39,7 +39,7 @@ Argued before the solution, so the solution reads as a conclusion.
 
 ## 3. Solution and phases
 
-Three routes on one origin. `/` is the landing page (the pitch, agent setup, tool contract). `/closet` is the shopper surface: private wardrobe, gaps and sizes, a requests-sent list, 6 WebMCP tools. `/studio` is the merchant surface: approved offer facts (human control), live 9:16 composition preview with timeline, an Incoming requests panel fed by the signal bridge and grouped by category and size, and an agent activity log recording every agent action, acceptance and rejection; it registers 10 WebMCP tools. Export emits a standalone, deterministic HyperFrames-format HTML composition renderable to video.
+Three routes on one origin. `/` is the landing page (the pitch, agent setup, tool contract). `/closet` is the shopper surface: private wardrobe, gaps, sizes, preferences, a sharing-level dial and a requests-sent list, 7 WebMCP tools. `/studio` is the merchant surface: approved offer facts (human control), a placement control, live composition preview with timeline, an offer completeness meter, an Incoming requests panel fed by the signal bridge and grouped by category and size, and an agent activity log recording every agent action, acceptance and rejection; it registers 10 WebMCP tools. Export emits a standalone, deterministic HyperFrames-format HTML composition renderable to video.
 
 | Phase | Client-visible outcome | Gate | Date |
 |---|---|---|---|
@@ -68,6 +68,13 @@ Each criterion is verifiable and traceable to a test or a documented manual chec
 | AC-10 | DemandSignal has no shopper identifier or wardrobe field; `report_demand_gap` rejects without human one-shot approval, consumes approval on use, and returns the exact payload sent | tests/closet.test.ts |
 | AC-11 | Requests emitted on the closet surface appear in the studio Incoming requests panel live (same tab and cross tab) | browser loop verification |
 | AC-12 | The closet's read tools carry readOnlyHint and report_demand_gap is the only outbound tool | closet tool-surface test |
+| AC-13 | Name, account, email, wardrobe rows, purchase history and income are never sent by `report_demand_gap` at any consent level | tests/closet.test.ts |
+| AC-14 | Consent level 0 (Private) makes `report_demand_gap` return `sharing-disabled` and emit nothing, without touching the approval gate | tests/closet.test.ts |
+| AC-15 | `ConsentGrant.fields` is drawn only from the fixed `ConsentField` enum minted in code; no WebMCP tool can widen it to a free string | tests/closet.test.ts |
+
+## 4b. Consent, shipped 2026-09-02
+
+Wave 2 turns opt-in into the product mechanic rather than a checkbox in front of the loop. A shopper-controlled sharing level (0 Private, 1 Basics, 2 Context, 3 Taste, stored only in the browser) sets exactly which `ConsentField`s a `report_demand_gap` call may carry; `consentFieldsForRequest` is the single pure function both the tool and the payload-preview UI call, so they can never drift. AC-13 through AC-15 are the acceptance criteria this mechanic exists to satisfy.
 
 ## 5. Ownership
 
@@ -79,14 +86,14 @@ Each criterion is verifiable and traceable to a test or a documented manual chec
 
 ## 6. Roadmap: Hemloop as the middle layer
 
-Hemloop sits between the shopper's closet and the merchant's offer today. The next layer is Hemloop sitting between the merchant's locked offer and whatever agent does the actual buying. Four threads, ordered by what they build on:
+Hemloop sits between the shopper's closet and the merchant's offer today. The next layer is Hemloop sitting between the merchant's locked offer and whatever agent does the actual buying. Four threads, ordered by what they build on. Wave 2 (2026-09-02) shipped a first slice of every thread; what remains is called out per row.
 
-| Layer | What exists today | What's next |
+| Layer | Shipped 2026-09-02 | Still roadmap |
 |---|---|---|
-| Shopper profile | Sizes only, derived from owned garments (`sizesOwned()`) | A preferences card (fit, colour family, materials, price ceiling) as a first-class read tool; an `occasion` field on the demand event (season, gift, event); family sub-profiles (Me / Partner / Kid); purchase capture from receipts or order-email so the wardrobe fills itself |
-| Demand visibility | Grouped by category and size with counts; labelled Need or Want | Aggregation before disclosure: a k-anonymity floor so a demand cell only becomes visible to the merchant once enough distinct shoppers have contributed to it |
-| Creative output | One 9:16 HTML composition | Image and GIF export matched to real placements (Story 9:16, Feed 4:5, Display 16:9), then short video once the still and motion pipelines share one validator |
-| Commerce handoff | `get_offer`: locked facts as structured data with a purchase link, real and shipped | A purchase-or-not feedback loop, bought or passed on each demand event, written back so both sides learn |
+| Shopper profile | Preferences card (fit, colour family, materials, price ceiling, liked brands) as `get_preferences`, consent-gated per field; `occasion` on the demand event (season, gift, event); family sub-profiles (Me / Partner / Kid) via `garmentsForProfile` | Purchase capture from receipts or order-email so the wardrobe fills itself; a consent receipt the shopper can export |
+| Demand visibility | Grouped by category and size with counts; labelled Need or Want; each request carries the shopper's consent grant (level and exact fields) | Aggregation before disclosure: a k-anonymity floor so a demand cell only becomes visible to the merchant once enough distinct shoppers have contributed to it; per-merchant consent levels |
+| Creative output | Placement selector (Story 9:16, Feed 4:5, Display 16:9) on the existing HTML composition; a human-only control, no WebMCP tool sets it | Image and GIF export matched to those placements, then short video once the still and motion pipelines share one validator; a browser extension surface |
+| Commerce handoff | `get_offer`: locked facts as structured data with sizesInStock, purchaseUrl and an offer-completeness meter (9 facts, `computeCompleteness`); Bought / Passed outcomes recorded per demand event and shown in the studio | Receipts; real purchase capture; the outcome written back into the merchant's own reporting, not just displayed |
 
 The merchant already answers demand at two levels, Need and Want (`DemandSignal.kind`: `gap`/`fit` read as Need, `want` reads as Want). The roadmap above deepens both levels; it does not add a third.
 
@@ -99,7 +106,7 @@ Summarised; full schemas in `lib/proofframe/webmcp.ts` and docs/TECH-GUIDE.md.
 | get_campaign_state | read | readOnlyHint |
 | validate_claims | read | dry-run, never mutates |
 | export_composition | read | refuses on violations |
-| get_offer | read | readOnlyHint; returns the locked offer (product, prices, promo code, validity dates, disclaimer, purchase link) as structured data for a shopping agent |
+| get_offer | read | readOnlyHint; returns the locked offer (product, prices, promo code, validity dates, disclaimer, sizes in stock, purchase link, offer completeness) as structured data for a shopping agent |
 | set_brief | write | free-form, brief is not rendered copy |
 | add_scene / update_scene | write | claim-validated before apply |
 | reorder_scenes | write | permutation-checked |
@@ -114,7 +121,29 @@ Summarised; full schemas in `lib/proofframe/webmcp.ts` and docs/TECH-GUIDE.md.
 | get_my_sizes | read | readOnlyHint |
 | find_gaps | read | readOnlyHint |
 | check_fit | read | readOnlyHint; uses the public catalog snapshot |
+| get_preferences | read | readOnlyHint; fit, colour family, materials to avoid, price ceiling, liked brands; a field travels only if the sharing level allows it |
 | add_garment | write | enum-validated category, bounded strings |
-| report_demand_gap | write | only merchant-facing tool; requires human one-shot approval, emits a DemandSignal with no shopper identifier and returns the exact payload sent |
+| report_demand_gap | write | only merchant-facing tool; blocks outright with `sharing-disabled` at consent level 0, otherwise requires human one-shot approval, emits a DemandSignal with no shopper identifier scoped to the shopper's consent level, and returns the exact payload sent |
 
 Note on labelling: `DemandSignal.kind` values `gap` and `fit` are labelled **Need** in both UIs; `want` is labelled **Want**. The tool contract and stored value are unchanged; only the human-facing label differs.
+
+### DemandSignal shape (consent-gated)
+
+```json
+{
+  "signalId": "string, random event id, not a shopper id",
+  "kind": "gap | fit | want",
+  "category": "hoodie | tee | denim | jacket | footwear | accessory",
+  "size": "string or null",
+  "handle": "string or null",
+  "at": "ISO timestamp",
+  "level": "need | want",
+  "consent": { "level": "0 | 1 | 2 | 3", "fields": ["a fixed ConsentField enum, never a free string"] },
+  "occasion": "everyday | season | gift | event, present only at consent level >= 2",
+  "for": "self | partner | kid, present only at consent level >= 2",
+  "context": { "fitPreference": "string, present only at consent level >= 2" },
+  "taste": { "colourFamily": "string", "avoidMaterials": ["string"], "priceCeiling": "number, present only at consent level 3" }
+}
+```
+
+`fields` in `consent` is always a subset of the enum minted in `ConsentField` (`category`, `size`, `level`, `handle`, `occasion`, `for`, `fitPreference`, `colourFamily`, `avoidMaterials`, `priceCeiling`); no WebMCP tool can widen it. Name, account, email, wardrobe rows, purchase history and income never appear in this shape at any level.

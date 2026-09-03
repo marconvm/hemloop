@@ -9,8 +9,8 @@ Recording: ChatGPT (or Chrome + WebMCP flag) on the deployed URL. Two browser ta
 |---|---|---|---|
 | 0:00-0:12 | Cold open (per judge guidance: no title, app already working) | `/closet` already open, live-tools badge visible, `find_gaps` call firing in the agent pane | "This is Hemloop. A shopper's agent can expose missing demand to a store without exposing a shopper identity or their wardrobe rows." |
 | 0:12-0:35 | The shopper closet | `/closet`: wardrobe grid, agent calls `find_gaps`, gap card shows "no hoodie" | "The agent reasons over the wardrobe through WebMCP and finds what is missing: no hoodie. The merchant-facing channel is a different, much narrower schema." |
-| 0:35-1:00 | Human-approved request (first climax) | Agent tries `report_demand_gap` and gets `human-approval-required`; shopper presses **Approve next request**; retry succeeds and the full payload is visible | "The agent cannot decide to share. Its first call is rejected until the shopper approves one request. The retry sends only category, size and product plus event metadata, no account ID, stable hash or wardrobe rows, and the approval is consumed." |
-| 1:00-1:20 | Demand lands | Cut to `/studio`: Incoming requests shows "hoodie · M · northlight-hoodie · request #...". Human clicks **Unlock offer facts**, clicks **Answer this request**, clicks **Lock offer facts** again | "That minimal request reaches the merchant. They pull in the product snapshot and lock the offer facts: price, offer, code, dates and disclaimer. Like the shopper's approval, locking is a human button, deliberately not a tool." |
+| 0:35-1:00 | Human-approved request (first climax) | Sharing level already set to **2 Context**; the payload preview lists exactly what would leave the page before anyone presses anything. Agent tries `report_demand_gap` and gets `human-approval-required`; shopper presses **Approve next request (level 2)**; retry succeeds and the full payload is visible | "The agent cannot decide to share. Before it even tries, the payload preview shows exactly what would leave: category, size, product, occasion, no account ID, stable hash or wardrobe rows. Its first call is rejected until the shopper approves one request. The retry sends only that, and the approval is consumed." |
+| 1:00-1:20 | Demand lands | Cut to `/studio`: Incoming requests shows "hoodie · M · northlight-hoodie · request #..." with its Occasion, For and "Shared at level 2" consent line visible. Human clicks **Unlock offer facts**, clicks **Answer this request**, clicks **Lock offer facts** again; the offer completeness meter reads its locked count | "That minimal request reaches the merchant, with exactly what was shared shown on the row. They pull in the product snapshot and lock the offer facts: price, offer, code, dates and disclaimer. Like the shopper's approval, locking is a human button, deliberately not a tool." |
 | 1:20-1:45 | Agent builds | Agent reads state, sets the brief, updates `hero` / `cta`, then calls `seek_preview`; human tweaks a heading by hand in the same canvas | "Now the merchant's agent produces: ten typed tools on the same live state the human is editing. Two editors, one canvas, every action on the record." |
 | 1:45-2:10 | The block (second climax) | Chat: "Say 50% off, guaranteed." Agent activity log shows the red rejection with the exact reason; canvas unchanged; agent self-corrects to 25% | "And here is the trust boundary. The agent tries 50% off. Rejected before anything changes, with a machine-readable reason (the locked offer is 25) and the agent fixes its own copy. The wrong frame never existed." |
 | 2:10-2:35 | Export | Export button; downloaded composition plays with the disclaimer footer visible | "Export refuses while any claim is wrong. Out comes a deterministic motion composition, disclaimer baked into every frame as an element no tool can remove. The video is one output, the loop is the product." |
@@ -35,9 +35,10 @@ Paste these prompts exactly. They name the intended page tools and constrain the
 
 1. Use the same ChatGPT browser session for both live routes so the same-origin bridge is available.
 2. Open `https://hemloop.app/closet` and `https://hemloop.app/studio` in separate tabs. Reload both after WebMCP is enabled.
-3. Confirm the badges say **6 WebMCP tools live** and **10 WebMCP tools live**.
+3. Confirm the badges say **7 WebMCP tools live** and **10 WebMCP tools live**.
 4. If previous rehearsal requests remain, clear site data before the final rehearsal, then reload both tabs. Confirm the studio says there are no requests yet.
-5. Keep the closet's **Approve next request** button and the studio's **Incoming requests** / **Agent activity log** panels visible. Start with offer facts locked.
+5. On the closet page, set the sharing level to **2 Context**, and set **Shopping for: Me**.
+6. Keep the closet's **Approve next request (level 2)** button and the studio's **Incoming requests** / **Agent activity log** panels visible. Start with offer facts locked.
 
 ### Closet prompt C1: find the private gap (0:12)
 
@@ -51,7 +52,7 @@ Expected: `find_gaps` returns `No hoodie in the wardrobe.` No data crosses to th
 
 Expected: structured `human-approval-required`; the requests-sent list and studio remain unchanged.
 
-**Human action:** click **Approve next request** once. Keep the armed state visible for one beat.
+**Human action:** click **Approve next request (level 2)** once. Keep the armed state visible for one beat.
 
 ### Closet prompt C3: send the minimized request (0:47)
 
@@ -65,7 +66,7 @@ Expected: one request containing no shopper identifier, only `signalId`, `kind`,
 
 Expected: `human-approval-required` again. This is the one-shot proof.
 
-The live P4 verification already captured this call. In the final video, the button reverting to **Approve next request** after C3 is the faster visual proof that approval was consumed; skip C4 unless the take is comfortably ahead of time.
+The live P4 verification already captured this call. In the final video, the button reverting to **Approve next request (level 2)** after C3 is the faster visual proof that approval was consumed; skip C4 unless the take is comfortably ahead of time.
 
 ### Human bridge actions (1:00)
 
