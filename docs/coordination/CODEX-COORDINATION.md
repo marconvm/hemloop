@@ -175,3 +175,12 @@ card + get_preferences (7th closet tool, closet_data fence); Shopping for Me/Par
 Bought/Passed outcomes via signal-bridge; placements Story/Feed/Display (human-only); offer completeness meter
 (9 facts, also in get_offer); Need/Want sorting in grouped view. Docs pass running as a third agent. Codex lane
 still dormant: everything since a80f9c4 is FIXED pending peer re-review.
+
+### Docs pass live (2026-09-02, Worker a986ec0f) + a testing lesson
+README / guides / PRD / USE-CASES / DEMO-SCRIPT / CUE-SHEET / TEST-PLAN / GAP-ANALYSIS / landing table now match
+the code: 7 closet + 10 studio = 17 tools, consent dial, preferences, profile switch, outcomes, placements,
+completeness meter, 63 tests. Lesson recorded for every successor: the Chrome extension's tab runs in a
+background window (document.visibilityState === 'hidden'), so CSS transitions and animations never advance and
+IntersectionObserver never fires there. Two "bugs" chased tonight (fold height 0, reveal opacity 0) were that
+artefact. Verify visuals by measuring the DOM or by a human eye in a focused tab, never by a background-tab
+screenshot mid-animation. The fold now toggles display (simplest, works everywhere).
