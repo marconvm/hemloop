@@ -1,61 +1,167 @@
-# Devpost Submission Text (draft v3, judge-review pass)
+# Hemloop, Devpost submission text
+
+## The one-line version
+
+Two strategies negotiate through an agent: the shopper's buying behaviour against the merchant's
+commercial rules, with a human gate on each side, and neither side ever learns who the other is.
 
 ## Inspiration
 
-I run e-commerce and paid media for apparel retail. Purchase history tells merchants what sold, but rarely what a shopper still owns, is missing, or wants in which size. That context lives in closets and is too sensitive to hand over wholesale. Meanwhile the other half of my job, promotional creative, is exactly where agents are both most useful and most dangerous: a wrong percentage in a promo is a legal problem.
+I run e-commerce and paid media for apparel retail, so I have spent years on the ad-platform side of
+this problem. That machinery works one way: accumulate identity, infer intent from surveillance,
+match the inferred intent to a creative, optimise for the conversion. It gets better by knowing more
+about the person.
 
-WebMCP made a different boundary possible: let the shopper's agent reason over page-local context, but give the merchant-facing action a smaller schema and a human-only release gate. If the merchant does not need an identity to answer a product gap, do not send even a hashed one.
+Two things about it never sat right. It guesses at intent that the shopper could simply have stated.
+And it optimises for the platform's objective, not the merchant's: no ad system will decline to
+discount because the discount would break your margin floor.
 
-In one sentence each, the before/after: a shopper's agent can surface an anonymous demand event to a store in one human-approved tool call, where before the store simply never knew; a merchant's agent can turn that event into a claim-compliant offer in minutes, where before it took a design round-trip and a legal check. (The name: a hem loop is the small functional loop sewn inside a garment, hidden, structural, load-bearing. So is this one.)
+Meanwhile the other half of my job, promotional creative, is where agents are simultaneously most
+useful and most dangerous. A wrong percentage in a promo is not a bad impression, it is a legal
+problem.
+
+WebMCP made a different shape possible. The shopper's agent can reason over rich, page-local context
+that never leaves the page, while the merchant-facing action gets a deliberately tiny schema and a
+human-only release. If a store does not need an identity to answer "no hoodie, size M", then do not
+send one, not even a hash.
+
+(The name: a hem loop is the small functional loop sewn inside a garment. Hidden, structural,
+load-bearing. So is this one.)
 
 ## What it does
 
-Two web pages register 21 WebMCP tools. The shopper's agent shops a private closet and can send a store exactly one thing: what is missing, in what size, with no shopper identifier, and only after the person presses Approve. The merchant's agent answers inside offer facts a human locked first; copy that contradicts them is rejected before it renders. The guarantees are structural: there is no tool that can unlock facts, arm sharing, or approve an offer.
+Two web pages register **21 WebMCP tools**, nine on the shopper's closet and twelve on the merchant's
+studio.
 
-Maya has a closet. Northlight Apparel (a demo brand) has a campaign. The agent is the only thing that touches both.
+The shopper's agent reads a private wardrobe: what she owns, what is missing, what is thin, and, from
+purchase dates, what is **worn out**. It can send a store exactly one thing, and only after she
+presses Approve: a category, a size, need or want. No name, no account, no hash, no wardrobe rows.
+One press releases one event, and the approval is consumed.
 
-The loop, in three steps:
+The merchant's agent reads that demand grouped and scored against the stock the merchant actually
+locked, proposes a personal offer **inside locked commercial rules**, and a human approves before the
+shopper ever sees it. She answers Bought or Passed. Bought records the purchase with the id of the
+offer that won it.
 
-1. **The shopper's agent finds the gap.** On `/closet`, nine WebMCP tools let the agent read wardrobe rows, find what is missing or worn out, check fit against a product catalog snapshot, and read (or import from a pasted receipt) a purchase log spanning every store, rivals included. The only tool that can send anything to a merchant, `report_demand_gap`, rejects until the shopper presses **Approve next request**, a human-only control deliberately absent from WebMCP. One approval releases one event with no shopper identifier: category, size, optional product, kind, time and a random event id; at the shopper's highest sharing level it may also carry a coarse buying pattern derived from that purchase log, never the raw purchases. `find_gaps` is also a lifecycle scan: when the oldest garment in a category is past its typical replacement life, the row comes back with a `due` block and the agent reports it with kind `replace`, which is timing a merchant cannot infer from their own sales. The tool returns the exact payload sent, so the boundary is inspectable.
-2. **The merchant answers it, inside locked facts and locked offer rules.** On `/studio`, consented demand arrives in a live panel, grouped by category and size with counts, labelled Need or Want, and scored against the stock they locked: can offer, size out of stock, or other category. `get_demand` hands their agent those same rows with the request ids, and the verdict runs the same two predicates the matcher refuses on, so the panel can never promise what `propose_offer` would decline. The merchant locks the offer facts (prices, offer, code, dates, disclaimer) and the offer rules (cost, margin floor, max discount), then their agent produces through twelve WebMCP tools. Every rendered-copy mutation is claim-validated before it applies; "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason the agent self-corrects from. One of those tools, `propose_offer`, matches a single incoming request against the locked rules and stages a personal offer; the offer stays invisible to the shopper until a human approves it.
-3. **The offer becomes something a shopping agent can act on, and the loop closes.** `get_offer` reads the locked facts back out as structured data: product, prices, promo code, validity dates, disclaimer and a purchase link, or, called with a request id, the one approved personal offer answering that request. It is read-only and it is the handoff out of Hemloop toward whatever agent is doing the actual buying. On the closet side, the shopper reads the same approved offer with `get_offers` and answers Bought or Passed by hand; Bought records a purchase carrying the offer's id, so the offer that won the sale stays traceable and the next buying pattern reflects it.
+Every rendered claim the merchant's agent writes is validated against human-locked facts first. "50%
+off" against a locked 25% is rejected atomically, with a machine-readable reason the agent corrects
+itself from. The export refuses to exist while any claim is wrong, and the disclaimer is baked into
+every frame as an element no tool can remove.
 
-An agent video editor alone would be one of a thousand on GitHub. The product is the loop: private data stays private, demand becomes visible, the response is provably compliant and provably inside the merchant's margin, and a human closes it on both ends.
+## Why this is not ad-tech, which is the whole point
 
-## Why WebMCP fits
+This is the distinction I care most about, because on the surface it looks like the same loop.
 
-Both surfaces need tools operating on live page state in the user's own session: the wardrobe on one page, the campaign on the other. WebMCP registers typed tools in the page itself, so there is no backend, no OAuth, no sync layer, and the human watches every agent action land in the UI they are using. It also makes both trust boundaries structural: locking the offer is not a tool on either surface, the closet's only outbound tool cannot carry wardrobe data, and validation runs inside the tool layer where it cannot be skipped.
+| Ad platforms | Hemloop |
+|---|---|
+| Infer intent from surveillance, history, lookalikes | The shopper's agent **states** intent, once, deliberately |
+| Target a person or a cohort | Answer a **request id**. There is no person to target |
+| Personalise **which creative** to serve | Personalise **what the offer is**: discount depth, price, validity window |
+| The merchant's strategy is a bid | The merchant's strategy is **locked rules**: cost price, margin floor, maximum discount |
+| Optimise for the conversion | Optimise **inside the margin floor**, and decline rather than break it |
+| Compound by accumulating identity | Compound by accumulating **matched outcomes**, while identity never accumulates |
 
-## How this compares
+Concretely, `matchOffer` is behaviour-strategy against commercial-strategy, not signal against ad:
 
-Scraping-as-a-service gets its speed by reverse-engineering a site's private endpoints and its resilience by self-healing when the site changes, all without the site's knowledge. Hemloop inverts both: the site publishes a small, hand-written set of typed tools, so there is nothing to reverse-engineer and nothing to heal, and every write is validated against human-locked facts before it applies, so the wrong claim is never rendered rather than repaired later. Fewer tools, each with a trust boundary, instead of a marketplace of thousands.
+- A shopper whose history shows she buys **without needing a code** gets a *smaller* discount, capped
+  at 15%. Spending margin on someone who would have bought anyway is waste.
+- A shopper who is a **brand switcher** gets the strongest discount the merchant permits, because
+  winning her back is worth more to them than the margin on one sale.
+- If either move would break the merchant's floor, the offer **trims its own discount** in 5-point
+  steps until the margin holds, and says so in its reasons.
 
-The build leans on a small vocabulary for these properties rather than inventing its own: the harness enforces it, not the prompt; the model stages, the person applies; server-issued IDs only, so nothing the agent invents can become an identifier; snapshot evals over the tool boundary, including adversarial replays; and presentation as tools, where a tool like `seek_preview` or `export_composition` acts on the surface the human is already looking at instead of returning a payload blob (vocabulary borrowed from Anthropic's "The anatomy of effective commerce agents").
+No ad platform performs that third move. It is the merchant's own strategy constraining the
+personalisation, rather than an auction optimising past it.
 
-## Trust and safety, briefly
+And the behaviour that drives it never leaves the page as raw data. `buyingPattern()` derives a
+coarse, category-scoped shape from the purchase log, discount sensitivity, spend band, brand loyalty,
+and only that derived shape travels, only at the shopper's highest sharing level. The purchases
+themselves stay in her browser.
 
-The tool surface went through six review passes (two independent reviewers, then a fix-and-replay loop) covering the locked-facts boundary, export escaping, and the no-identifier event shape; every finding was fixed with a regression test and replayed against the live WebMCP runtime, not just unit tests. Full detail, including the adversarial cases, lives in [docs/SECURITY.md](./SECURITY.md).
+## The loop compounds, and that is the moat
 
-## How we built it
+Every completed loop makes both sides sharper, and neither side gains an identity:
 
-TypeScript. A pure, framework-free core (claim validator, composition exporter, wardrobe/fit/signal logic, receipt parser, personal-offer matcher, two WebMCP adapters) with 135 unit tests (including adversarial tool-boundary replays: extra-property XSS, malformed input, unicode claim evasion), wrapped by React surfaces that own all state and pass callbacks in. Registration probes both `navigator.modelContext` and `document.modelContext`. Product data is a synthetic apparel catalog shaped like a Shopify store export (this demo's connector), with a generic Catalog interface underneath so any source with handle, title, price and compare-at works unchanged. The two surfaces are routes of one origin, so the demo signal bridge works over localStorage and storage events with no dependency on multi-tab agent behaviour. The live app is deployed on Cloudflare Workers.
+1. **Bought** writes a purchase carrying the offer id that won it.
+2. That purchase joins the local log, so `buyingPattern` for that category sharpens: is she actually
+   code-driven, what does she really spend, is she loyal or switching.
+3. A sharper pattern shapes a better next offer: the right discount depth, the right validity window,
+   without the merchant learning anything new about her.
+4. On the merchant's side, each request sharpens `get_demand`: which category and size combinations
+   they persistently **cannot fill**. That is restock and assortment intelligence drawn from real
+   stated intent, not from a forecast.
+5. Run it long enough and the shopper's agent negotiates well on her behalf while the merchant's
+   rules stay in force. Both sides get better. **Neither side accumulated a profile of the other.**
+
+The rail across the top of both pages shows one request's position in that loop: Gap, Approved
+request, Matched offer, Bought, Learned.
+
+## What people and agents can now do together that was hard before
+
+- A shopper's agent can tell a store what she needs **without the store learning who asked**, and the
+  store can answer that specific person's need anyway. Previously the store either knew nothing, or
+  knew everything.
+- A merchant can let an agent set an actual **price** rather than pick a creative, because the
+  agent's freedom is bounded by rules the merchant locked and no tool can touch.
+- A merchant's agent can write promotional copy that is **checked against locked facts before it
+  applies**, so the wrong claim never exists rather than being caught in review.
+- A shopper can see, before approving, the exact payload that would leave her page, and can watch the
+  same tool be refused before and after her single approval.
+
+## Why WebMCP fits, specifically
+
+Both surfaces need tools that operate on **live page state in the user's own session**: the wardrobe
+on her page, the composition on his. WebMCP registers typed tools in the page itself, so there is no
+backend, no OAuth, no credential grant, and the human watches every agent action land in the UI they
+are already looking at.
+
+It also lets the trust boundaries be **structural rather than conventional**. The closet's only
+outbound tool physically cannot include wardrobe rows or an identifier: it can emit one shape. The
+studio has no tool that can touch locked facts, and there is deliberately **no `lock_facts`, no
+`unlock_facts`, no `approve_share`, no `set_sharing_level` and no `approve_offer`**. That absence is
+the product. An agent cannot do those things because the tools do not exist, not because it was asked
+nicely.
+
+## How we implemented WebMCP
+
+Registration targets `document.modelContext`, probing `navigator.modelContext` first for older
+drafts. Each tool is `{ name, description, inputSchema, annotations?, execute }`, schemas closed with
+`additionalProperties: false`, `readOnlyHint` on every reader and `untrustedContentHint` wherever
+user or catalog text flows through.
+
+The core is pure and framework-free: claim validator, composition exporter, wardrobe and fit logic,
+receipt parser, replacement-lifecycle scan, offer matcher, demand insight, and two WebMCP adapters,
+with **136 unit tests** including adversarial tool-boundary replays: extra-property XSS, malformed
+input, unicode claim evasion, output-budget floods, and fence-marker smuggling. React surfaces own
+all state and pass callbacks in, which is why the whole tool surface is testable without a browser.
+
+One test loops **every** tool on both surfaces and asserts the contract Chrome's secure-tools guidance
+sets: name charset and length, description under 500 characters, closed schemas, and `readOnlyHint`
+exactly on the readers. Results are bounded to the ~1.5K output budget by measuring the serialised
+size as rows are added, not by trusting a fixed row count.
+
+The two surfaces are routes of one origin, so the demo bridge runs over `localStorage` and storage
+events with no dependency on multi-tab agent behaviour. Storage is treated as a client-integrity
+boundary, not an authenticated one: everything read back is re-parsed into an exact shape, and a
+stored record can never claim more consent fields than its level grants.
 
 ## Challenges
 
-Making the data boundary checkable rather than promised: the demand-event type has no identity or wardrobe field; the human-only approval is consumed after one use; and the tool returns its own payload so a judge can inspect it in one minute. And scoping honestly: an earlier two-origin version depended on unverified multi-tab tool behaviour, so we kept the workflow and moved both surfaces to one origin.
+The hardest one was resisting my own instinct. Every time a feature got hard, the ad-platform answer
+was right there: just send an identifier, just let the agent optimise freely, just cache the shopper.
+Each of those would have made the build easier and the point disappear.
+
+The second was that a defensive re-parse is worthless if it is weaker than the parse it backs up. An
+independent review found ours was, and that a tool result could blow its output budget on ordinary
+data long before any attacker showed up.
 
 ## What's next
 
-Purchase capture, buying pattern, auto-matched personal offers and the Bought/Passed attribution loop shipped this wave. What is still real roadmap:
-
-1. **Real purchase capture.** `import_receipt` parses two pasted text shapes today, no OCR, no network. Next is receipt OCR for a photographed receipt and real order-email connectors (Gmail, a merchant's own confirmation webhook), so the log fills without the shopper pasting anything.
-2. **Aggregation before disclosure.** A merchant should see a pattern, not a single event: a k-anonymity floor so a demand cell only becomes visible once enough distinct shoppers have contributed to it. This is the article's cap on resulting state, applied to the privacy boundary instead of to the campaign.
-3. **Creatives for every placement.** Image and GIF exports first, matched to real ad placements (Story 9:16, Feed 4:5, Display 16:9), then short video once the still and motion pipelines share one validator.
-4. **A browser extension surface**, so the closet and the purchase log travel with the shopper instead of living on one origin.
-5. **The seam behind the WebMCP adapters.** Three interfaces, `ToolContract`, `ApprovalReceipt` and `PresentationEvent`, so a future authenticated backend can add server-side identity and revalidation without weakening the no-identifier bridge; sketched in `docs/integrations/commerce-agents/README.md`, not built.
-
-The first artefacts of that plan are in the repo: `docs/integrations/commerce-agents/` holds a SKILL.md a commerce-agents shopping agent would load to use the closet, and a snapshot eval case in that harness's format that drives our tool boundary instead of a model.
+Aggregation before disclosure, so a demand cell only becomes visible once enough distinct shoppers
+have contributed to it. Consent receipts a shopper can export. Per-merchant sharing levels. And
+writing the outcome back into the merchant's own reporting, rather than only displaying it.
 
 ## Built with
 
-TypeScript, React 19, WebMCP (`document.modelContext`, with `navigator.modelContext` fallback), a Shopify-shaped synthetic catalog, GSAP, Cloudflare Workers, HyperFrames composition format.
+TypeScript, React 19, Vite, Cloudflare Workers, WebMCP, and a Shopify catalog snapshot as the demo's
+commerce connector.

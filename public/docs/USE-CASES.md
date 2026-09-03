@@ -1,125 +1,160 @@
-# Hemloop Use Cases
+# The loop, as a story
 
-Concrete scenarios showing where the loop earns its place. Personas are synthetic and the merchant, its prices and its offer are fictional; the brands and photos in the shopper's wardrobe are real (see PHOTO-CREDITS.md).
+Personas are synthetic and the merchant, its prices and its offer are fictional; the brands and
+photos in the shopper's wardrobe are real (see [PHOTO-CREDITS.md](./PHOTO-CREDITS.md)).
 
-## Primary loop
+## The problem, in one page
 
-### UC-1: the shopper who will not upload her closet (a Need)
+A store wants to know what you need. The only machinery that currently answers that question works by
+accumulating you: cookies, history, lookalikes, a profile that gets more valuable to the platform the
+more of you it holds. It infers intent it could simply have been told, and it optimises for the
+platform's objective rather than the merchant's. No ad system will decline to discount because the
+discount would break your margin floor.
 
-**Actor:** Priya, a shopper with a browser agent.
-**Trigger:** "Help me fill the gaps in my winter wardrobe from this store, but don't share my closet."
-**Flow:**
-1. Priya's agent calls `find_gaps` and `get_my_sizes` on `/closet`, reasoning over her wardrobe locally.
-2. It finds she has no hoodie (a gap, labelled **Need** in the UI), checks fit against the store catalogue with `check_fit`, and recommends starting from her known size.
-3. It calls `report_demand_gap`. The tool refuses: `human-approval-required`.
-4. Priya reads the exact payload the agent wants to send (category, size, product, no name, no id, no wardrobe), presses **Approve next request** once, and the agent retries successfully.
-**Outcome:** the store learns "someone nearby needs a hoodie in M" and nothing else. Priya never uploaded a thing.
-**Why WebMCP:** the agent operates the wardrobe as structured tools on her own page; the identity boundary is a property of the tool schema, not a promise.
+Meanwhile the shopper is sitting on the answer. She knows what she owns, what is worn out, what size
+she takes and what she will not pay above. That context is far richer than anything a tracker
+reconstructs, and it is exactly the context she will not hand over wholesale, correctly.
 
-### UC-2: the shopper who wants something she does not need (a Want)
+So both sides lose. The store guesses. The shopper gets offers for things she already owns.
 
-**Actor:** Priya, later the same week.
-**Trigger:** "I already own three jackets, but I like the look of the new Northlight colourway. Let the store know I'm interested, without sending my closet."
-**Flow:**
-1. Priya's agent calls `get_wardrobe` and confirms jacket is not a gap; this is a stated preference, not a missing category.
-2. It calls `report_demand_gap` with `kind: "want"` and the product handle. The tool refuses: `human-approval-required`, same as any other event.
-3. Priya presses **Approve next request**, and the agent retries successfully; the event is labelled **Want** everywhere it appears.
-**Outcome:** the merchant sees a Want alongside any Needs, grouped separately by category and size, so "four people need a hoodie in M" and "one person wants a jacket colourway" read as two different kinds of demand, not one undifferentiated list.
-**Why WebMCP:** the same tool and the same schema carry both levels of demand; the `kind` field, not a separate tool, is what tells the merchant which one they are looking at.
+Hemloop's bet is that the missing piece is not more data. It is a **channel narrow enough to be
+safe**: one that carries a stated need instead of an inferred identity, and that lets each side keep
+its own strategy private while still matching them against each other.
 
-### UC-2b: the shopper buying a gift, at level 2 Context (a Need)
+## Maya's loop
 
-**Actor:** Priya, shopping for her partner.
-**Trigger:** "My partner needs a hoodie for a trip next week. Ask the store, but keep it at Context level, don't send colour or budget."
-**Flow:**
-1. Priya switches the closet's **Shopping for** control to Partner; her agent now reads and reasons over the partner's wardrobe rows only.
-2. It calls `find_gaps` on that profile and confirms hoodie is missing, then `get_my_sizes` for the partner's known size.
-3. Priya raises her sharing level to 2 Context (from the default 1 Basics) and sets the request's occasion to "gift" when asked; the payload preview shows exactly six fields: category, level, size, for, fitPreference, occasion, no colour, no price ceiling.
-4. The agent calls `report_demand_gap` with `occasion: "gift"`; the tool refuses `human-approval-required` until Priya presses **Approve next request (level 2)**.
-5. She approves once; the retry succeeds and the requests-sent list shows the exact payload, `for: "partner"` included, no name, id or wardrobe rows.
-**Outcome:** the merchant learns "a gift-occasion hoodie, size L, for a partner profile" and nothing about who Priya or her partner are; a level below (1 Basics) could not have carried occasion or the for field at all.
-**Why WebMCP:** the sharing level and the sub-profile switch are both human-only state the tool schema reads, never something the agent can raise or widen itself.
+```
+        SHOPPER (private, /closet)                    MERCHANT (locked, /studio)
+        ──────────────────────────                    ──────────────────────────
 
-### UC-3: the merchant who finally sees owned-inventory demand
+   wardrobe · sizes · purchase dates                  cost price · margin floor
+   preferences · buying pattern                       max discount · offer facts
+              │                                                  │
+              │ 1. find_gaps                                     │
+              ▼                                                  │
+     "no hoodie · size M"                                        │
+     "sneakers due, 21 months"                                   │
+              │                                                  │
+              │ 2. report_demand_gap   ┌──────────────┐          │
+              │    REFUSED ────────────│ HUMAN GATE   │          │
+              │                        │ Approve next │          │
+              │    one press ─────────▶│   request    │          │
+              │                        └──────────────┘          │
+              ▼                                                  ▼
+        ┌───────────────────────────────────────────────────────────┐
+        │  category · size · need-or-want · consent level            │
+        │  NO name · NO account · NO hash · NO wardrobe rows         │
+        └───────────────────────────────────────────────────────────┘
+              │                                                  │
+              │                              3. get_demand ──────┤
+              │                                 grouped, scored  │
+              │                                 against stock    │
+              │                                                  │
+              │                              4. propose_offer ───┤
+              │                                 inside the       │
+              │                                 margin floor     │
+              │                                       │          │
+              │                        ┌──────────────┐│         │
+              │                        │ HUMAN GATE   ││         │
+              │                        │   Approve    │◀┘        │
+              │                        └──────────────┘          │
+              │                                │                 │
+              │  5. get_offers  ◀──────────────┘                 │
+              ▼     addressed to the request id, never to a person│
+        ┌──────────────┐                                         │
+        │ HUMAN GATE   │                                         │
+        │   Bought     │                                         │
+        └──────────────┘                                         │
+              │                                                  │
+              │ 6. purchase records the OFFER ID that won it     │
+              ▼                                                  ▼
+      pattern sharpens locally                    demand picture sharpens
+              │                                                  │
+              └───────────────▶ next loop is better ◀────────────┘
+                        and neither side learned who the other is
+```
 
-**Actor:** a Hemloop merchant.
-**Trigger:** a hoodie demand event lands in the studio's Incoming requests panel, grouped with others as "hoodie · M · 4 requests".
-**Flow:**
-1. The merchant clicks "Answer this request"; the requested product's facts load from the catalogue.
-2. They lock the offer facts (price, 25% offer, code, dates, disclaimer).
-3. Their agent storyboards a 9:16 promo through the WebMCP tools; the merchant tweaks a headline by hand in the same canvas.
-4. Export produces a compliant, renderable composition; `get_offer` makes the same locked facts available as structured data with a purchase link, for any shopping agent that wants to act on it directly.
-**Outcome:** demand that used to be invisible offline becomes a same-day campaign, provably accurate, and consumable by a shopping agent once it exists.
-**Why WebMCP:** the creative tools that agents cannot click become a typed contract; the trust boundary is enforced in code.
+**One.** Maya's agent calls `find_gaps`. It returns three rows: she has no hoodie, only one jacket in
+rotation, and the sneakers she bought in November 2024 are twenty-one months past a twelve-month
+replacement life. The third row is the one no store could have guessed. It came from a purchase date
+sitting in her own browser.
 
-### UC-4: the agent that tries to oversell
+**Two.** The agent calls `report_demand_gap` and is refused: `human-approval-required`. Nothing has
+left the page. Maya reads the payload preview, which shows exactly what would go, and presses
+**Approve next request**. The retry succeeds and returns the precise payload sent. The agent tries
+once more out of habit and is refused again, because one press releases one event.
 
-**Actor:** the merchant's agent, over-eager.
-**Trigger:** "Make the offer pop, say 50% off, guaranteed lowest price."
-**Flow:** the tool call is validated against the locked 25% offer and the banned-phrase list; it is rejected before anything changes, with a machine-readable reason and a `next` instruction telling the agent what the compliant retry looks like; the agent rewrites its own copy to the true 25%.
-**Outcome:** the non-compliant frame never exists. The agent activity log shows the block for auditors.
-**Why WebMCP:** validation lives inside the tool layer, so "the agent cannot publish a false claim" is structural.
+**Three.** In Northlight's studio, the request arrives grouped with others by category and size, and
+scored against the stock the merchant actually locked: **can offer**, **size out of stock**, or
+**other category**. It carries no shopper identifier. What it does carry is a `replace` marker,
+telling the merchant these people already own the thing and wore it out. That is timing their own
+sales data cannot give them.
 
-### UC-4b: the merchant who fills the missing fact to unlock an agent action
+**Four.** The merchant's agent calls `propose_offer`. It cannot invent a price. It works inside cost
+price, margin floor and maximum discount, all locked by a human, none readable or writable by any
+tool. The proposal comes back at 25% off with its margin checked at 46.6% against a 35% floor, and
+its reasons written out. A human presses **Approve**. Until that press, `get_offers` on Maya's page
+returns nothing.
 
-**Actor:** the Hemloop merchant, mid-campaign.
-**Trigger:** a shopping agent calls `get_offer` and the result shows `completeness: { locked: 8, total: 9, missing: ["sizesInStock"] }`.
-**Flow:**
-1. The merchant checks the studio's completeness meter, "8 of 9 facts locked", and reads the one entry left in the missing list: "Sizes in stock, unlocks: agents can skip sizes you cannot fill."
-2. They unlock the offer facts, add the sizes currently in stock, and lock the facts again.
-3. The next `get_offer` call returns `sizesInStock: ["S", "M", "L"]` and `completeness: { locked: 9, total: 9, missing: [] }`.
-**Outcome:** the one missing fact was named in the tool's own output before the merchant went looking for it, and filling it is what turns "agents can skip sizes you cannot fill" from a locked-out action into a live one.
-**Why WebMCP:** `get_offer` and the studio's completeness meter share one `computeCompleteness` function, so what an agent sees as missing and what a human sees as missing can never drift apart.
+**Five.** Maya sees the offer, addressed to her request, not to her. Nothing on the page can buy for
+her. She presses **Bought**.
 
-### UC-4c: the gift hoodie that closes the loop, auto-proposed, approved, bought, attributed
+**Six.** The purchase is written with the offer id attached. Northlight learns their offer worked.
+They still do not know who she is.
 
-**Actors:** Priya, shopping for her partner; a Hemloop merchant, with Auto-propose switched on.
-**Trigger:** "My partner needs a hoodie for a trip next week." Same request as UC-2b, but this time the merchant has already turned on Auto-propose, and the offer rules (cost 24, margin floor 35%, max discount 30%) are locked.
-**Flow:**
-1. Priya's agent confirms the gap and her sharing level is 2 Context; she sets occasion to "gift" and approves once. `report_demand_gap` sends category, size, occasion and the `for: "partner"` field, no colour, no price ceiling, no purchase history.
-2. The request lands in the studio's Incoming requests. Because Auto-propose is on, `matchOffer` runs automatically: category matches, the size is in stock, and because the occasion is "gift" the offer's `validTo` shortens to 7 days out. The margin holds at the full discount, so nothing is trimmed. The proposal appears under the request, status `proposed`, `proposedBy: "auto"`.
-3. The merchant reads the proposal's price, reasons and margin check, and presses **Approve**. The offer's status becomes `approved`; no WebMCP tool could have done this step.
-4. Back on the closet page, the approved offer appears in **Offers for your requests** (the same thing `get_offers` would return to Priya's agent). Priya presses **Bought**.
-5. The purchase is recorded in the **Purchases across stores** panel with `source: "offer"` and `offerId` set to the offer's id, so the row that answered the request and the row it produced are linked.
-**Outcome:** a gift-occasion request became a personal offer inside the merchant's margin, without a human writing a single number by hand, and a human still made both consequential decisions, approving the offer and buying it. The next `buyingPattern` computed for hoodies now includes this purchase.
-**Why WebMCP:** every step an agent could take (matching, proposing, reading the approved offer back) is a typed tool; the two decisions that matter, approve and buy, stay off the tool surface entirely.
+## Run it three times
 
-## Secondary and edge
+This is the part that makes it a loop rather than a transaction.
 
-- **UC-5 Plain-editor fallback:** with no WebMCP runtime, both surfaces work as ordinary single-user editors (preview mode). No agent, no dead app.
-- **UC-6 Private-mode shopper:** localStorage blocked, the closet still functions; the bridge simply delivers nothing, no crash.
-- **UC-7 Auditor review:** a compliance reviewer opens the studio's agent activity log and reads every accepted and rejected agent action with reasons.
-- **UC-8 Catalogue refresh:** the merchant regenerates the product snapshot with one CLI command when the store changes.
+**Loop one.** Maya's pattern is thin, so the offer is generic: the merchant's standard 25%.
 
-## Out of scope (deliberately)
+**Loop two.** Her purchase log now shows most category buys went through without a promo code.
+`buyingPattern` marks her discount sensitivity `none`, and the matcher caps her discount at 15%.
+She still buys. **The merchant kept ten points of margin they would have given away**, because the
+shopper's own behaviour said the discount was not what closed her. An ad platform would have served
+the bigger discount, because a conversion is a conversion.
 
-- Real payment, checkout, or account creation.
-- Cross-merchant identity graphs or any persistent shopper profile.
-- Live Storefront API calls (the importer interface already matches, but the demo uses a committed snapshot).
-- Server-side video rendering (the export is a renderable file; rendering to MP4 is roadmap).
+**Loop three.** She buys a competing brand. Her pattern flips to `switcher`, and the next offer comes
+in at the maximum the merchant permits, because winning her back is worth more to them than the
+margin on one sale. That is not a bid. It is the merchant's own positioning deciding what she is
+worth, executed automatically.
 
-## Roadmap use cases
+And if any of those moves would break the floor, the offer trims its own discount in five-point steps
+until the margin holds, and says so.
 
-- **k-anonymity floor:** a merchant sees a demand cell only after N distinct shoppers contribute to it.
-- **Per-merchant fact schemas:** regional pricing and legal-copy templates as locked facts.
-- **Request relay:** the localStorage bridge becomes a hosted queue (same `DemandSignal` contract).
+**What accumulated:** on her side, a sharper local picture of how she actually shops. On theirs, a
+sharper picture of what they cannot fill. **What did not accumulate: any profile of Maya anywhere.**
+That is the inversion. Ad platforms compound by knowing more about the person. This compounds by both
+sides getting better at their own half.
 
-## Right time: the boots that wore out
+## Right time, not just right product
 
 Maya's closet knows she owns sneakers, so they are not a gap. It also knows she bought them in
-November 2024. Twenty-one months on, past the twelve a pair of shoes typically lasts, `find_gaps`
-returns footwear with a `due` block: the date, the months elapsed, and size 10. Her agent reports it
-with kind `replace`, and the merchant sees demand for footwear in size 10 from someone who already
-owns a pair and wore it out, which is timing their own sales data cannot give them. Nothing about
-where she bought them or what she paid travels; the replacement intervals are one table in the code
-that a merchant with real wear data should tune.
+November 2024. Twenty-one months on, `find_gaps` returns footwear with a `due` block: the date, the
+months elapsed, and size 10. Her agent reports it with kind `replace`, and the merchant sees demand
+from someone who already owns the thing and wore it out. Nothing about where she bought them or what
+she paid ever travels, and the replacement intervals are one table in the code a merchant with real
+wear data should tune.
 
 ## What the merchant cannot fill
 
-Northlight's studio panel groups the incoming requests: hoodie L, four requests, three of them
-replacing one they own, **can offer**. Hoodie XXL, six requests, **size out of stock**, with the
-reason on hover: restock it, or add the size to the offer facts before locking. Footwear 10, one
-request, **other category**: import a product in that category to answer it. The verdict runs the
-same two checks the matcher itself refuses on, so the panel never promises an offer that
-`propose_offer` would then decline. The merchant's agent reads the same rows with `get_demand`, and
-takes the request ids straight from them.
+Northlight's panel groups the incoming requests. Hoodie L, four requests, three of them replacing one
+they own, **can offer**. Hoodie XXL, six requests, **size out of stock**, with the reason on hover:
+restock it, or add the size to the offer facts before locking. Footwear 10, one request, **other
+category**: import a product in that category to answer it.
+
+The verdict runs the same two checks the matcher itself refuses on, so the panel can never promise an
+offer that `propose_offer` would then decline. The merchant's agent reads the same rows with
+`get_demand` and takes the request ids straight from them. This is restock and assortment
+intelligence drawn from stated intent rather than from a forecast.
+
+## Other shapes the same loop takes
+
+- **Shopping for someone else.** The profile switch scopes the wardrobe and every closet tool to Me,
+  Partner or Kid, so a gift request carries the right size without revealing whose it is.
+- **A receipt from a rival.** `import_receipt` parses a pasted order email locally, with no OCR and no
+  network. The purchase joins her log and sharpens her pattern even though the merchant who sees the
+  next request never made that sale.
+- **The handoff to a shopping agent.** `get_offer` returns the locked offer as structured data,
+  including sizes in stock, purchase link and an offer-completeness meter, so a third-party agent can
+  act on it without Hemloop being in the transaction.

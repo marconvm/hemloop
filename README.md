@@ -8,6 +8,22 @@ Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/).
 
 Maya has a closet. Northlight Apparel (a demo brand) has a campaign. The agent is the only thing that touches both.
 
+## This is not ad-tech, and the difference is the point
+
+On the surface it looks like the same loop: a signal arrives, something gets matched, an offer goes out. It is the opposite shape.
+
+An ad platform accumulates identity, infers intent it could have been told, and optimises for the conversion. Hemloop carries a **stated** need with no identity attached, and matches it against rules the merchant locked. `matchOffer` is one side's buying behaviour against the other side's commercial strategy:
+
+- A shopper whose history shows she buys **without needing a code** gets a *smaller* discount, capped at 15%. Spending margin on someone who would have bought anyway is waste.
+- A shopper who is a **brand switcher** gets the strongest discount the merchant permits, because winning her back is worth more than the margin on one sale.
+- If either move would break the merchant's **margin floor**, the offer trims its own discount in five-point steps until the margin holds, and says so in its reasons.
+
+No ad platform performs that third move. It is the merchant's own strategy constraining the personalisation instead of an auction optimising past it. And the behaviour driving it never leaves the page as raw data: `buyingPattern()` derives a coarse, category-scoped shape (discount sensitivity, spend band, brand loyalty), and only that shape travels, only at the shopper's highest sharing level.
+
+**The loop compounds, and identity never does.** Every closed loop writes a purchase carrying the id of the offer that won it. That sharpens the shopper's local pattern, so the next offer is better shaped; and it sharpens the merchant's picture of what they persistently cannot fill. Both sides get better at their own half. Neither side accumulated a profile of the other. Ad platforms compound by knowing more about the person; this compounds by matching outcomes.
+
+See [docs/USE-CASES.md](docs/USE-CASES.md) for the loop told as a story, run three times.
+
 Two surfaces, one origin, with the agent orchestrating both sides of the workflow:
 
 1. **The Closet** (`/closet`): the shopper surface. The agent uses 9 WebMCP tools to find wardrobe gaps, spot what the shopper owns that is worn out, check fit and read stated preferences against a product catalog snapshot (this demo's connector is Shopify). When something is missing, `report_demand_gap` can send one event carrying no shopper identifier (zero-ID) and a limited schema, but only after the shopper arms a one-shot approval in the UI. Which fields travel is set by a sharing level the shopper controls (0 Private through 3 Taste); the payload never has an account ID, stable hash or wardrobe rows. A purchase log across every merchant (rivals included) stays in the browser too; `import_receipt` reads a pasted receipt or order email into it, and `get_offers` reads back any approved personal offer addressed to this closet's own requests.

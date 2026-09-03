@@ -50,23 +50,34 @@
   <a class="home" href="/">← Home</a>
   <a class="home" href="/closet">Closet</a>
   <a class="home" href="/studio">Studio</a>
+  <div class="tag" style="margin-top:18px">Internal record</div>
+  <a class="home small" href="#PRD.md">Requirements</a>
+  <a class="home small" href="#TEST-PLAN.md">Test plan</a>
+  <a class="home small" href="#VERIFICATION.md">Verification</a>
+  <a class="home small" href="#GAP-ANALYSIS.md">Gap analysis</a>
+  <a class="home small" href="#PHOTO-CREDITS.md">Photo credits</a>
 </nav>
 <main><article id="content">Loading…</article></main>
 <script>
+  // Five documents, in the order a judge should read them. The internal record
+  // (test plan, verification, gap analysis, PRD, demo script, photo credits)
+  // stays in the repo where it belongs and is linked at the foot of the nav,
+  // rather than competing for attention with the product itself.
   const DOCS = [
-    ["README.md", "Overview"],
-    ["PRD.md", "Product Requirements"],
-    ["USE-CASES.md", "Use Cases"],
-    ["USER-GUIDE.md", "User Guide"],
-    ["TECH-GUIDE.md", "Tech Guide"],
-    ["TEST-PLAN.md", "Test Plan"],
-    ["SECURITY.md", "Security Review"],
-    ["VERIFICATION.md", "Verification Record"],
-    ["GAP-ANALYSIS.md", "Gap Analysis"],
-    ["PHOTO-CREDITS.md", "Photo Credits"],
-    ["DEMO-SCRIPT.md", "Demo Script"],
-    ["WRITEUP.md", "Submission Writeup"],
+    ["WRITEUP.md", "Start here: the argument"],
+    ["README.md", "Overview and tool surface"],
+    ["USE-CASES.md", "The loop, as a story"],
+    ["TECH-GUIDE.md", "WebMCP implementation"],
+    ["USER-GUIDE.md", "Using both surfaces"],
+    ["SECURITY.md", "Threat model and review"],
   ];
+  // Reachable by direct link, just not headline cards.
+  const EXTRA = [
+    ["PRD.md", "Requirements"], ["TEST-PLAN.md", "Test plan"],
+    ["VERIFICATION.md", "Verification"], ["GAP-ANALYSIS.md", "Gap analysis"],
+    ["PHOTO-CREDITS.md", "Photo credits"], ["DEMO-SCRIPT.md", "Demo script"],
+  ];
+  const ALL = [...DOCS, ...EXTRA];
   const toc = document.getElementById("toc");
   const content = document.getElementById("content");
   const links = {};
@@ -89,7 +100,9 @@
   }
   function route() {
     const file = location.hash.slice(1);
-    load(DOCS.some(([f]) => f === file) ? file : DOCS[0][0]);
+    // ALL, not DOCS: the internal record is still directly linkable from the
+    // foot of the nav even though it is not a headline card.
+    load(ALL.some(([f]) => f === file) ? file : DOCS[0][0]);
   }
   window.addEventListener("hashchange", route);
   route();
