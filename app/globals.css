@@ -1525,22 +1525,30 @@ select {
   border-bottom: none;
 }
 .tool-table-fold {
-  /* max-height, not grid 0fr/1fr: a grid track inside a table cell resolved to 0 in Chrome, hiding the rows. */
+  /* No height animation: a transition on this block inside a table cell never settled in Chrome
+     and pinned the height at 0. Toggle display, fade the inner content. */
   display: block;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 420ms ease;
 }
-.tool-table-fold[data-expanded='true'] {
-  max-height: 1600px;
+.tool-table-fold:not([data-expanded='true']) {
+  display: none;
 }
 .tool-table-fold-inner {
-  opacity: 0;
-  transition: opacity 320ms ease;
+  animation: tool-fold-in 320ms ease both;
 }
-.tool-table-fold[data-expanded='true'] .tool-table-fold-inner {
-  opacity: 1;
-  transition-delay: 80ms;
+@keyframes tool-fold-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-table-fold-inner {
+    animation: none;
+  }
 }
 .tool-table-toggle {
   justify-self: start;
