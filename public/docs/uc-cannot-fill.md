@@ -24,15 +24,15 @@ No merchant's cost or floor is shown to another merchant or to the shopper.
   <rect x="160" y="40" width="300" height="200" rx="14" fill="#fff" stroke="rgba(23,33,28,0.13)"/>
   <text x="310" y="68" text-anchor="middle" fill="#183e30" font-size="13" font-weight="800">Market scan</text>
   <text x="200" y="100" fill="#17211c" font-size="12">Northlight</text>
-  <text x="400" y="100" fill="#346b45" font-size="12" font-weight="700">can offer</text>
+  <text x="445" y="100" text-anchor="end" fill="#346b45" font-size="12" font-weight="700">can offer</text>
   <text x="200" y="124" fill="#17211c" font-size="12">Harborview</text>
-  <text x="400" y="124" fill="#346b45" font-size="12" font-weight="700">can offer</text>
+  <text x="445" y="124" text-anchor="end" fill="#346b45" font-size="12" font-weight="700">can offer</text>
   <text x="200" y="148" fill="#17211c" font-size="12">Ridgeline</text>
-  <text x="400" y="148" fill="#ee6f4d" font-size="12" font-weight="700">size out</text>
+  <text x="445" y="148" text-anchor="end" fill="#ee6f4d" font-size="12" font-weight="700">size out</text>
   <text x="200" y="172" fill="#17211c" font-size="12">Denim Supply</text>
-  <text x="400" y="172" fill="#687169" font-size="12" font-weight="700">other category</text>
+  <text x="445" y="172" text-anchor="end" fill="#687169" font-size="12" font-weight="700">other category</text>
   <text x="200" y="196" fill="#17211c" font-size="12">Overland</text>
-  <text x="400" y="196" fill="#346b45" font-size="12" font-weight="700">can offer</text>
+  <text x="445" y="196" text-anchor="end" fill="#346b45" font-size="12" font-weight="700">can offer</text>
   <text x="310" y="224" text-anchor="middle" fill="#687169" font-size="10">same predicates as propose_offer</text>
   <path d="M460 128 H500" stroke="#183e30" stroke-width="2.5"/>
   <rect x="500" y="100" width="120" height="56" rx="10" fill="#17211c"/>
