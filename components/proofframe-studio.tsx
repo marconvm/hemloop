@@ -18,7 +18,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CompositionScene } from '@/components/composition/scene';
-import { LockedInventoryTableForMerchant } from '@/components/locked-inventory-table';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
