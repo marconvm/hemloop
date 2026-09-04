@@ -1398,12 +1398,15 @@ void test('marketScan: five verdicts at Basics (no ceiling) for hoodie · M', ()
   const byId = Object.fromEntries(rows.map((r) => [r.merchantId, r]));
   assert.equal(byId.northlight.verdict, 'can-offer');
   assert.equal(byId.northlight.price, 44.93);
+  assert.equal(byId.northlight.reason, 'margin 46.58%');
   assert.equal(byId.overland.verdict, 'can-offer');
   assert.equal(byId.overland.price, 80.1);
+  assert.equal(byId.overland.reason, 'margin 43.82%');
   assert.equal(byId.harborview.verdict, 'margin-floor');
   assert.equal(byId.harborview.price, null);
   assert.match(byId.harborview.reason, /26\.53%.*30%/);
   assert.equal(byId.ridgeline.verdict, 'size-not-in-stock');
+  assert.equal(byId.ridgeline.reason, 'M sold out');
   assert.equal(byId['denim-supply'].verdict, 'category-mismatch');
   // Market rows never carry another merchant's cost or floor fields.
   for (const row of rows) {
@@ -1428,10 +1431,32 @@ void test('marketScan: Taste ceiling 60 leaves only Northlight can-offer; Overla
   const byId = Object.fromEntries(rows.map((r) => [r.merchantId, r]));
   assert.equal(byId.northlight.verdict, 'can-offer');
   assert.equal(byId.northlight.price, 44.93);
+  assert.equal(byId.northlight.reason, 'margin 46.58%');
   assert.equal(byId.harborview.verdict, 'margin-floor');
   assert.equal(byId.ridgeline.verdict, 'size-not-in-stock');
   assert.equal(byId['denim-supply'].verdict, 'category-mismatch');
   assert.equal(byId.overland.verdict, 'over-ceiling');
   assert.equal(byId.overland.price, null);
   assert.match(byId.overland.reason, /80\.10/);
+});
+
+void test('marketScan: hoodie · XS switches answering merchant to Overland', () => {
+  const request = {
+    signalId: 'req-market-xs',
+    category: 'hoodie' as const,
+    size: 'XS',
+    kind: 'gap' as const,
+    level: 'need' as const,
+  };
+  const rows = marketScan(request, seedMerchants(), null);
+  const byId = Object.fromEntries(rows.map((r) => [r.merchantId, r]));
+  assert.equal(byId.northlight.verdict, 'size-not-in-stock');
+  assert.equal(byId.northlight.reason, 'XS sold out');
+  assert.equal(byId.overland.verdict, 'can-offer');
+  assert.equal(byId.overland.price, 80.1);
+  assert.equal(byId.overland.reason, 'margin 43.82%');
+  assert.equal(rows[0]?.merchantId, 'overland', 'first can-offer is Overland; Loop Room switches to it');
+  assert.equal(byId.harborview.verdict, 'margin-floor');
+  assert.equal(byId.ridgeline.verdict, 'size-not-in-stock');
+  assert.equal(byId['denim-supply'].verdict, 'category-mismatch');
 });
