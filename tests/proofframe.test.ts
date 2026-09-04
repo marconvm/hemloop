@@ -1553,6 +1553,15 @@ void test('sizesInStockFromInventory: qty > 0 only, first-seen size order', () =
   assert.ok(northlight.inventory.some((r) => r.sku === 'NL-HD-MOSS-M'));
 });
 
+void test('seed merchants carry product-appropriate, non-shared creative images', () => {
+  const merchants = seedMerchants();
+  assert.equal(new Set(merchants.map((row) => row.facts.productImage)).size, merchants.length);
+  assert.equal(
+    merchants.find((row) => row.id === 'denim-supply')?.facts.productImage,
+    '/products/east-side-straight-jean.jpg',
+  );
+});
+
 void test('marketScan: five verdicts at Basics (no ceiling) for hoodie · M', () => {
   const request = {
     signalId: 'req-market-l1',

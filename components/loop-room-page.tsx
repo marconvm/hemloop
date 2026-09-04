@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   LoopRoom,
+  MARKET_VERDICT_LABEL,
   RuntimeStatus,
   type LoopCreative,
   type ProcessingView,
@@ -840,7 +841,7 @@ export function LoopRoomPage() {
           facts: [
             ...(market ?? []).map((row) => ({
               label: row.name,
-              value: `${row.verdict}${row.price != null ? ` · ${money(row.price, row.currency)}` : ''} · ${row.reason}`,
+              value: `${MARKET_VERDICT_LABEL[row.verdict]}${row.price != null ? ` · ${money(row.price, row.currency)}` : ''} · ${row.reason}`,
             })),
             { label: 'Answering', value: activeMerchant.name },
           ],
