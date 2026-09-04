@@ -67,7 +67,7 @@
   .site-nav a:hover, .site-nav a:focus-visible {
     background: #eef1e9; color: var(--loop-ink); outline: none;
   }
-  .site-nav a.is-active, .site-nav a[aria-current="page"] {
+  .site-nav a.is-active {
     background: var(--loop-ink); color: #fff;
   }
   .site-header-meta {
@@ -89,8 +89,7 @@
   .site-footer nav a {
     color: var(--muted); font-size: 13px; font-weight: 700; text-decoration: none;
   }
-  .site-footer nav a:hover, .site-footer nav a:focus-visible,
-  .site-footer nav a[aria-current="page"] {
+  .site-footer nav a:hover, .site-footer nav a:focus-visible {
     color: var(--loop-ink); text-decoration: underline; text-underline-offset: 4px;
   }
   .site-footer > p {
@@ -191,7 +190,7 @@
     <a href="/">Loop</a>
     <a href="/closet">Closet</a>
     <a href="/studio">Studio</a>
-    <a href="/docs/" aria-current="page">Docs</a>
+    <a href="/docs/">Docs</a>
   </nav>
   <p><span aria-hidden="true"></span>Demo data, real brands</p>
 </footer>
@@ -254,6 +253,19 @@
   }
   window.addEventListener("hashchange", route);
   route();
+
+  // Header chrome: only Docs is the current page. Strip any stray
+  // aria-current from the other three header links (Loop / Closet / Studio).
+  document.querySelectorAll(".site-header .site-nav a").forEach((a) => {
+    const docs = a.getAttribute("href") === "/docs/";
+    if (docs) {
+      a.setAttribute("aria-current", "page");
+      a.classList.add("is-active");
+    } else {
+      a.removeAttribute("aria-current");
+      a.classList.remove("is-active");
+    }
+  });
 </script>
 </body>
 </html>

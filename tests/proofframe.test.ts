@@ -980,6 +980,16 @@ void test('every registered tool satisfies the WebMCP name, description and sche
   }
 });
 
+void test('every tool description is at most 320 characters', () => {
+  for (const { surface, tool } of everyTool()) {
+    const description = tool.description ?? '';
+    assert.ok(
+      description.length <= 320,
+      `${surface}/${tool.name}: description is ${description.length} chars, must be <=320`,
+    );
+  }
+});
+
 void test('every read-only tool declares readOnlyHint, and no writing tool claims it', () => {
   const READERS = new Set([
     'get_wardrobe', 'get_my_sizes', 'find_gaps', 'check_fit', 'get_preferences', 'get_offers',

@@ -24,10 +24,12 @@ No ad platform performs that third move. It is the merchant's own strategy const
 
 See [docs/USE-CASES.md](docs/USE-CASES.md) for the loop told as a story, run three times.
 
-Two surfaces, one origin, with the agent orchestrating both sides of the workflow:
+Four routes are the whole product (header: Loop · Closet · Studio · Docs). `/merchant` redirects to `/studio?tab=demand`.
 
-1. **The Closet** (`/closet`): the shopper surface. The agent uses 9 WebMCP tools to find wardrobe gaps, spot what the shopper owns that is worn out, check fit and read stated preferences against a product catalog snapshot (this demo's connector is Shopify). When something is missing, `report_demand_gap` can send one event carrying no shopper identifier (zero-ID) and a limited schema, but only after the shopper arms a one-shot approval in the UI. Which fields travel is set by a sharing level the shopper controls (0 Private through 3 Taste); the payload never has an account ID, stable hash or wardrobe rows. A purchase log across every merchant (rivals included) stays in the browser too; `import_receipt` reads a pasted receipt or order email into it, and `get_offers` reads back any approved personal offer addressed to this closet's own requests.
-2. **The Studio** (`/studio`): the merchant surface. Consented demand arrives in a live panel, grouped by category and size with counts and labelled Need or Want: intent that purchase history often misses. The merchant answers it with a workflow: lock the offer facts (prices, offer, code, dates, disclaimer) and the offer rules (cost, margin floor, max discount), then let their agent build the response through 12 WebMCP tools, including `get_demand`, which scores that demand against the stock they locked, and `propose_offer`, which stages a personal offer for one incoming request inside those rules for a human to approve or decline. A promo video is one output of that workflow. The trust machinery around it is the product, not the video editor.
+1. **The Loop Room** (`/`): both sides of one request in one shared space, seven stations (New item → Again). Registers all **21 WebMCP tools** (9 closet + 12 studio) together. Three human gates on the page: Approve next request, Approve offer, Bought.
+2. **The Closet** (`/closet`): the full shopper surface (tabs: Wardrobe · Requests and offers). Nine tools find wardrobe gaps, check fit, read preferences, import receipts, and — after one human approval — send a zero-ID demand signal. Sharing level 0–3 controls which fields travel; wardrobe rows never do.
+3. **The Studio** (`/studio`): the full merchant surface (tabs: Demand · Offer and rules · Composition). Twelve tools including `get_demand` and `propose_offer`. Lock facts and approve proposals are human-only. A promo video is one output; the trust machinery is the product.
+4. **Docs** (`/docs/`): the five-section docs site.
 
 The win-win: the shopper gets an agent that can reason over their wardrobe while Hemloop strictly limits its merchant-facing channel; the merchant gets an explicit demand event without a shopper identifier; and every rendered claim the merchant's agent proposes is validated before it applies. Copy that says "50% off" against a locked 25% offer is rejected atomically with a machine-readable reason. The exported composition refuses to exist while violations remain, and the disclaimer is baked into every frame as an element no tool can remove.
 
@@ -35,7 +37,7 @@ The win-win: the shopper gets an agent that can reason over their wardrobe while
 
 Both surfaces need tools that operate on live page state in the user's own session: the wardrobe on the shopper's page, the composition on the merchant's. WebMCP registers typed tools in the page itself: no backend, no OAuth, no credential grant, and the human watches every agent action land in the UI they are using. It also makes both trust boundaries structural rather than conventional: the closet's only outbound tool cannot include wardrobe rows or any shopper identifier, and the studio has no tool that can touch locked facts.
 
-## What we built: 21 WebMCP tools, two pages
+## What we built: 21 WebMCP tools, four routes
 
 | Surface | Tool | Kind | What it does | Structural guarantee |
 |---|---|---|---|---|
@@ -65,8 +67,8 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 
 ```sh
 npm install
-npm run dev                       # landing on /, studio on /studio, closet on /closet
-npm test                          # 135 tests
+npm run dev                       # Loop Room on /, studio on /studio, closet on /closet
+npm test                          # 144 tests
 ```
 
 To connect an agent in a challenge-supported Chrome build: Chrome 149+ carries an origin-trial token for this domain, so no flag is needed there. On an older build, enable `chrome://flags/#enable-webmcp-testing` in the exact profile you will use, press **Relaunch**, then reopen the live URL. Or open the deployed URL in ChatGPT's desktop browser (GPT-5.6 Sol/Terra), where nothing needs enabling. Each page's header badge switches from "preview mode" to "tools live".

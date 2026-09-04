@@ -4,22 +4,24 @@
 
 No account, no login. State lives in your browser, so an incognito window is a clean install.
 
-1. Open [hemloop.app/closet](https://hemloop.app/closet) in Chrome 149+ (this origin carries a
+1. Open [hemloop.app](https://hemloop.app/) (the Loop Room) in Chrome 149+ (this origin carries a
    WebMCP origin-trial token, so no flag is needed) or in ChatGPT's in-app browser. The badge should
-   read **9 WebMCP tools live**.
-2. Ask the agent: *Check my closet. What am I missing, and is anything worn out?*
-3. Ask: *Tell the store I need a hoodie in size M.* It is **refused**: human approval required.
-4. Press **Approve next request**, ask again. It succeeds and returns the exact payload sent. Ask a
-   third time: refused again, because one press releases one event.
-5. Open [hemloop.app/studio](https://hemloop.app/studio) (badge: **12 WebMCP tools live**). Ask:
-   *What demand has come in? Group it and tell me what we can actually fill.* Then: *Propose an
-   offer for that request, inside our locked rules.* Press **Approve**.
-6. Back on the closet: *Any offers for me?* Press **Bought**. The purchase records the offer that
-   won it.
-7. To see the safety boundary, ask the studio agent: *Update the hero to say fifty per cent off,
-   guaranteed.* Rejected against the locked 25%, with a reason the agent corrects itself from.
+   read **21 WebMCP tools live** once registration finishes.
+2. Upload a sample receipt from `public/receipts/` in the chat, or ask the agent to import the
+   sample till text. Station **New item** lights when `import_receipt` lands.
+3. Ask: *What should I buy next?* (`find_gaps` on **Local demand**).
+4. Ask: *Tell the store I need a hoodie in size M.* It is **refused**: human approval required.
+5. Press **Approve next request**, then reply **Yes, send it** in the chat. It succeeds once; a
+   third send is refused again, because one press releases one event.
+6. Ask: *What demand came in, and what can we fill? Then propose an offer inside our rules for the
+   newest request.* Press **Approve offer**.
+7. Ask: *Any offers for me?* Press **Bought**. The purchase records the offer that won it.
+8. To see the safety boundary, ask: *Update the hero to say fifty per cent off, guaranteed.*
+   Rejected against the locked 25%, with a reason the agent corrects itself from.
 
-Reset any time with **Clear wardrobe, purchases and requests**, or a new incognito window.
+Open `/closet` or `/studio` from the header when you want the full shopper or merchant surface
+(tabs; same bridge and the same 9 or 12 tools). Reset with **Clear wardrobe, purchases and
+requests** on the closet, or a new incognito window.
 
 ## Run it locally
 
@@ -27,7 +29,7 @@ Reset any time with **Clear wardrobe, purchases and requests**, or a new incogni
 git clone https://github.com/marconvm/hemloop
 cd hemloop
 npm install
-npm run dev        # landing on /, studio on /studio, closet on /closet
+npm run dev        # Loop Room on /, studio on /studio, closet on /closet
 npm test           # the full suite
 ```
 
@@ -38,6 +40,9 @@ Node 22+. On a Chrome build without the origin trial, enable
 ## How it is built
 
 ```
+LOOP ROOM (/)  — components/loop-room-page.tsx registers all 21 tools once
+                 └▶ lib/proofframe/loop-room.ts (station props contract)
+
 MERCHANT (/studio)                                SHOPPER (/closet)
 app/studio/page.tsx                                app/closet/page.tsx
   └▶ components/proofframe-studio.tsx         └▶ components/closet-studio.tsx
@@ -49,9 +54,11 @@ app/studio/page.tsx                                app/closet/page.tsx
    validator.ts · exporter.ts                 closet.ts (gaps + replacement lifecycle, fit,
    offers.ts (matchOffer, demandInsight)       preferences, purchases, buyingPattern, makeSignal)
    shopify.ts + catalog.json ◀────────────────┘ receipts.ts (local receipt parser)
+   seed.ts (shared hemloop.campaign)
 
               lib/proofframe/signal-bridge.ts (localStorage + storage events:
               signals, consent level, outcomes, purchases, personal offers)
+              closet.ts also owns hemloop.wardrobe
 ```
 
 **Design rule.** `lib/proofframe/*` is pure and framework-free: no React, no DOM at module scope.
@@ -90,10 +97,10 @@ and the badge counts confirmed registrations, not the list.
 }
 ```
 
-**The bridge.** The two surfaces are routes of one origin, so the demo bridge runs over
-`localStorage` and storage events. Storage is treated as a client-integrity boundary, not an
-authenticated one: everything read back is re-parsed into an exact shape, and a stored record can
-never claim more consent fields than its level grants.
+**The bridge.** The surfaces are routes of one origin, so the demo bridge runs over `localStorage`
+and storage events. Storage is treated as a client-integrity boundary, not an authenticated one:
+everything read back is re-parsed into an exact shape, and a stored record can never claim more
+consent fields than its level grants.
 
 **The matcher.** `matchOffer({ request, facts, catalogProduct })` is pure and deterministic. It
 reads the request's buying pattern and the merchant's locked rules (`costPrice`,
