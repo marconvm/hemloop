@@ -70,4 +70,6 @@ second refusal.
 - Captions say why a step matters, not which tool ran; the tool chip is already on screen.
 - Intro card and seven step cards come from HyperFrames on the Hemloop tokens; each step card is at
   most 1.2 s and sits on the cut into that step.
+- Source and renders: `video/cards/` (landscape `index.html`, portrait `portrait.html`);
+  MP4s in `video/cards/out/` (`cards-landscape.mp4`, `cards-portrait.mp4`).
 - Hard cap 3:00.
