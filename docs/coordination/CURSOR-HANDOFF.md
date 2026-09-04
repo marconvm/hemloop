@@ -66,9 +66,10 @@ This is presentation only. Every one of these is a guarantee, not a style:
 - The three-column closet layout keeps the wardrobe in the widest column, and garment cards keep the
   thumbnail in column one with everything else in column two (a bug fixed today; do not reintroduce
   it by rewriting `.garment-card`'s grid).
-- The loop rail (`components/loop-rail.tsx`) and the surface nav (`.surface-nav`) stay on both
-  pages; restyle them, do not remove them. Codex is building a `site-header.tsx` that will replace
-  the per-page header; leave the header markup alone so that swap is clean.
+- The surface nav (`.surface-nav`) stays on both pages; restyle it, do not remove it. The five-step
+  loop rail is gone — loop lives on Loop Room; header Loop link is the way back. Codex is building
+  a `site-header.tsx` that will replace the per-page header; leave the header markup alone so that
+  swap is clean.
 - `lib/proofframe/*`, `tests/*`, `app/globals.css`, `public/docs/*`, `docs/*.md`: not yours.
 
 ## Gate before every commit
