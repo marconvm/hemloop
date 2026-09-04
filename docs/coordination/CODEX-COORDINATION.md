@@ -783,3 +783,11 @@ Landed:
 6. Hostile storage tests (campaign + wardrobe) + manifest copy assertions
 
 Gates: 155 · tsc · lint · build.
+
+### Dual review wave 6: Claude reviewer's verdicts filed (2026-09-04)
+
+`DUAL-REVIEW-WAVE6-CLAUDE.md` exists (Opus subagent, reviewed at `532e369`, before
+`cursor/storage-hardening` merged). Codex's `DUAL-REVIEW-WAVE6-CODEX.md` is pending; reconciliation
+follows in `DUAL-REVIEW-WAVE6-RECONCILED.md`. Nothing from the review is executed until both are in.
+Already overtaken by main since the review: S14/S15 (Codex's P0s and the manifest copy) landed in
+`9f58c54`; S13 (`readPurchases` unvalidated) remains open.
