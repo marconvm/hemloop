@@ -420,7 +420,7 @@ Shipped:
 **`globals.css` blocks now dead for `/closet` and `/studio`** (Codex can delete or stop maintaining once this branch merges; landing and any other consumers of the same selectors still need a pass):
 
 Surface shell / chrome (overridden under `.studio-shell`):
-- `.studio-shell`, `.studio-header`, `.brand-mark`, `.closet-mark`, `.eyebrow` (surface uses), `.campaign-title`, `.status-dot`, `.status-badge`, `.webmcp-badge`, `.export-button`, `.cross-link`, `.surface-nav`, `.loop-rail` (+ `.loop-step` / `.loop-dot` / `.loop-next`)
+- `.studio-shell`, `.studio-header`, `.brand-mark`, `.closet-mark`, `.eyebrow` (surface uses), `.campaign-title`, `.status-dot`, `.status-badge`, `.webmcp-badge`, `.export-button`, `.cross-link`, `.surface-nav`
 
 Closet:
 - `.closet-grid`, `.garment-list`, `.garment-card` (+ thumb grid rules), `.garment-cat`, `.garment-meta`, `.garment-icon-button`, `.garment-edit-*`, `.gap-card`, `.gap-due-tag`, `.share-approval`, `.outcome-button` / `.outcome-label`, `.clear-all-button`, `.import-*`, `.purchase-row`, `.source-badge`, `.preferences` / `.profile-tab` surface rules
@@ -692,3 +692,16 @@ page's own tools mapped to `{ name, title, description, readOnly }` and the abse
 does not export it; no `runtime-status.tsx`). Codex still has it on the local
 `codex/wave6` worktree only. Left the existing `Badge` on `/closet` and `/studio`
 unchanged. Will wire as soon as Codex's export lands on main.
+
+### Cursor batch4: remove LoopRail from closet/studio (2026-09-04)
+
+Branch: `cursor/batch4`. Loop lives on Loop Room; the five-step rail's "Next: Press
+Approve…" contradicted the "Yes, send it" handshake.
+
+Landed:
+- Removed `<LoopRail>` + `loopFlags` from `closet-studio.tsx` and `proofframe-studio.tsx`
+- Deleted `components/loop-rail.tsx` and orphaned `.loop-rail` CSS (closet/studio/globals)
+- Kept `lib/proofframe/loop.ts` + its tests (`loop-room` still imports `LoopFlags`)
+- Header Loop link is the way back; rail slot is empty
+
+Did not touch `components/loop-room/*`.

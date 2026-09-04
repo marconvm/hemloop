@@ -18,7 +18,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { LoopRail } from '@/components/loop-rail';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { SurfaceTabs } from '@/components/surface-tabs';
@@ -681,21 +680,6 @@ export function ClosetStudio() {
     () => [...purchases].sort((a, b) => b.at.localeCompare(a.at)),
     [purchases],
   );
-  const loopFlags = useMemo(
-    () => ({
-      gapFound: gaps.length > 0,
-      requestSent: signals.length > 0,
-      offerApproved: offers.some((o) => o.status === 'approved'),
-      bought: outcomes.some((o) => o.outcome === 'bought'),
-      // Scoped to the offers this page currently knows about: the seed ships a
-      // past purchase that already carries an offerId, and counting that would
-      // light the last step before the first four had happened.
-      attributed: purchases.some(
-        (p) => p.offerId !== undefined && p.offerId !== null && offers.some((o) => o.offerId === p.offerId),
-      ),
-    }),
-    [gaps, signals, offers, outcomes, purchases],
-  );
   const sentSignalIdSet = useMemo(
     () => new Set(signals.map((s) => s.signalId)),
     [signals],
@@ -803,8 +787,6 @@ export function ClosetStudio() {
           </Badge>
         }
       />
-
-      <LoopRail surface="closet" flags={loopFlags} />
 
       <SurfaceTabs
         tabs={[...CLOSET_TABS]}

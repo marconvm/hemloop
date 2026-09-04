@@ -148,55 +148,6 @@
   border-bottom-color: var(--ink);
 }
 
-/* ── Loop rail ── */
-
-.studio-shell .loop-rail {
-  margin: 0 10px;
-  padding: 14px 18px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--white);
-  color: var(--ink);
-  box-shadow: 0 7px 24px rgba(23, 33, 28, 0.05);
-}
-
-.studio-shell .loop-step.is-done {
-  color: var(--moss);
-  opacity: 1;
-}
-
-.studio-shell .loop-step.is-done .loop-dot {
-  background: var(--forest);
-  border-color: var(--forest);
-}
-
-.studio-shell .loop-step.is-current {
-  color: var(--ink);
-}
-
-.studio-shell .loop-step.is-current .loop-dot {
-  background: var(--loop);
-  border-color: var(--ink);
-  box-shadow: 0 0 0 4px rgba(185, 242, 39, 0.18);
-}
-
-.studio-shell .loop-step.is-todo {
-  color: #8a908b;
-  opacity: 1;
-}
-
-.studio-shell .loop-step + .loop-step::before {
-  background: var(--line);
-}
-
-.studio-shell .loop-next {
-  color: var(--muted);
-}
-
-.studio-shell .loop-next strong {
-  color: var(--ink);
-}
-
 /* ── Grid + panels ── */
 
 .studio-shell .studio-grid {
@@ -619,10 +570,6 @@
   .studio-shell .header-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
-  }
-
-  .studio-shell .loop-rail {
-    margin: 0 8px;
   }
 
   .studio-shell .phone-preview {

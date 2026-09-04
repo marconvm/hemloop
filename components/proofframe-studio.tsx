@@ -17,7 +17,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { LoopRail } from '@/components/loop-rail';
 import { Button } from '@/components/ui/button';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
 import { SiteFooter } from '@/components/site-footer';
@@ -824,28 +823,6 @@ export function ProofFrameStudio() {
     () => new Map(outcomes.map((o) => [o.signalId, o.outcome])),
     [outcomes],
   );
-  const loopFlags = useMemo(
-    () => ({
-      // The studio never sees the wardrobe; a request arriving is proof enough
-      // that the closet found a gap.
-      gapFound: signals.length > 0,
-      requestSent: signals.length > 0,
-      offerApproved: offers.some((o) => o.status === 'approved'),
-      bought: outcomes.some((o) => o.outcome === 'bought'),
-      // The merchant cannot read the purchase row, but it does not need to:
-      // an approved offer whose request came back bought IS the merchant's
-      // half of attribution, and both halves are already on this page. It was
-      // hardcoded false, which capped the studio rail at 4/5 forever and made
-      // the v4 script's closing shot (both surfaces, all five lit) impossible
-      // (found by Codex on acceptance replay). No shopper identifier or
-      // purchase row is involved: this joins an offer's requestId to an
-      // outcome's signalId, both of which are already merchant-visible.
-      attributed: offers.some(
-        (o) => o.status === 'approved' && outcomeById.get(o.requestId) === 'bought',
-      ),
-    }),
-    [signals, offers, outcomes, outcomeById],
-  );
   const aggregatedSignals = useMemo(
     () =>
       aggregateSignals(
@@ -1034,8 +1011,6 @@ export function ProofFrameStudio() {
           </Button>
         }
       />
-
-      <LoopRail surface="studio" flags={loopFlags} />
 
       <SurfaceTabs
         tabs={[...STUDIO_TABS]}
