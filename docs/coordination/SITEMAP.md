@@ -12,7 +12,7 @@ per side, tabs inside**. The four routes are the whole product; nothing else is 
 | `/closet` | **Closet** | Shopper · Closet, the full shopper surface. | 9 | Wardrobe · Requests and offers |
 | `/studio` | **Studio** | Merchant · Studio, the full merchant surface. | 12 | Demand · Offer and rules · Composition |
 | `/docs/` | **Docs** | The five-section docs site. | 0 | its own sections |
-| `/merchant` | (not in nav) | 301 to `/studio?tab=demand`, kept only so links already shared keep working. | | |
+| `/merchant` | (not in nav) | 307 to `/studio?tab=demand`, kept only so links already shared keep working. | | |
 
 Header and footer are identical on all four (`SiteHeader`, `SiteFooter`); the header's four links are
 the sitemap. No page carries a second nav, cross-link pill or "Home" link.
