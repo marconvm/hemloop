@@ -45,3 +45,4 @@ video/voice-samples/
 yarn-debug.log*
 yarn-error.log*
 .tmp-docs-shots/
+.tmp-devpost-shots/
