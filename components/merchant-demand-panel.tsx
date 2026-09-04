@@ -6,9 +6,15 @@ import type { DemandSignal } from '@/lib/proofframe/closet';
 import {
   demandInsight,
   slug,
+  toDemandSignalLike,
   type DemandGroup,
   type PersonalOffer,
 } from '@/lib/proofframe/offers';
+import {
+  marketScan,
+  type Merchant,
+} from '@/lib/proofframe/merchants';
+import type { MarketRow } from '@/lib/proofframe/loop-room';
 import { demoCatalog } from '@/lib/proofframe/shopify';
 import {
   readOffers,
@@ -32,6 +38,14 @@ const VERDICT_LABEL: Record<DemandGroup['verdict'], string> = {
   'can-offer': 'Can offer',
   'size-not-in-stock': 'Size out of stock',
   'category-mismatch': 'Other category',
+};
+
+const MARKET_VERDICT_LABEL: Record<MarketRow['verdict'], string> = {
+  'can-offer': 'Can offer',
+  'size-not-in-stock': 'Size out of stock',
+  'category-mismatch': 'Other category',
+  'margin-floor': 'Margin floor',
+  'over-ceiling': 'Over ceiling',
 };
 
 function catalogProductFor(facts: CampaignFacts) {
@@ -73,8 +87,17 @@ function formatWhen(iso: string): string {
 }
 
 /** Read-only demand insight panel. Same bridge + demandInsight as the old
- * /merchant page; lives as the studio's Demand tab. */
-export function MerchantDemandPanel({ facts }: { facts: CampaignFacts }) {
+ * /merchant page; lives as the studio's Demand tab. Shows the market scan
+ * (verdict per merchant, no costs or floors) for each incoming request. */
+export function MerchantDemandPanel({
+  facts,
+  merchants,
+  activeMerchantId,
+}: {
+  facts: CampaignFacts;
+  merchants: Merchant[];
+  activeMerchantId: string;
+}) {
   const catalogProduct = useMemo(() => catalogProductFor(facts), [facts]);
 
   const [signals, setSignals] = useState<DemandSignal[]>([]);
@@ -132,6 +155,21 @@ export function MerchantDemandPanel({ facts }: { facts: CampaignFacts }) {
       ),
     [signals, facts, catalogProduct, boughtIds],
   );
+
+  const marketBySignal = useMemo(() => {
+    const map = new Map<string, MarketRow[]>();
+    const live = merchants.map((m) =>
+      m.id === activeMerchantId ? { ...m, facts } : m,
+    );
+    for (const signal of signals) {
+      const request = toDemandSignalLike(signal);
+      if (!request) continue;
+      const ceiling =
+        typeof signal.taste?.priceCeiling === 'number' ? signal.taste.priceCeiling : null;
+      map.set(signal.signalId, marketScan(request, live, ceiling));
+    }
+    return map;
+  }, [signals, merchants, activeMerchantId, facts]);
 
   const cannotFill = useMemo(
     () =>
@@ -326,6 +364,30 @@ export function MerchantDemandPanel({ facts }: { facts: CampaignFacts }) {
                     ) : (
                       <span className="outcome-pill outcome-open">Open</span>
                     )}
+                    {(() => {
+                      const market = marketBySignal.get(s.signalId) ?? [];
+                      if (market.length === 0) return null;
+                      return (
+                        <ul className="market-rows" aria-label="Market scan">
+                          {market.map((row) => (
+                            <li key={row.merchantId} className="market-row">
+                              <span className="market-merchant">{row.name}</span>
+                              <span
+                                className={`verdict-pill verdict-${row.verdict}`}
+                                title={row.reason}
+                              >
+                                {MARKET_VERDICT_LABEL[row.verdict]}
+                              </span>
+                              {row.price != null ? (
+                                <span className="market-price">
+                                  {row.currency} {row.price.toFixed(2)}
+                                </span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
                   </li>
                 );
               })}

@@ -1,5 +1,11 @@
-// Seeded synthetic campaign for the demo. "Northlight Apparel" is a fictional
-// brand; every number here is invented.
+// Seeded campaigns per merchant. Facts come from seedMerchants(); scenes and
+// brief stay presentation. Per-merchant storage: hemloop.campaigns +
+// hemloop.merchant, with a one-shot migration from the old hemloop.campaign key.
+import {
+  merchantById,
+  seedMerchants,
+  type Merchant,
+} from './merchants';
 import type {
   CampaignFacts,
   CampaignFormat,
@@ -11,29 +17,11 @@ import type {
 } from './types';
 import { formatForPlacement } from './types';
 
-export function seedCampaign(): CampaignState {
-  return {
-    brief:
-      '15-second 9:16 story promo for the Northlight Hoodie back-to-school offer. Energetic, warm, ends on the promo code.',
-    facts: {
-      productName: 'Northlight Hoodie',
-      currency: 'CAD',
-      regularPrice: 59.9,
-      salePrice: 44.9,
-      discountPercent: 25,
-      promoCode: 'NORTHLIGHT25',
-      startDate: '2026-08-28',
-      endDate: '2026-09-07',
-      disclaimer: '25% off select styles until Sep 7, 2026. Online only.',
-      bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
-      purchaseUrl: 'https://hemloop.app/closet?product=northlight-hoodie',
-      productImage: '/products/northlight-hoodie.jpg',
-      costPrice: 24,
-      marginFloorPercent: 35,
-      maxDiscountPercent: 30,
-    },
-    factsLocked: true,
-    scenes: [
+const DEFAULT_MERCHANT_ID = 'northlight';
+
+function scenesFor(merchant: Merchant): Scene[] {
+  if (merchant.id === 'northlight') {
+    return [
       {
         id: 'hero',
         kind: 'hero',
@@ -63,20 +51,61 @@ export function seedCampaign(): CampaignState {
         body: 'Shop the drop before Sep 7.',
         durationSec: 3,
       },
-    ],
+    ];
+  }
+  const price =
+    merchant.facts.salePrice ??
+    (merchant.facts.discountPercent
+      ? Math.round(merchant.facts.regularPrice * (1 - merchant.facts.discountPercent / 100) * 100) /
+        100
+      : merchant.facts.regularPrice);
+  return [
+    {
+      id: 'hero',
+      kind: 'hero',
+      heading: merchant.facts.productName,
+      body: `${merchant.name}.`,
+      durationSec: 4,
+    },
+    {
+      id: 'offer',
+      kind: 'offer',
+      heading: merchant.facts.discountPercent
+        ? `${merchant.facts.discountPercent}% off`
+        : 'Locked offer',
+      body: `$${merchant.facts.regularPrice.toFixed(2)} → $${price.toFixed(2)}`,
+      durationSec: 4,
+    },
+    {
+      id: 'cta',
+      kind: 'cta',
+      heading: merchant.name,
+      body: merchant.facts.disclaimer,
+      durationSec: 3,
+    },
+  ];
+}
+
+/** Build a campaign from a merchant. Default is Northlight Apparel. */
+export function seedCampaign(merchantId: string = DEFAULT_MERCHANT_ID): CampaignState {
+  const merchant =
+    merchantById(merchantId) ?? seedMerchants().find((m) => m.id === DEFAULT_MERCHANT_ID)!;
+  return {
+    brief: `15-second 9:16 story promo for ${merchant.facts.productName}. Energetic, warm, ends on the offer.`,
+    facts: { ...merchant.facts, bannedPhrases: [...merchant.facts.bannedPhrases] },
+    factsLocked: true,
+    scenes: scenesFor(merchant),
     format: formatForPlacement('story'),
     style: { background: '#101418', ink: '#f4f1ea', accent: '#ff7a45' },
   };
 }
 
-// ---------- Campaign persistence: one campaign for every page ----------
-// The Loop Room and /studio used to seed their own in-memory CampaignState, so
-// a brief or scene edited on one never showed on the other. Same browser-only
-// pattern as hemloop.wardrobe; the seed is what a fresh browser sees on both.
-// factsLocked is part of the stored state: a human lock on /studio must show
-// as locked on /.
+// ---------- Per-merchant campaign persistence ----------
 
-const CAMPAIGN_KEY = 'hemloop.campaign';
+const CAMPAIGNS_KEY = 'hemloop.campaigns';
+const MERCHANT_KEY = 'hemloop.merchant';
+/** Pre-multi-merchant single-campaign key; migrated into campaigns.northlight. */
+const LEGACY_CAMPAIGN_KEY = 'hemloop.campaign';
 
 const SCENE_KINDS: readonly SceneKind[] = ['hero', 'product', 'offer', 'cta'];
 const PLACEMENTS: readonly Placement[] = ['story', 'feed', 'display'];
@@ -223,24 +252,108 @@ function parseCampaign(value: unknown): CampaignState | null {
   return { brief: c.brief, facts, factsLocked: c.factsLocked, scenes, format, style };
 }
 
-/** Read the shared campaign, or the seed when storage is empty, unavailable,
- * or holds something malformed. Never throws. */
-export function readCampaign(): CampaignState {
-  if (!hasStorage()) return seedCampaign();
+function readCampaignsMap(): Record<string, CampaignState> {
+  if (!hasStorage()) return {};
   try {
-    const raw = window.localStorage.getItem(CAMPAIGN_KEY);
-    if (!raw) return seedCampaign();
+    migrateLegacyCampaign();
+    const raw = window.localStorage.getItem(CAMPAIGNS_KEY);
+    if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
-    return parseCampaign(parsed) ?? seedCampaign();
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, CampaignState> = {};
+    for (const [id, value] of Object.entries(parsed as Record<string, unknown>)) {
+      const campaign = parseCampaign(value);
+      if (campaign) out[id] = campaign;
+    }
+    return out;
   } catch {
-    return seedCampaign();
+    return {};
   }
 }
 
-export function writeCampaign(campaign: CampaignState): void {
+function writeCampaignsMap(map: Record<string, CampaignState>): void {
   if (!hasStorage()) return;
   try {
-    window.localStorage.setItem(CAMPAIGN_KEY, JSON.stringify(campaign));
+    window.localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** One-shot: old hemloop.campaign → campaigns.northlight, then delete the key. */
+function migrateLegacyCampaign(): void {
+  if (!hasStorage()) return;
+  try {
+    const legacy = window.localStorage.getItem(LEGACY_CAMPAIGN_KEY);
+    if (!legacy) return;
+    const campaign = parseCampaign(JSON.parse(legacy));
+    const existingRaw = window.localStorage.getItem(CAMPAIGNS_KEY);
+    const map: Record<string, CampaignState> = existingRaw
+      ? ((JSON.parse(existingRaw) as Record<string, CampaignState>) ?? {})
+      : {};
+    if (campaign && !map[DEFAULT_MERCHANT_ID]) {
+      map[DEFAULT_MERCHANT_ID] = campaign;
+      window.localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(map));
+    }
+    window.localStorage.removeItem(LEGACY_CAMPAIGN_KEY);
+  } catch {
+    try {
+      window.localStorage.removeItem(LEGACY_CAMPAIGN_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export function readActiveMerchantId(): string {
+  if (!hasStorage()) return DEFAULT_MERCHANT_ID;
+  try {
+    const raw = window.localStorage.getItem(MERCHANT_KEY);
+    if (raw && merchantById(raw)) return raw;
+  } catch {
+    /* ignore */
+  }
+  return DEFAULT_MERCHANT_ID;
+}
+
+export function writeActiveMerchantId(merchantId: string): void {
+  if (!hasStorage()) return;
+  if (!merchantById(merchantId)) return;
+  try {
+    window.localStorage.setItem(MERCHANT_KEY, merchantId);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Read one merchant's campaign, or the seed when empty/corrupt. */
+export function readCampaign(merchantId: string = readActiveMerchantId()): CampaignState {
+  if (!merchantById(merchantId)) return seedCampaign(DEFAULT_MERCHANT_ID);
+  if (!hasStorage()) return seedCampaign(merchantId);
+  try {
+    const map = readCampaignsMap();
+    return map[merchantId] ?? seedCampaign(merchantId);
+  } catch {
+    return seedCampaign(merchantId);
+  }
+}
+
+export function writeCampaign(merchantId: string, campaign: CampaignState): void;
+export function writeCampaign(campaign: CampaignState): void;
+export function writeCampaign(
+  merchantIdOrCampaign: string | CampaignState,
+  maybeCampaign?: CampaignState,
+): void {
+  if (!hasStorage()) return;
+  const merchantId =
+    typeof merchantIdOrCampaign === 'string' ? merchantIdOrCampaign : readActiveMerchantId();
+  const campaign =
+    typeof merchantIdOrCampaign === 'string' ? maybeCampaign! : merchantIdOrCampaign;
+  if (!merchantById(merchantId)) return;
+  try {
+    const map = readCampaignsMap();
+    map[merchantId] = campaign;
+    writeCampaignsMap(map);
   } catch {
     /* ignore */
   }

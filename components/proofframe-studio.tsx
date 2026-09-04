@@ -36,7 +36,14 @@ import {
   type DemandGroup,
   type PersonalOffer,
 } from '@/lib/proofframe/offers';
-import { readCampaign, seedCampaign, writeCampaign } from '@/lib/proofframe/seed';
+import {
+  readActiveMerchantId,
+  readCampaign,
+  seedCampaign,
+  writeActiveMerchantId,
+  writeCampaign,
+} from '@/lib/proofframe/seed';
+import { seedMerchants } from '@/lib/proofframe/merchants';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
@@ -308,10 +315,10 @@ function sortNeedsFirst(signals: DemandSignal[]): DemandSignal[] {
 
 export function ProofFrameStudio() {
   const [tab, setTab] = useSurfaceTab<StudioTab>(STUDIO_TAB_IDS, 'demand');
-  // One campaign for every page (Loop Room and /studio): read the stored one
-  // once mounted, write on every change after that. The seed only lands in a
-  // browser that has nothing stored; factsLocked travels with it.
-  const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
+  const merchants = useMemo(() => seedMerchants(), []);
+  const [activeMerchantId, setActiveMerchantId] = useState('northlight');
+  const activeMerchantIdRef = useRef(activeMerchantId);
+  const [campaign, setCampaign] = useState<CampaignState>(() => seedCampaign('northlight'));
   const campaignRef = useRef(campaign);
   const campaignHydratedRef = useRef(false);
   const [activity, setActivity] = useState<Activity[]>(initialActivity);
@@ -332,7 +339,10 @@ export function ProofFrameStudio() {
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
-      const stored = readCampaign();
+      const merchantId = readActiveMerchantId();
+      activeMerchantIdRef.current = merchantId;
+      setActiveMerchantId(merchantId);
+      const stored = readCampaign(merchantId);
       campaignRef.current = stored;
       setCampaign(stored);
       setSelectedId((current) =>
@@ -347,8 +357,11 @@ export function ProofFrameStudio() {
     };
   }, []);
   useEffect(() => {
-    if (campaignHydratedRef.current) writeCampaign(campaign);
-  }, [campaign]);
+    if (campaignHydratedRef.current) writeCampaign(activeMerchantId, campaign);
+  }, [campaign, activeMerchantId]);
+  useEffect(() => {
+    activeMerchantIdRef.current = activeMerchantId;
+  }, [activeMerchantId]);
 
   // A stable, always-current view of `signals` for the getRequests callback
   // handed to WebMCP tools, so a tool registered once still sees fresh
@@ -459,6 +472,29 @@ export function ProofFrameStudio() {
     );
     setNewActivityIds((current) => new Set(current).add(id));
   }, []);
+
+  const switchMerchant = useCallback(
+    (merchantId: string) => {
+      if (merchantId === activeMerchantIdRef.current) return;
+      if (campaignHydratedRef.current) {
+        writeCampaign(activeMerchantIdRef.current, campaignRef.current);
+      }
+      activeMerchantIdRef.current = merchantId;
+      setActiveMerchantId(merchantId);
+      writeActiveMerchantId(merchantId);
+      const next = readCampaign(merchantId);
+      campaignRef.current = next;
+      setCampaign(next);
+      setSelectedId(next.scenes[0]?.id ?? '');
+      pushActivity({
+        actor: 'PF',
+        title: `Switched desk to ${seedMerchants().find((m) => m.id === merchantId)?.name ?? merchantId}`,
+        detail: "Facts, lock and scenes are this merchant's stored campaign.",
+        status: 'system',
+      });
+    },
+    [pushActivity],
+  );
 
   const commit = useCallback(
     (transform: (current: CampaignState) => CampaignState) => {
@@ -1015,7 +1051,27 @@ export function ProofFrameStudio() {
         hidden={tab !== 'demand'}
         className="tab-panel"
       >
-        <MerchantDemandPanel facts={campaign.facts} />
+        <div className="demand-tab-chrome">
+          <label className="merchant-switcher">
+            <span>You are:</span>
+            <select
+              value={activeMerchantId}
+              onChange={(event) => switchMerchant(event.target.value)}
+              aria-label="Active merchant"
+            >
+              {merchants.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <MerchantDemandPanel
+          facts={campaign.facts}
+          merchants={merchants}
+          activeMerchantId={activeMerchantId}
+        />
       </div>
 
       <section

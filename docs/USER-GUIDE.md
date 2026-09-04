@@ -68,10 +68,13 @@ Approve button is disabled and `report_demand_gap` returns `sharing-disabled`.
 
 ## The Studio (`/studio`)
 
-Merchant surface. Tabs: **Demand** (grouped requests and verdicts; this is what `/merchant` used to
-be), **Offer and rules** (locked facts, completeness, offer rules, proposals), **Composition**
-(brief, scenes, preview, placement, export). Twelve WebMCP tools. Campaign state is shared with the
-Loop Room in this browser (`hemloop.campaign`), including whether facts are locked.
+Merchant surface. Tabs: **Demand** (grouped requests, a merchant switcher, and the market scan
+verdict per store for each incoming request; this is what `/merchant` used to be), **Offer and
+rules** (locked facts, completeness, offer rules, proposals), **Composition** (brief, scenes,
+preview, placement, export). Twelve WebMCP tools. Campaign state is shared with the Loop Room in
+this browser per merchant (`hemloop.campaigns` + `hemloop.merchant`), including whether facts are
+locked. A request is scanned against every merchant's rules; only a `can-offer` store answers.
+Market rows show verdict and price only — never another merchant's cost or floor.
 
 Human-only on this page: **Lock / Unlock offer facts**, placement (Story / Feed / Display),
 **Approve** or **Decline** on a proposal, and the Auto-propose toggle. No WebMCP tool can do those.
@@ -102,5 +105,6 @@ See "Rendering the export" in the tech guide.
 - The demo catalog is synthetic apparel shaped like a Shopify store export. Northlight Apparel is
   fictional; wardrobe brand photos are real (see PHOTO-CREDITS).
 - Date phrasing in copy ("ends Sunday") is not fact-checked; the locked disclaimer carries the dates.
-- One shared campaign and one shared wardrobe per browser; a fresh profile or cleared storage restores
-  the seeds.
+- One shared wardrobe per browser, and one campaign per merchant (`hemloop.campaigns`); a fresh
+  profile or cleared storage restores the seeds. The active merchant id lives in `hemloop.merchant`.
+  Legacy `hemloop.campaign` migrates into Northlight on first read.
