@@ -87,4 +87,4 @@ Deploy (Cloudflare Workers): `npm run build` then `npm run prepare:worker` and `
 
 ## Credits
 
-Wardrobe product photos from the author’s own Bluenotes and Aeropostale catalogs, used with permission. The merchant (Northlight Apparel) and its campaign are fictional. See [docs/PHOTO-CREDITS.md](docs/PHOTO-CREDITS.md).
+Wardrobe product photos are real retail catalog images, used with permission; the sources are listed in [docs/PHOTO-CREDITS.md](docs/PHOTO-CREDITS.md). The five merchants and their campaigns are fictional.

@@ -5,8 +5,8 @@ it is stated plainly rather than buried.
 
 ## Real product photography (7 files)
 
-These are real product photographs from the owner's own Shopify catalogs,
-committed here with the owner's authorization for this demo:
+These are real product photographs from two retail catalogs, committed here
+with the catalog owner's permission for this demo:
 
 | File | Brand | Product |
 |---|---|---|
