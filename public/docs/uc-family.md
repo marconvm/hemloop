@@ -7,7 +7,7 @@ The **Me / Partner / Kid** switch on the Closet scopes the wardrobe and every cl
 on the kid's profile finds the kid's gaps; a request from that profile carries the right size.
 Kid merchandise photos are flat-lay product stills with no faces.
 
-![The wardrobe scoped to one profile](img/closet-real-brands.jpg)
+![The wardrobe scoped to the Kid profile](img/closet-family-kid.jpg)
 
 <div class="flow-diagram" role="img" aria-label="Profile switch scopes tools; for-field travels only at level 2+">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 170" font-family="DM Sans, system-ui, sans-serif">

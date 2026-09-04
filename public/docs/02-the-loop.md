@@ -56,7 +56,7 @@ and merchant surfaces live at `/closet` and `/studio`.
 </svg>
 </div>
 
-![The shopper's closet with real wardrobe brands](img/closet-real-brands.jpg)
+![Hemloop with a request in flight: market scan answering, Matched offer station current](img/hemloop-request-inflight.jpg)
 
 ## The “Yes, send it” handshake
 
