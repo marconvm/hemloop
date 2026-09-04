@@ -5,7 +5,7 @@
  *
  * Usage: node scripts/render-logo-assets.mjs
  */
-import { mkdirSync, writeFileSync, readFileSync, unlinkSync, existsSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
