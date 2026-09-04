@@ -24,8 +24,14 @@ export function SiteFooter() {
         ))}
       </nav>
       <p>
-        <span aria-hidden="true" />
-        Demo data, real brands
+        © 2026 Marco Cheung ·{' '}
+        <a
+          href="https://github.com/marconvm/hemloop"
+          rel="noopener"
+          target="_blank"
+        >
+          Source on GitHub
+        </a>
       </p>
     </footer>
   );
