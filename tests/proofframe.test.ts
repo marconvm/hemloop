@@ -330,6 +330,36 @@ void test('get_campaign_state includes placement (nested in format)', async () =
   assert.equal(result.state.format.placement, 'story');
 });
 
+void test('campaign and offer reads visibly compact storage-bounded maxima under 1.5K', async () => {
+  const state = seedCampaign();
+  state.brief = 'B'.repeat(2000);
+  state.facts = {
+    ...state.facts,
+    productName: 'P'.repeat(120),
+    disclaimer: 'D'.repeat(500),
+    bannedPhrases: Array.from({ length: 20 }, (_, i) => `${i}`.padEnd(40, 'x')),
+    purchaseUrl: `https://example.com/${'u'.repeat(280)}`,
+    sizesInStock: Array.from({ length: 20 }, (_, i) => `size-${i}`.padEnd(10, 'x')),
+  };
+  state.scenes = Array.from({ length: 12 }, (_, i) => ({
+    id: `scene-${i}`,
+    kind: (['hero', 'product', 'offer', 'cta'] as const)[i % 4],
+    heading: 'H'.repeat(200),
+    body: 'C'.repeat(400),
+    durationSec: 5,
+  }));
+  const tools = buildTools(makeStore(state).cb);
+  const campaign = await tool(tools, 'get_campaign_state').execute({});
+  const offer = await tool(tools, 'get_offer').execute({});
+
+  assert.ok(JSON.stringify(campaign).length <= 1500);
+  assert.ok(JSON.stringify(offer).length <= 1500);
+  assert.ok((campaign.truncated as { scenes: number }).scenes > 0);
+  assert.equal((offer.truncated as { disclaimer: boolean }).disclaimer, true);
+  assert.equal(tool(tools, 'get_campaign_state').annotations?.untrustedContentHint, true);
+  assert.equal(tool(tools, 'get_offer').annotations?.untrustedContentHint, true);
+});
+
 void test('completeness counts on the seed and after removing purchaseUrl', () => {
   const seed = seedCampaign();
   const onSeed = computeCompleteness(seed.facts);

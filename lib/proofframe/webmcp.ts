@@ -331,6 +331,97 @@ export function computeCompleteness(facts: CampaignFacts): Completeness {
   return { locked: COMPLETENESS_CHECKS.length - missing.length, total: COMPLETENESS_CHECKS.length, missing };
 }
 
+/** Compact read projections keep a valid, storage-bounded campaign inside
+ * Chrome's 1.5K tool-result guidance. Counts and omitted fields make every
+ * lossy projection visible instead of silently pretending it is complete. */
+function campaignStateResult(state: CampaignState): ToolContent {
+  const facts = state.facts;
+  const projected = {
+    brief: truncate(state.brief, 120),
+    facts: {
+      productName: truncate(facts.productName, 96),
+      currency: truncate(facts.currency, 8),
+      regularPrice: facts.regularPrice,
+      salePrice: facts.salePrice,
+      discountPercent: facts.discountPercent,
+      promoCode: facts.promoCode ? truncate(facts.promoCode, 40) : null,
+      startDate: truncate(facts.startDate, 10),
+      endDate: truncate(facts.endDate, 10),
+      disclaimer: truncate(facts.disclaimer, 140),
+      bannedPhrases: facts.bannedPhrases.slice(0, 2).map((x) => truncate(x, 40)),
+      purchaseUrl: facts.purchaseUrl ? truncate(facts.purchaseUrl, 160) : null,
+      sizesInStock: (facts.sizesInStock ?? []).slice(0, 6).map((x) => truncate(x, 16)),
+      costPrice: facts.costPrice ?? null,
+      marginFloorPercent: facts.marginFloorPercent ?? null,
+      maxDiscountPercent: facts.maxDiscountPercent ?? null,
+      offerId: facts.offerId ? truncate(facts.offerId, 80) : null,
+    },
+    factsLocked: state.factsLocked,
+    scenes: [] as Array<Pick<Scene, 'id' | 'kind' | 'heading' | 'body' | 'durationSec'>>,
+    format: state.format,
+    style: state.style,
+  };
+  const truncation = {
+    brief: state.brief.length > 120,
+    disclaimer: facts.disclaimer.length > 140,
+    bannedPhrases: Math.max(0, facts.bannedPhrases.length - 2),
+    sizesInStock: Math.max(0, (facts.sizesInStock?.length ?? 0) - 6),
+    scenes: state.scenes.length,
+  };
+  for (const scene of state.scenes) {
+    const row = {
+      id: truncate(scene.id, 48),
+      kind: scene.kind,
+      heading: truncate(scene.heading, 80),
+      body: truncate(scene.body, 100),
+      durationSec: scene.durationSec,
+    };
+    const candidate = { ...projected, scenes: [...projected.scenes, row] };
+    const candidateTruncation = {
+      ...truncation,
+      scenes: state.scenes.length - candidate.scenes.length,
+    };
+    if (JSON.stringify(ok({ state: candidate, truncated: candidateTruncation })).length > 1400) break;
+    projected.scenes.push(row);
+  }
+  truncation.scenes = state.scenes.length - projected.scenes.length;
+  return ok({ state: projected, truncated: truncation });
+}
+
+function personalOfferResult(offer: PersonalOffer): ToolContent {
+  const sizes = (offer.sizesInStock ?? []).slice(0, 6).map((x) => truncate(x, 16));
+  const reasons = offer.reasons.slice(0, 2).map((x) => truncate(x, 100));
+  return ok({
+    offer: {
+      offerId: truncate(offer.offerId, 96),
+      requestId: truncate(offer.requestId, 64),
+      handle: truncate(offer.handle, 80),
+      title: truncate(offer.title, 120),
+      size: offer.size ? truncate(offer.size, 20) : null,
+      currency: truncate(offer.currency, 8),
+      regularPrice: offer.regularPrice,
+      price: offer.price,
+      discountPercent: offer.discountPercent,
+      promoCode: offer.promoCode ? truncate(offer.promoCode, 40) : null,
+      validFrom: truncate(offer.validFrom, 10),
+      validTo: truncate(offer.validTo, 10),
+      disclaimer: truncate(offer.disclaimer, 140),
+      purchaseUrl: truncate(offer.purchaseUrl, 180),
+      sizesInStock: sizes,
+      status: offer.status,
+      proposedBy: offer.proposedBy,
+      reasons,
+      marginCheck: offer.marginCheck,
+    },
+    truncated: {
+      disclaimer: offer.disclaimer.length > 140,
+      purchaseUrl: offer.purchaseUrl.length > 180,
+      sizesInStock: Math.max(0, (offer.sizesInStock?.length ?? 0) - sizes.length),
+      reasons: Math.max(0, offer.reasons.length - reasons.length),
+    },
+  });
+}
+
 export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
   const tools: WebMcpTool[] = [
     {
@@ -338,8 +429,8 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
       description:
         'Read the campaign: facts (price, discount, code, dates, disclaimer), their human lock state, brief, scenes, and format. When facts are locked, agents cannot change them — write copy that matches.',
       inputSchema: { type: 'object', properties: {} },
-      annotations: { readOnlyHint: true },
-      execute: () => ok({ state: cb.getState() }),
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: () => campaignStateResult(cb.getState()),
     },
     {
       name: 'set_brief',
@@ -514,7 +605,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
       description:
         'Dry-run the claim validator over a piece of copy, or over the whole campaign when no text is given.',
       inputSchema: { type: 'object', properties: { text: { type: 'string' } } },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: (args) => {
         const state = cb.getState();
         const violations =
@@ -554,7 +645,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
       description:
         'Read the locked offer as data a shopping agent can act on: product, prices, promo code, validity dates, disclaimer, purchase link, sizes in stock. Pass requestId for the approved personal offer on one request.',
       inputSchema: { type: 'object', properties: { requestId: { type: 'string' } } },
-      annotations: { readOnlyHint: true },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
       execute: (args) => {
         const state = cb.getState();
         const facts = state.facts as CampaignFacts & { purchaseUrl?: string };
@@ -571,7 +662,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
               next: 'Ask the merchant to approve a proposal for this request in the studio, or call get_offer without requestId for the general offer.',
             };
           }
-          return ok({ offer: approved });
+          return personalOfferResult(approved);
         }
         return ok({
           offerId: facts.offerId ?? offerIdFor(facts),
@@ -583,11 +674,16 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
           promoCode: facts.promoCode,
           validFrom: facts.startDate,
           validTo: facts.endDate,
-          disclaimer: facts.disclaimer,
-          purchaseUrl: facts.purchaseUrl ?? null,
-          sizesInStock: facts.sizesInStock ?? [],
+          disclaimer: truncate(facts.disclaimer, 300),
+          purchaseUrl: facts.purchaseUrl ? truncate(facts.purchaseUrl, 180) : null,
+          sizesInStock: (facts.sizesInStock ?? []).slice(0, 6),
           locked: state.factsLocked,
           completeness: computeCompleteness(facts),
+          truncated: {
+            disclaimer: facts.disclaimer.length > 300,
+            purchaseUrl: (facts.purchaseUrl?.length ?? 0) > 180,
+            sizesInStock: Math.max(0, (facts.sizesInStock?.length ?? 0) - 6),
+          },
         });
       },
     },
