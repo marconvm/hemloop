@@ -12,7 +12,7 @@ The Demand panel groups incoming requests by category and size, and scores each 
 Five sample merchants sit in the market scan. One request in; a verdict table out; one store answers.
 No merchant's cost or floor is shown to another merchant or to the shopper.
 
-![Demand grouped and scored against locked stock](img/studio-demand-insight.jpg)
+![Demand grouped and scored against locked stock: XXL size out of stock](img/studio-cannot-fill.jpg)
 
 <div class="flow-diagram" role="img" aria-label="Market scan: one request in, five verdicts, one store answers">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 280" font-family="DM Sans, system-ui, sans-serif">

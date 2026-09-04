@@ -12,6 +12,8 @@ reconstructs, and it is exactly the context she will not hand over wholesale, co
 
 So both sides lose. The store guesses. The shopper gets offers for things she already owns.
 
+![The private closet: owned brands stay on the page; the merchant never sees these rows](img/closet-private-wardrobe.jpg)
+
 ## Three things a merchant cannot see today
 
 **Replacement timing.** Purchase history says what sold. It does not say what the customer still

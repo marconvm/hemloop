@@ -4,7 +4,7 @@ Maya buys a crew tee from Harborview Basics. She uploads the sample order-email 
 pastes the text on the Closet). `import_receipt` parses it locally: no OCR on the page, no network.
 The purchase joins her log; the tee joins her wardrobe; her **buying pattern** for tees recomputes.
 
-![A proposal shaped by local pattern, waiting for Approve](img/studio-proposal-approve.jpg)
+![A proposal shaped by local pattern, waiting for Approve](img/studio-rival-proposal.jpg)
 
 <div class="flow-diagram" role="img" aria-label="Rival receipt stays local; only derived pattern can leave at level 3">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 180" font-family="DM Sans, system-ui, sans-serif">

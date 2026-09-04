@@ -946,3 +946,17 @@ Landed:
 4. `public/logo-loop.gif` (256px, transparent, ~2.4s loop) for README + Devpost; `scripts/render-logo-assets.mjs` rebuilds ico/gif
 
 Gates: tests · tsc · lint · build.
+
+### Cursor docs-v2-shots: fresh light screenshots @1440 (2026-09-04)
+
+Branch: `cursor/docs-v2-shots` from `origin/main` (post logo-loop).
+
+Landed:
+1. Replaced every docs screenshot under `public/docs/img/` (+ `docs/img/` mirror) with
+   fresh captures from `https://hemloop.app` at 1440×900, light cream UI, new ring/dot logo
+2. One image per section (01–05) and per use case; 02 uses Hemloop with a request in flight
+   (`hemloop-request-inflight.jpg`); 03 gains `closet-private-wardrobe.jpg`
+3. Unique files where captions differ (family kid wardrobe, cannot-fill XXL OOS, rival proposal)
+4. Grep: no leftover refs to retired screenshot names
+
+Gates: tests · tsc · lint · build.

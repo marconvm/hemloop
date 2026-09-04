@@ -9,7 +9,7 @@ WebMCP. Two web pages register **21 typed tools** in the browser itself. An agen
 wardrobe, send a store one approved request with no identity attached, and on the other side
 propose an offer that a matcher keeps inside the merchant's margin. Human gates sit on each side.
 
-![The loop closed on the merchant side: every station lit, the request marked bought](img/studio-loop-closed.jpg)
+![The loop closed: six stations done, Bought and Learned lit, ready for the next cycle](img/studio-loop-closed.jpg)
 
 ## The product, as it stands
 
