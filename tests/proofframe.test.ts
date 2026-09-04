@@ -23,7 +23,14 @@ import {
 } from '../lib/proofframe/offers';
 import { buildClosetTools } from '../lib/proofframe/webmcp-closet';
 import { loopProgress, loopSteps } from '../lib/proofframe/loop';
-import { currentStation, loopRoomFlags, stationOrder, stationStates } from '../lib/proofframe/loop-room';
+import {
+  currentStation,
+  loopRoomFlags,
+  nextAnsweringMerchant,
+  stationOrder,
+  stationStates,
+  type MarketRow,
+} from '../lib/proofframe/loop-room';
 import { seedPreferences, seedPurchases, seedWardrobe } from '../lib/proofframe/closet';
 
 function makeStore(state: CampaignState = seedCampaign()) {
@@ -1246,6 +1253,55 @@ void test("stationStates: 'again' is done only when a second loop has actually s
   const second = stationStates(all, 2);
   assert.equal(second.again, 'done');
   assert.equal(currentStation(second), 'again', 'nothing is current once every station is done');
+});
+
+void test('nextAnsweringMerchant never revisits a merchant for the same signal', () => {
+  const row = (
+    merchantId: string,
+    verdict: MarketRow['verdict'],
+  ): MarketRow => ({
+    merchantId,
+    name: merchantId,
+    verdict,
+    reason: verdict,
+    price: verdict === 'can-offer' ? 40 : null,
+    currency: 'CAD',
+  });
+  const attempted = new Set(['northlight']);
+  assert.equal(
+    nextAnsweringMerchant(
+      [row('northlight', 'category-mismatch'), row('overland', 'can-offer')],
+      'northlight',
+      attempted,
+    ),
+    'overland',
+  );
+
+  // Overland's stored campaign also fails. Northlight's seed now looks viable,
+  // but both have already been attempted for this signal, so move forward
+  // rather than ping-ponging back to Northlight.
+  attempted.add('overland');
+  assert.equal(
+    nextAnsweringMerchant(
+      [
+        row('northlight', 'can-offer'),
+        row('overland', 'category-mismatch'),
+        row('harborview', 'can-offer'),
+      ],
+      'overland',
+      attempted,
+    ),
+    'harborview',
+  );
+  attempted.add('harborview');
+  assert.equal(
+    nextAnsweringMerchant(
+      [row('northlight', 'can-offer'), row('overland', 'category-mismatch')],
+      'overland',
+      attempted,
+    ),
+    null,
+  );
 });
 
 void test('loopRoomFlags: flags come from real rows and calls, and a restart scopes to the new loop', () => {

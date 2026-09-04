@@ -47,6 +47,7 @@ import {
 import {
   currentStation,
   loopRoomFlags,
+  nextAnsweringMerchant,
   patternLabel,
   stationOrder,
   stationStates,
@@ -212,6 +213,10 @@ export function LoopRoomPage() {
   const merchants = useMemo(() => seedMerchants(), []);
   const [activeMerchantId, setActiveMerchantId] = useState('northlight');
   const activeMerchantIdRef = useRef(activeMerchantId);
+  const marketAttemptsRef = useRef<{
+    signalId: string;
+    merchantIds: Set<string>;
+  } | null>(null);
   const [campaign, setCampaign] = useState<CampaignState>(() =>
     seedCampaign('northlight'),
   );
@@ -590,12 +595,20 @@ export function LoopRoomPage() {
   // When a request lands, the right store answers: switch to the first can-offer
   // if the active merchant cannot.
   useEffect(() => {
-    if (!market || !campaignHydratedRef.current) return;
-    const activeRow = market.find((r) => r.merchantId === activeMerchantId);
-    if (activeRow?.verdict === 'can-offer') return;
-    const first = market.find((r) => r.verdict === 'can-offer');
-    if (first) switchMerchant(first.merchantId);
-  }, [market, activeMerchantId, switchMerchant]);
+    if (!market || !lastSignal || !campaignHydratedRef.current) return;
+    if (marketAttemptsRef.current?.signalId !== lastSignal.signalId) {
+      marketAttemptsRef.current = {
+        signalId: lastSignal.signalId,
+        merchantIds: new Set<string>(),
+      };
+    }
+    const attempted = marketAttemptsRef.current.merchantIds;
+    attempted.add(activeMerchantId);
+    const next = nextAnsweringMerchant(market, activeMerchantId, attempted);
+    if (!next) return;
+    attempted.add(next);
+    switchMerchant(next);
+  }, [market, lastSignal, activeMerchantId, switchMerchant]);
 
   const activeMerchant =
     merchants.find((m) => m.id === activeMerchantId) ?? merchants[0];
