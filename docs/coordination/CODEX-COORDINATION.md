@@ -875,5 +875,14 @@ Same branch. `app/closet.css` only.
 Till receipt PNG is 720×960 with the paper centred in a beige frame; `.receipt-thumb` used `object-fit: cover` + `object-position: top`, so the card banner showed only beige. Both sample cards (till + order email body) now use `aspect-ratio: 4 / 3`, `object-fit: contain`, `object-position: center` on the paper background.
 
 Verified screenshots @ 1440 and 430: Northlight receipt text and Harborview email body visible on both cards.
+### Cursor copy-button: Copy prompt feedback + clipboard fallback (2026-09-04)
+
+Branch: `cursor/copy-button` from `origin/main` @ `060ac2e`.
+Allowed edit to `components/loop-room/station-card.tsx` (Codex on review).
+
+Landed (S11):
+1. `onCopySay` → `Promise<boolean>`: `navigator.clipboard.writeText`, then temporary textarea + `document.execCommand('copy')`, else `false`
+2. Station card: success → button "Copied" for ~1.5s; failure → select the blockquote (expand if collapsed) and label "Select and copy" so Cmd+C works
+3. 44px target unchanged (`.hlr-say-actions button` min-height)
 
 Gates: 159 · tsc · lint · build.
