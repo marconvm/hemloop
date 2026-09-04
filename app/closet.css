@@ -443,15 +443,19 @@
   border-radius: 10px;
   overflow: hidden;
   background: #f3f1ea;
-  min-height: 140px;
 }
 
+/* Till receipt is 720×960 with the paper centred in a beige frame. A wide
+ * cover+top crop showed only the background; 4:3 contain keeps the receipt
+ * (and the email screenshot) visible on both cards. */
 .studio-shell .receipt-thumb {
   display: block;
   width: 100%;
-  height: 160px;
-  object-fit: cover;
-  object-position: top;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  object-position: center;
+  background: #f3f1ea;
 }
 
 .studio-shell .eml-preview {
@@ -480,9 +484,11 @@
 .studio-shell .eml-body-thumb {
   display: block;
   width: 100%;
-  height: 110px;
-  object-fit: cover;
-  object-position: top;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  object-position: center;
+  background: #f3f1ea;
 }
 
 .studio-shell .receipt-card-label {

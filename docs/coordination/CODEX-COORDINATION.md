@@ -863,3 +863,13 @@ Landed:
 4. Margin cell → "Margin at sale price" with `8.2% · floor 30%` (sale margin + floor at a glance).
 
 Gates: 159 · tsc · lint · build.
+
+### Cursor studio-polaris-2 fold-in: receipt card thumbs (2026-09-04)
+
+Same branch. `app/closet.css` only.
+
+Till receipt PNG is 720×960 with the paper centred in a beige frame; `.receipt-thumb` used `object-fit: cover` + `object-position: top`, so the card banner showed only beige. Both sample cards (till + order email body) now use `aspect-ratio: 4 / 3`, `object-fit: contain`, `object-position: center` on the paper background.
+
+Verified screenshots @ 1440 and 430: Northlight receipt text and Harborview email body visible on both cards.
+
+Gates: 159 · tsc · lint · build.
