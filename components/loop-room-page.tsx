@@ -1168,7 +1168,6 @@ export function LoopRoomPage() {
       />
       <LoopRoom
         view={view}
-        tools={manifest}
         processing={processing}
         creative={creative}
         onCopySay={onCopySay}

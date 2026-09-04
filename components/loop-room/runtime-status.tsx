@@ -27,8 +27,12 @@ export function RuntimeStatus({
         type="button"
         onClick={() => dialogRef.current?.showModal()}
       >
-        <span aria-hidden="true" />
-        {label ?? `${toolCount} webmcp tools ${live ? 'live' : 'preview'}`}
+        <span className="hlr-live-dot" aria-hidden="true" />
+        <strong>
+          {label ?? `WebMCP ${live ? 'live' : 'preview'}`}
+          <span aria-hidden="true"> · </span>
+        </strong>
+        <b>{toolCount} tools</b>
       </button>
       <dialog
         aria-labelledby="hlr-tool-dialog-title-header"
