@@ -41,17 +41,8 @@
     color: inherit; font-family: var(--font-heading); font-size: 21px; font-weight: 800;
     letter-spacing: -0.055em; text-decoration: none;
   }
-  .site-brand-mark {
-    position: relative; display: inline-grid; width: 31px; height: 31px;
-    place-items: center; border: 2px solid currentColor; border-radius: 50%;
-  }
-  .site-brand-mark::after {
-    position: absolute; top: 2px; right: -4px; width: 10px; height: 10px;
-    border-top: 2px solid currentColor; content: ''; transform: rotate(35deg);
-  }
-  .site-brand-mark > span {
-    width: 8px; height: 8px; border: 1px solid currentColor; border-radius: 50%;
-    background: var(--loop);
+  .site-brand-logo {
+    display: block; width: 31px; height: 31px; flex: 0 0 auto;
   }
   .site-nav {
     display: flex; align-items: center; gap: 4px; padding: 4px;
@@ -169,7 +160,7 @@
 <body>
 <header class="site-header">
   <a class="site-brand" href="/" aria-label="Hemloop home">
-    <span class="site-brand-mark" aria-hidden="true"><span></span></span>
+    <img class="site-brand-logo" src="/logo.svg" alt="" width="31" height="31" aria-hidden="true" />
     <span>hemloop</span>
   </a>
   <nav class="site-nav" aria-label="Hemloop surfaces">
@@ -195,7 +186,7 @@
 
 <footer class="site-footer">
   <a class="site-brand" href="/" aria-label="Hemloop home">
-    <span class="site-brand-mark" aria-hidden="true"><span></span></span>
+    <img class="site-brand-logo" src="/logo.svg" alt="" width="31" height="31" aria-hidden="true" />
     <span>hemloop</span>
   </a>
   <nav aria-label="Hemloop footer navigation">

@@ -1,5 +1,9 @@
 # Hemloop
 
+<p align="center">
+  <img src="public/logo-loop.gif" alt="Hemloop mark — lime dot looping the ring" width="96" height="96" />
+</p>
+
 Your AI tells a store what you need, without telling it who you are. The store answers with an offer priced inside rules a human locked, and every promotional claim is checked before it can exist. Neither side accumulates a profile of the other.
 
 **Live:** [hemloop.app](https://hemloop.app) · Built for the [OpenAI WebMCP Challenge](https://webmcp.devpost.com/).

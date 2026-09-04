@@ -933,3 +933,16 @@ Landed:
 5. DOMPurify allowlist for SVG; public/docs byte-identical mirror
 
 Gates: tests · tsc · lint · build.
+
+### Cursor logo-loop: one mark source everywhere (2026-09-04)
+
+Branch: `cursor/logo-loop` from `origin/main` (post docs-v2).
+
+Landed:
+1. `public/logo.svg` is the single source — ring + lime dot; CSS orbit 2.5s inside the SVG
+   (animates in `<img>`); `prefers-reduced-motion: reduce` parks the dot
+2. `SiteHeader` + `SiteFooter` + docs static header use `/logo.svg` (dropped CSS `.site-brand-mark`)
+3. `favicon.svg` = static top-dot frame of the same geometry; `favicon.ico` regenerated 16/32/48
+4. `public/logo-loop.gif` (256px, transparent, ~2.4s loop) for README + Devpost; `scripts/render-logo-assets.mjs` rebuilds ico/gif
+
+Gates: tests · tsc · lint · build.

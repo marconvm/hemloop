@@ -11,9 +11,15 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <a className="site-brand" href="/" aria-label={`${BRAND.name} home`}>
-        <span className="site-brand-mark" aria-hidden="true">
-          <span />
-        </span>
+        {/* oxlint-disable-next-line next/no-img-element -- animated SVG mark; next/image would freeze SMIL/CSS */}
+        <img
+          className="site-brand-logo"
+          src="/logo.svg"
+          alt=""
+          width={31}
+          height={31}
+          aria-hidden="true"
+        />
         <span>{BRAND.name.toLowerCase()}</span>
       </a>
       <nav aria-label="Hemloop footer navigation">

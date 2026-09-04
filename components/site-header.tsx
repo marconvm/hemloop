@@ -26,10 +26,16 @@ const LINKS: { key: SiteSection; label: string; href: string }[] = [
 export function SiteHeader({ active, status, actions }: SiteHeaderProps) {
   return (
     <header className="site-header">
-      <a className="site-brand" href="/" aria-label={`${BRAND.name} loop room`}>
-        <span className="site-brand-mark" aria-hidden="true">
-          <span />
-        </span>
+      <a className="site-brand" href="/" aria-label={`${BRAND.name} home`}>
+        {/* oxlint-disable-next-line next/no-img-element -- animated SVG mark; next/image would freeze SMIL/CSS */}
+        <img
+          className="site-brand-logo"
+          src="/logo.svg"
+          alt=""
+          width={31}
+          height={31}
+          aria-hidden="true"
+        />
         <span>{BRAND.name.toLowerCase()}</span>
       </a>
 
