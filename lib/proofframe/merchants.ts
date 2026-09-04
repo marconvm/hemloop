@@ -11,10 +11,19 @@ import {
 } from './offers';
 import type { CampaignFacts } from './types';
 
+/** One SKU line the merchant actually owns. `sizesInStock` is derived as the
+ * distinct sizes with qty > 0 — never hand-edited beside this list. */
+export interface MerchantInventoryRow {
+  sku: string;
+  size: string;
+  qty: number;
+}
+
 export interface Merchant {
   id: string;
   name: string;
   facts: CampaignFacts;
+  inventory: MerchantInventoryRow[];
 }
 
 const DATES = {
@@ -22,14 +31,44 @@ const DATES = {
   endDate: '2026-09-07',
 } as const;
 
+/** Distinct sizes with qty > 0, first-seen order. Pure. */
+export function sizesInStockFromInventory(inventory: MerchantInventoryRow[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const row of inventory) {
+    if (row.qty <= 0) continue;
+    if (seen.has(row.size)) continue;
+    seen.add(row.size);
+    out.push(row.size);
+  }
+  return out;
+}
+
+function merchant(
+  id: string,
+  name: string,
+  facts: Omit<CampaignFacts, 'sizesInStock'> & { sizesInStock?: string[] },
+  inventory: MerchantInventoryRow[],
+): Merchant {
+  const sizesInStock = sizesInStockFromInventory(inventory);
+  return {
+    id,
+    name,
+    inventory,
+    facts: { ...facts, sizesInStock },
+  };
+}
+
 /** The five merchants from MERCHANTS-BRIEF.md. Numbers are calibrated so a
- * hoodie · M request yields the table's verdicts at Basics and Taste. */
+ * hoodie · M request yields the table's verdicts at Basics and Taste.
+ * Northlight inventory mirrors catalog.json variants; Ridgeline M is qty 0 so
+ * size-not-in-stock stays true. */
 export function seedMerchants(): Merchant[] {
   return [
-    {
-      id: 'northlight',
-      name: 'Northlight Apparel',
-      facts: {
+    merchant(
+      'northlight',
+      'Northlight Apparel',
+      {
         productName: 'Northlight Hoodie',
         currency: 'CAD',
         regularPrice: 59.9,
@@ -41,16 +80,24 @@ export function seedMerchants(): Merchant[] {
         bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
         purchaseUrl: 'https://hemloop.app/closet?product=northlight-hoodie',
         productImage: '/products/northlight-hoodie.jpg',
-        sizesInStock: ['S', 'M', 'L', 'XL'],
         costPrice: 24,
         marginFloorPercent: 35,
         maxDiscountPercent: 30,
       },
-    },
-    {
-      id: 'harborview',
-      name: 'Harborview Basics',
-      facts: {
+      // Same SKUs / qty as catalog.json northlight-hoodie variants.
+      [
+        { sku: 'NL-HD-MOSS-S', size: 'S', qty: 18 },
+        { sku: 'NL-HD-MOSS-M', size: 'M', qty: 26 },
+        { sku: 'NL-HD-BONE-M', size: 'M', qty: 14 },
+        { sku: 'NL-HD-BONE-L', size: 'L', qty: 9 },
+        { sku: 'NL-HD-INK-M', size: 'M', qty: 21 },
+        { sku: 'NL-HD-INK-XL', size: 'XL', qty: 6 },
+      ],
+    ),
+    merchant(
+      'harborview',
+      'Harborview Basics',
+      {
         productName: 'Harbor Fleece Hoodie',
         currency: 'CAD',
         regularPrice: 49,
@@ -62,16 +109,22 @@ export function seedMerchants(): Merchant[] {
         bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
         purchaseUrl: 'https://hemloop.app/closet?product=harbor-fleece-hoodie',
         productImage: '/products/northlight-hoodie.jpg',
-        sizesInStock: ['XS', 'S', 'M', 'L', 'XL'],
         costPrice: 36,
         marginFloorPercent: 30,
         maxDiscountPercent: 20,
       },
-    },
-    {
-      id: 'ridgeline',
-      name: 'Ridgeline Outdoor',
-      facts: {
+      [
+        { sku: 'HV-HD-FLEECE-XS', size: 'XS', qty: 8 },
+        { sku: 'HV-HD-FLEECE-S', size: 'S', qty: 16 },
+        { sku: 'HV-HD-FLEECE-M', size: 'M', qty: 22 },
+        { sku: 'HV-HD-FLEECE-L', size: 'L', qty: 14 },
+        { sku: 'HV-HD-FLEECE-XL', size: 'XL', qty: 7 },
+      ],
+    ),
+    merchant(
+      'ridgeline',
+      'Ridgeline Outdoor',
+      {
         productName: 'Summit Fleece Hoodie',
         currency: 'CAD',
         regularPrice: 79,
@@ -83,16 +136,21 @@ export function seedMerchants(): Merchant[] {
         bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
         purchaseUrl: 'https://hemloop.app/closet?product=summit-fleece-hoodie',
         productImage: '/products/northlight-hoodie.jpg',
-        sizesInStock: ['S', 'L', 'XL'],
         costPrice: 40,
         marginFloorPercent: 35,
         maxDiscountPercent: 25,
       },
-    },
-    {
-      id: 'denim-supply',
-      name: 'Denim Supply Co.',
-      facts: {
+      [
+        { sku: 'RL-HD-SUMMIT-S', size: 'S', qty: 11 },
+        { sku: 'RL-HD-SUMMIT-M', size: 'M', qty: 0 },
+        { sku: 'RL-HD-SUMMIT-L', size: 'L', qty: 9 },
+        { sku: 'RL-HD-SUMMIT-XL', size: 'XL', qty: 5 },
+      ],
+    ),
+    merchant(
+      'denim-supply',
+      'Denim Supply Co.',
+      {
         productName: 'East Side Straight Jean',
         currency: 'CAD',
         regularPrice: 78,
@@ -104,16 +162,22 @@ export function seedMerchants(): Merchant[] {
         bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
         purchaseUrl: 'https://hemloop.app/closet?product=east-side-straight',
         productImage: '/products/northlight-hoodie.jpg',
-        sizesInStock: ['28', '30', '32', '34', '36'],
         costPrice: 38,
         marginFloorPercent: 35,
         maxDiscountPercent: 20,
       },
-    },
-    {
-      id: 'overland',
-      name: 'Overland Trading Co.',
-      facts: {
+      [
+        { sku: 'DS-JN-EAST-28', size: '28', qty: 6 },
+        { sku: 'DS-JN-EAST-30', size: '30', qty: 12 },
+        { sku: 'DS-JN-EAST-32', size: '32', qty: 18 },
+        { sku: 'DS-JN-EAST-34', size: '34', qty: 10 },
+        { sku: 'DS-JN-EAST-36', size: '36', qty: 4 },
+      ],
+    ),
+    merchant(
+      'overland',
+      'Overland Trading Co.',
+      {
         productName: 'Fieldhouse Fleece Hoodie',
         currency: 'CAD',
         regularPrice: 89,
@@ -126,12 +190,18 @@ export function seedMerchants(): Merchant[] {
         bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
         purchaseUrl: 'https://hemloop.app/closet?product=fieldhouse-fleece',
         productImage: '/products/northlight-hoodie.jpg',
-        sizesInStock: ['XS', 'S', 'M', 'L', 'XL'],
         costPrice: 45,
         marginFloorPercent: 40,
         maxDiscountPercent: 10,
       },
-    },
+      [
+        { sku: 'OL-HD-FIELD-XS', size: 'XS', qty: 5 },
+        { sku: 'OL-HD-FIELD-S', size: 'S', qty: 10 },
+        { sku: 'OL-HD-FIELD-M', size: 'M', qty: 15 },
+        { sku: 'OL-HD-FIELD-L', size: 'L', qty: 12 },
+        { sku: 'OL-HD-FIELD-XL', size: 'XL', qty: 8 },
+      ],
+    ),
   ];
 }
 
@@ -193,11 +263,11 @@ export function marketScan(
   shopperCeiling: number | null = null,
   now: Date = new Date(),
 ): MarketRow[] {
-  const rows: MarketRow[] = merchants.map((merchant) => {
+  const rows: MarketRow[] = merchants.map((merchantRow) => {
     const result = matchOffer({
       request,
-      facts: merchant.facts,
-      catalogProduct: catalogProductForMerchant(merchant.facts),
+      facts: merchantRow.facts,
+      catalogProduct: catalogProductForMerchant(merchantRow.facts),
       now,
     });
 
@@ -210,40 +280,40 @@ export function marketScan(
             ? 'category-mismatch'
             : 'category-mismatch';
       return {
-        merchantId: merchant.id,
-        name: merchant.name,
+        merchantId: merchantRow.id,
+        name: merchantRow.name,
         verdict,
         reason: reasonFor(verdict, null, refuse, request.size ?? null),
         price: null,
-        currency: merchant.facts.currency,
+        currency: merchantRow.facts.currency,
       };
     }
 
     if (!result.marginCheck.ok) {
       return {
-        merchantId: merchant.id,
-        name: merchant.name,
+        merchantId: merchantRow.id,
+        name: merchantRow.name,
         verdict: 'margin-floor' as const,
         reason: reasonFor('margin-floor', result, null, request.size ?? null),
         price: null,
-        currency: merchant.facts.currency,
+        currency: merchantRow.facts.currency,
       };
     }
 
     if (shopperCeiling !== null && result.price > shopperCeiling) {
       return {
-        merchantId: merchant.id,
-        name: merchant.name,
+        merchantId: merchantRow.id,
+        name: merchantRow.name,
         verdict: 'over-ceiling' as const,
         reason: reasonFor('over-ceiling', result, null, request.size ?? null),
         price: null,
-        currency: merchant.facts.currency,
+        currency: merchantRow.facts.currency,
       };
     }
 
     return {
-      merchantId: merchant.id,
-      name: merchant.name,
+      merchantId: merchantRow.id,
+      name: merchantRow.name,
       verdict: 'can-offer' as const,
       reason: reasonFor('can-offer', result, null, request.size ?? null),
       price: result.price,

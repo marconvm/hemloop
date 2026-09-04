@@ -24,9 +24,9 @@ No ad platform performs that third move. It is the merchant's own strategy const
 
 See [docs/USE-CASES.md](docs/USE-CASES.md) for the loop told as a story, run three times.
 
-Four routes are the whole product (header: Loop · Closet · Studio · Docs). `/merchant` redirects to `/studio?tab=demand`.
+Four routes are the whole product (header: Hemloop · Closet · Studio · Docs). `/merchant` redirects to `/studio?tab=demand`.
 
-1. **The Loop Room** (`/`): both sides of one request in one shared space, seven stations (New item → Again). Registers all **21 WebMCP tools** (9 closet + 12 studio) together. Three human gates on the page: Approve next request, Approve offer, Bought.
+1. **Hemloop** (`/`): both sides of one request in one shared space, seven stations (New item → Again). Registers all **21 WebMCP tools** (9 closet + 12 studio) together. Three human gates on the page: Approve next request, Approve offer, Bought.
 2. **The Closet** (`/closet`): the full shopper surface (tabs: Wardrobe · Requests and offers). Nine tools find wardrobe gaps, check fit, read preferences, import receipts, and — after one human approval — send a zero-ID demand signal. Sharing level 0–3 controls which fields travel; wardrobe rows never do.
 3. **The Studio** (`/studio`): the full merchant surface (tabs: Demand · Offer and rules · Composition). Twelve tools including `get_demand` and `propose_offer`. Lock facts and approve proposals are human-only. A promo video is one output; the trust machinery is the product.
 4. **Docs** (`/docs/`): the five-section docs site.
@@ -67,7 +67,7 @@ Both surfaces need tools that operate on live page state in the user's own sessi
 
 ```sh
 npm install
-npm run dev                       # Loop Room on /, studio on /studio, closet on /closet
+npm run dev                       # Hemloop on /, studio on /studio, closet on /closet
 npm test                          # 144 tests
 ```
 

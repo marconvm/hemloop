@@ -604,20 +604,117 @@
 
 .stat-label {
   margin: 0;
-  color: var(--muted);
-  font-size: 12px;
+  color: var(--ink);
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 
 .stat-value {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-family: var(--font-display);
-  font-size: clamp(26px, 3vw, 34px);
+  font-size: clamp(28px, 3.2vw, 36px);
   font-weight: 750;
   letter-spacing: -0.05em;
   line-height: 1;
+  color: var(--ink);
 }
+
+.stat-sub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--moss);
+}
+
+/* Locked inventory table (Demand + Offer) */
+.locked-inventory {
+  margin: 0 0 16px;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--white, #fff);
+  color: var(--ink);
+}
+
+.locked-inventory-kicker {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.locked-inventory-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.locked-inventory-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.locked-inventory-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.locked-inventory-table th {
+  padding: 6px 10px 8px 0;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--moss);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.locked-inventory-table td {
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.locked-inventory-table tr.is-sold-out td {
+  color: #5c6560;
+}
+
+.locked-inventory-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.studio-shell .panel-intro {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.studio-shell .empty-state .eyebrow {
+  color: var(--moss);
+}
+
+.studio-shell .empty-state h2 {
+  color: var(--ink);
+}
+
+.studio-shell .empty-state p {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
 
 .stat-split {
   margin: 0 4px;

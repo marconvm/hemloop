@@ -11,7 +11,7 @@ export interface SiteHeaderProps {
 }
 
 const LINKS: { key: SiteSection; label: string; href: string }[] = [
-  { key: 'loop', label: 'Loop', href: '/' },
+  { key: 'loop', label: 'Hemloop', href: '/' },
   { key: 'closet', label: 'Closet', href: '/closet' },
   { key: 'studio', label: 'Studio', href: '/studio' },
   { key: 'docs', label: 'Docs', href: '/docs/' },

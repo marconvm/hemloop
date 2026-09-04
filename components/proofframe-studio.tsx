@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { LockedInventoryTableForMerchant } from '@/components/locked-inventory-table';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
@@ -317,6 +318,10 @@ export function ProofFrameStudio() {
   const merchants = useMemo(() => seedMerchants(), []);
   const [activeMerchantId, setActiveMerchantId] = useState('northlight');
   const activeMerchantIdRef = useRef(activeMerchantId);
+  const activeMerchant = useMemo(
+    () => merchants.find((m) => m.id === activeMerchantId) ?? merchants[0],
+    [merchants, activeMerchantId],
+  );
   const [campaign, setCampaign] = useState<CampaignState>(() => seedCampaign('northlight'));
   const campaignRef = useRef(campaign);
   const campaignHydratedRef = useRef(false);
@@ -1067,9 +1072,12 @@ export function ProofFrameStudio() {
           </div>
 
           <p className="panel-intro">
-            Locked by the merchant. No agent tool can change these. Lock them
-            before asking an agent to compose.
+            Locked by the merchant. Agents compose inside these numbers.
           </p>
+
+          {activeMerchant ? (
+            <LockedInventoryTableForMerchant merchant={activeMerchant} />
+          ) : null}
 
           {facts.productImage ? (
             // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured

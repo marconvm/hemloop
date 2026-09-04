@@ -741,3 +741,16 @@ Gates: tests · tsc · lint · build. Deploy immediately.
 Also on this branch: /studio Demand `Store:` label was flush at left=0 (clipped to
 `re:` on live at 1456). `demand-tab-chrome` now shares the merchant-body width;
 offer-grid uses `minmax(0,…)`. Label reads `Store:`.
+
+### Cursor studio-pass: inventory table, Hemloop brand, density (2026-09-04)
+
+Branch: `cursor/studio-pass` (from closet-fix tip). Did not touch `components/loop-room/*`.
+
+A. Per-size `inventory: { sku, size, qty }[]` on each merchant; `sizesInStock` derived
+   (`sizesInStockFromInventory`). Northlight SKUs match catalog.json; Ridgeline M qty 0.
+   `LockedInventoryTable` on Demand + Offer (SKU, size, units, cost, floor %, max disc %, sale).
+B. Header first link Loop → Hemloop; "Waiting on Hemloop"; closet/docs/README Loop Room → Hemloop
+   as product name; cycle "the loop" kept.
+C. Studio density: shorter empty/stat copy, body-size ink, numbers first on stat strip.
+
+Gates: 149 · tsc · lint · build.

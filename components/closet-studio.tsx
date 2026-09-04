@@ -190,7 +190,7 @@ export function ClosetStudio() {
   const [tab, setTab] = useSurfaceTab<ClosetTab>(CLOSET_TAB_IDS, 'wardrobe');
   const [wardrobe, setWardrobe] = useState<Wardrobe>(seedWardrobe);
   const wardrobeRef = useRef(wardrobe);
-  // One wardrobe for every page (Loop Room and closet): read the stored one
+  // One wardrobe for every page (Hemloop home and closet): read the stored one
   // once mounted, write on every change after that. The seed only lands in a
   // browser that has nothing stored.
   const wardrobeHydratedRef = useRef(false);
@@ -215,7 +215,7 @@ export function ClosetStudio() {
       id: 1,
       actor: 'ME',
       title: 'Wardrobe seeded',
-      detail: 'Ten garments for Me, shared with the Loop Room in this browser.',
+      detail: 'Ten garments for Me, shared with Hemloop in this browser.',
     },
   ]);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
