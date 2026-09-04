@@ -892,3 +892,10 @@ Gates: 159 · tsc · lint · build.
 `DUAL-REVIEW-WAVE6-RECONCILED.md` compares both independent verdicts against
 main at `13f5cbf`, records already-landed fixes, and separates AGREED execution
 from ONE-SIDE, DISAGREE and DEFER items. No product code changed in this pass.
+### Cursor kids-photos: flat-lay kids wardrobe stills (2026-09-04)
+
+Branch: `cursor/kids-photos` from `origin/main`.
+Replaced every `public/products/kids-*.jpg` with Unsplash flat-lay / product stills
+(no faces). Updated `docs/PHOTO-CREDITS.md` + `public/docs/` mirror.
+
+Gates: 159 · tsc · lint · build.
