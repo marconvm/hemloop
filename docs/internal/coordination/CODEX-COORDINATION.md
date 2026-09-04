@@ -1038,3 +1038,5 @@ Landed:
 3. `DEVPOST-SUBMISSION.md` Gallery list under Gallery / logo asset
 
 No app / public / video changes. Not merged.
+
+Stretch: `docs/internal/devpost/teaser-portrait.mp4` (~20 s portrait; 02 still + cards-portrait + 04 still).

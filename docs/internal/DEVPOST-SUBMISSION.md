@@ -113,6 +113,8 @@ Five framed stills (3:2, 1800×1200 JPG) in `docs/internal/devpost/gallery/` —
 4. `04-outcome.jpg` — Outcome panel after Bought (loop closed)
 5. `05-studio-approve.jpg` — Studio proposal with Approve offer
 
+Stretch: `docs/internal/devpost/teaser-portrait.mp4` — ~20 s vertical (gate still + cards-portrait + outcome still).
+
 ## Video
 
 ```
