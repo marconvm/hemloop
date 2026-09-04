@@ -44,6 +44,6 @@ The merchant, Northlight Apparel (and four peers in the market scan), is fiction
 catalog, prices and promo code. The studio is the surface that makes promotional claims, so no real
 brand's name is attached to a synthetic claim.
 
-The shopper's wardrobe and purchase history carry real brands and real product photography from the
-author's own Shopify catalogs, used with permission. Kid wardrobe stills are flat-lay product
+The shopper's wardrobe and purchase history carry real brands and real product photography from retail
+catalogs, used with permission. Kid wardrobe stills are flat-lay product
 photos with no faces. The shopper herself, her sizes and her history are seeded and fictional.
