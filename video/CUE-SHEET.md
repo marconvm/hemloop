@@ -36,20 +36,20 @@ The claim of this video is that **an agent can run the loop and that three acts 
 
 ## The clock
 
-Spoken total about 2:05 in a 2:50 runtime. The air is where the calls land and the buttons get
+Spoken total 2:13 (measured, clone voice 2026-09-04) in a 2:50 runtime. The air is where the calls land and the buttons get
 pressed. Speed-ramp every wait 8× to 20× in the edit; never cut the refusal, the press, or the
 second refusal.
 
 | t | VO | on screen | paste or press |
 |---|---|---|---|
-| 0:00 | VO-01 (~16s) | Cold open on the Hemloop page, step 1 current, live header in frame. Drop the receipt image into the chat. Agent reads it, calls `import_receipt`; purchase row and garment appear in the closet stack; step 1 done. | image + `Import this receipt` |
-| 0:20 | VO-02 (~15s) | `find_gaps` runs; step 2 card shows owned counts then the gaps: hoodie missing, jacket thin, footwear due at twenty one months. | P1 |
-| 0:40 | VO-03 (~20s) | `report_demand_gap` refused: human-approval-required, on screen. Marco presses **Approve next request**; the card flips to "reply Yes, send it". Reply. The packet card appears with exactly its fields. A third send is refused again. Step 3 done. | P2, press, P3, P3 again |
-| 1:05 | VO-04 (~19s) | Market scan: five rows, four verdicts that say why not, Northlight answering. `get_demand` then `propose_offer`; proposal with margin versus floor. Marco presses **Approve offer**. Step 4 done. | P4, press |
-| 1:30 | VO-05 (~9s) | `get_offers` returns the offer addressed to the request. Marco presses **Bought**. Hold on the click and the row changing. | P5, press |
-| 1:45 | VO-06 (~14s) | Outcome panel: customer gained, merchant gained, pattern before and after, nobody gained a profile. Step 6 done, step 7 current. | none |
-| 2:05 | VO-07 (~13s) | Drop the rival receipt. `import_receipt`; the kicker counts up to cycle 2; rail resets to step 2 with a sharper pattern. | image + `Import this receipt` |
-| 2:25 | VO-08 (~11s) | Pull back: header (21 tools), the three gates named in a caption, docs flow map card, hemloop.app. | none |
+| 0:00 | VO-01 (16.9s) | Cold open on the Hemloop page, step 1 current, live header in frame. Drop the receipt image into the chat. Agent reads it, calls `import_receipt`; purchase row and garment appear in the closet stack; step 1 done. | image + `Import this receipt` |
+| 0:20 | VO-02 (19.3s) | `find_gaps` runs; step 2 card shows owned counts then the gaps: hoodie missing, jacket thin, footwear due at twenty one months. | P1 |
+| 0:40 | VO-03 (22.5s) | `report_demand_gap` refused: human-approval-required, on screen. Marco presses **Approve next request**; the card flips to "reply Yes, send it". Reply. The packet card appears with exactly its fields. A third send is refused again. Step 3 done. | P2, press, P3, P3 again |
+| 1:05 | VO-04 (21.9s) | Market scan: five rows, four verdicts that say why not, Northlight answering. `get_demand` then `propose_offer`; proposal with margin versus floor. Marco presses **Approve offer**. Step 4 done. | P4, press |
+| 1:30 | VO-05 (8.5s) | `get_offers` returns the offer addressed to the request. Marco presses **Bought**. Hold on the click and the row changing. | P5, press |
+| 1:45 | VO-06 (15.3s) | Outcome panel: customer gained, merchant gained, pattern before and after, nobody gained a profile. Step 6 done, step 7 current. | none |
+| 2:05 | VO-07 (11.7s) | Drop the rival receipt. `import_receipt`; the kicker counts up to cycle 2; rail resets to step 2 with a sharper pattern. | image + `Import this receipt` |
+| 2:25 | VO-08 (16.9s) | Pull back: header (21 tools), the three gates named in a caption, docs flow map card, hemloop.app. | none |
 
 ## Prompt sheet (paste exactly)
 

@@ -1,4 +1,4 @@
-# Devpost submission checklist (deadline 2026-09-03 13:00 PT)
+# Devpost submission checklist (deadline 2026-09-04 01:00 PDT, 04:00 EDT)
 
 Fill the form from these sources. Nothing here is new prose; every field points at a file that is
 already reviewed.
@@ -25,7 +25,7 @@ already reviewed.
 - [ ] WRITEUP.md has no em dash, no stale tool count (9 closet, 12 studio, 21 total), test count matches `npm test`
 - [ ] Judge can reach docs from the landing CTA "Read the docs"
 
-## After 13:00 PT
+## After 01:00 PDT
 
 Touch nothing: not the entry, the repo, or the live site. The unstealth branch (robots allow-all) merges
 only after the deadline (task 7).

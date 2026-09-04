@@ -9,8 +9,8 @@ after swapping in the ElevenLabs voice clone.
 """
 import sys, wave, glob, os
 
-# Beat starts from docs/DEMO-SCRIPT.md, in seconds. Runtime cap is 3:00.
-BEATS = [0, 12, 35, 60, 80, 105, 130, 155]
+# Beat starts from video/CUE-SHEET.md v5, in seconds. Runtime cap is 3:00.
+BEATS = [0, 20, 40, 65, 90, 105, 125, 145]
 TOTAL = 170
 
 src = sys.argv[1] if len(sys.argv) > 1 else 'video/vo'
