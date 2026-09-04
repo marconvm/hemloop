@@ -16,12 +16,10 @@ import { MerchantMarket } from './merchant-market';
 import { OutcomePanel } from './outcome-panel';
 import { PacketInTransit } from './packet-in-transit';
 import { StationCard } from './station-card';
-import { ToolManifestDialog } from './tool-manifest-dialog';
-import type { LoopCreative, ProcessingView, RuntimeToolView } from './types';
+import type { LoopCreative, ProcessingView } from './types';
 
 export interface LoopRoomProps {
   view: LoopRoomView;
-  tools: RuntimeToolView[];
   processing?: ProcessingView | null;
   creative?: LoopCreative | null;
   onCopySay?: (prompt: string) => void;
@@ -35,7 +33,6 @@ export interface LoopRoomProps {
 
 export function LoopRoom({
   view,
-  tools,
   processing,
   creative,
   onCopySay,
@@ -85,11 +82,6 @@ export function LoopRoom({
           </div>
           <div className="hlr-heading-status">
             <span>{view.progress} of 7 steps complete</span>
-            <ToolManifestDialog
-              live={view.runtime.live}
-              tools={tools}
-              absent={view.runtime.absent}
-            />
           </div>
         </section>
 

@@ -209,33 +209,44 @@ select {
   min-height: 44px;
   align-items: center;
   gap: 8px;
-  padding: 0 4px;
-  border: 0;
-  background: transparent;
+  padding: 6px 7px 6px 12px;
+  border: 1px solid var(--loop-line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 82%);
   color: var(--loop-ink);
+  box-shadow: 0 8px 24px rgb(23 33 28 / 6%);
   cursor: pointer;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 12px;
-  letter-spacing: -0.02em;
-  text-transform: lowercase;
+  font-weight: 700;
 }
 
-.hlr-header-runtime > span {
-  width: 8px;
-  height: 8px;
+.hlr-header-runtime > .hlr-live-dot {
+  width: 7px;
+  height: 7px;
   flex: 0 0 auto;
   border-radius: 50%;
 }
 
-.hlr-header-runtime.is-live > span {
+.hlr-header-runtime.is-live > .hlr-live-dot {
   background: #4cb662;
   box-shadow: 0 0 0 4px rgb(76 182 98 / 13%);
   animation: hlr-runtime-pulse 1.5s ease-in-out infinite;
 }
 
-.hlr-header-runtime.is-preview > span {
+.hlr-header-runtime.is-preview > .hlr-live-dot {
   background: #d19c32;
   box-shadow: 0 0 0 4px rgb(209 156 50 / 13%);
+}
+
+.hlr-header-runtime > strong {
+  font-weight: 750;
+}
+
+.hlr-header-runtime > b {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: var(--loop-ink);
+  color: #fff;
 }
 
 .hlr-header-runtime:hover,
@@ -2348,6 +2359,247 @@ select {
   aspect-ratio: 16 / 9;
 }
 
+/* Campaign scenes use the product image as the layout. Motion is supplied as
+   playhead-derived inline transforms by CompositionScene, never a CSS clock. */
+.composition-scene {
+  --composition-accent: var(--loop);
+
+  isolation: isolate;
+  container-type: inline-size;
+  border-color: #101612;
+  border-radius: 22px;
+  background: #17211c;
+  color: #fff;
+}
+
+.composition-photo,
+.composition-photo-fallback,
+.composition-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.composition-photo {
+  z-index: 0;
+  object-fit: cover;
+  object-position: center 42%;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.composition-photo-fallback {
+  z-index: 0;
+  background: currentcolor;
+  opacity: 0.12;
+}
+
+.composition-scrim {
+  z-index: 1;
+  background: linear-gradient(
+    to top,
+    rgb(8 13 10 / 96%) 0%,
+    rgb(8 13 10 / 76%) 31%,
+    rgb(8 13 10 / 12%) 68%,
+    transparent 100%
+  );
+}
+
+.composition-copy {
+  position: absolute;
+  z-index: 2;
+  right: 7%;
+  bottom: 8%;
+  left: 7%;
+  color: #fff;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 16px rgb(0 0 0 / 44%);
+  transform-origin: bottom left;
+  will-change: transform;
+}
+
+.composition-kicker,
+.composition-body,
+.composition-price,
+.composition-code,
+.composition-url,
+.composition-dates,
+.composition-disclaimer {
+  margin: 0;
+}
+
+.composition-kicker {
+  margin-bottom: 7px;
+  color: color-mix(in srgb, var(--composition-accent) 82%, white);
+  font-family: var(--font-code);
+  font-size: clamp(7px, 3.1cqw, 12px);
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.composition-copy h3 {
+  max-width: 12ch;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: clamp(25px, 11cqw, 46px);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.composition-body {
+  max-width: 29ch;
+  margin-top: 9px;
+  font-size: clamp(9px, 4cqw, 16px);
+  font-weight: 620;
+  line-height: 1.3;
+}
+
+.composition-price {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-top: 11px;
+}
+
+.composition-price strong {
+  font-family: var(--font-heading);
+  font-size: clamp(20px, 8cqw, 34px);
+  line-height: 1;
+}
+
+.composition-price del {
+  color: rgb(255 255 255 / 68%);
+  font-family: var(--font-code);
+  font-size: clamp(8px, 3.2cqw, 13px);
+}
+
+.composition-chip-row,
+.composition-verification {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.composition-chip-row span,
+.composition-verification span,
+.composition-code,
+.composition-url,
+.composition-dates {
+  width: fit-content;
+  border: 1px solid rgb(255 255 255 / 35%);
+  border-radius: 999px;
+  font-size: clamp(7px, 2.8cqw, 11px);
+  font-weight: 750;
+  line-height: 1.15;
+}
+
+.composition-chip-row span,
+.composition-verification span {
+  padding: 5px 7px;
+  backdrop-filter: blur(9px);
+  background: rgb(16 24 19 / 44%);
+}
+
+.composition-verification span {
+  border-color: color-mix(in srgb, var(--composition-accent) 68%, white);
+  color: color-mix(in srgb, var(--composition-accent) 78%, white);
+}
+
+.composition-code,
+.composition-url,
+.composition-dates {
+  margin-top: 10px;
+  padding: 6px 8px;
+  background: color-mix(in srgb, var(--composition-accent) 80%, #17211c);
+  color: #fff;
+  font-family: var(--font-code);
+}
+
+.composition-url {
+  max-width: 100%;
+}
+
+.composition-dates {
+  border-color: rgb(255 255 255 / 28%);
+  background: rgb(16 24 19 / 55%);
+}
+
+.composition-scene.kind-offer .composition-copy {
+  bottom: 18%;
+}
+
+.composition-scene.kind-offer .composition-copy h3 {
+  color: color-mix(in srgb, var(--composition-accent) 78%, white);
+  font-size: clamp(34px, 15cqw, 64px);
+}
+
+.composition-disclaimer {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 8px 7%;
+  background: rgb(8 13 10 / 88%);
+  color: rgb(255 255 255 / 74%);
+  font-size: clamp(6px, 2.4cqw, 10px);
+  line-height: 1.25;
+}
+
+.composition-scene.placement-display .composition-photo {
+  object-position: 68% 42%;
+}
+
+.composition-scene.placement-display .composition-scrim {
+  background: linear-gradient(
+    90deg,
+    rgb(8 13 10 / 94%) 0%,
+    rgb(8 13 10 / 72%) 38%,
+    rgb(8 13 10 / 8%) 75%,
+    transparent 100%
+  );
+}
+
+.composition-scene.placement-display .composition-copy {
+  top: auto;
+  right: auto;
+  bottom: 10%;
+  width: 48%;
+  transform-origin: left center;
+}
+
+.composition-scene.placement-display .composition-copy h3 {
+  font-size: clamp(20px, 7.5cqw, 36px);
+}
+
+.composition-scene.placement-display.kind-offer .composition-copy {
+  top: auto;
+  bottom: 17%;
+}
+
+.composition-scene.placement-display.kind-offer .composition-copy h3 {
+  font-size: clamp(29px, 10cqw, 48px);
+}
+
+.composition-scene.placement-display .composition-body {
+  margin-top: 6px;
+  font-size: clamp(8px, 2.8cqw, 13px);
+}
+
+.composition-scene.placement-display .composition-price,
+.composition-scene.placement-display .composition-chip-row,
+.composition-scene.placement-display .composition-verification,
+.composition-scene.placement-display .composition-code,
+.composition-scene.placement-display .composition-url,
+.composition-scene.placement-display .composition-dates {
+  margin-top: 6px;
+}
+
 /* Offer completeness meter, in the Approved offer facts panel. */
 .completeness-meter {
   margin-top: 18px;
@@ -3570,6 +3822,27 @@ select {
   box-shadow: inset 3px 0 0 var(--loop);
 }
 
+.hlr-market li.is-answering .hlr-market-row-head em,
+.hlr-rail-summary em,
+.hlr-rail-step.is-current .hlr-rail-copy small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hlr-market li.is-answering .hlr-market-row-head em::before,
+.hlr-rail-summary em::before,
+.hlr-rail-step.is-current .hlr-rail-copy small::before {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #4cb662;
+  box-shadow: 0 0 0 3px rgb(76 182 98 / 13%);
+  animation: hlr-runtime-pulse 1.5s ease-in-out infinite;
+  content: '';
+}
+
 .hlr-market-row-head,
 .hlr-market-result {
   display: flex;
@@ -4491,13 +4764,19 @@ select {
 }
 
 .hlr-tool-dialog {
+  position: fixed;
+  inset: 50% auto auto 50%;
   width: min(650px, calc(100% - 28px));
   max-width: none;
+  max-height: calc(100dvh - 28px);
   padding: 0;
+  margin: 0;
+  overflow: auto;
   border: 0;
   border-radius: 25px;
   background: transparent;
   color: var(--loop-ink);
+  transform: translate(-50%, -50%);
 }
 
 .hlr-tool-dialog::backdrop {
@@ -4898,7 +5177,11 @@ select {
   .hlr-hero,
   .hlr-cycle-count,
   .hlr-closet-stack > li.is-new,
-  .is-spinning {
+  .is-spinning,
+  .hlr-header-runtime.is-live > .hlr-live-dot,
+  .hlr-market li.is-answering .hlr-market-row-head em::before,
+  .hlr-rail-summary em::before,
+  .hlr-rail-step.is-current .hlr-rail-copy small::before {
     animation: none;
   }
 }

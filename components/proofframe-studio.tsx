@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { CompositionScene } from '@/components/composition/scene';
 import { LockedInventoryTableForMerchant } from '@/components/locked-inventory-table';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
 import { SiteFooter } from '@/components/site-footer';
@@ -1666,57 +1667,11 @@ export function ProofFrameStudio() {
 
           <div className="preview-stage">
             {activeScene ? (
-              <div
-                className={`phone-preview dynamic-preview kind-${activeScene.kind} placement-${campaign.format.placement}`}
-                style={
-                  {
-                    background:
-                      activeScene.style?.background ??
-                      campaign.style.background,
-                    color: activeScene.style?.ink ?? campaign.style.ink,
-                    '--scene-accent':
-                      activeScene.style?.accent ?? campaign.style.accent,
-                  } as React.CSSProperties
-                }
-              >
-                <div className="preview-grain" aria-hidden="true" />
-                {facts.productImage &&
-                (activeScene.kind === 'hero' || activeScene.kind === 'product') ? (
-                  // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
-                  <img
-                    src={facts.productImage}
-                    alt={facts.productName}
-                    className="preview-product-photo"
-                    loading="lazy"
-                  />
-                ) : null}
-                <p className="preview-kicker">
-                  {activeScene.kind} / {campaign.facts.productName}
-                </p>
-                <div className="preview-signal" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <div className="dynamic-copy">
-                  <span>
-                    Scene{' '}
-                    {String(campaign.scenes.indexOf(activeScene) + 1).padStart(
-                      2,
-                      '0',
-                    )}
-                  </span>
-                  <h3>{activeScene.heading}</h3>
-                  <p>{activeScene.body}</p>
-                </div>
-                <div className="preview-price">
-                  <strong>{campaign.facts.discountPercent}% off</strong>
-                  <span>
-                    {money(campaign.facts.salePrice, campaign.facts.currency)}
-                  </span>
-                </div>
-                <p className="preview-footnote">{campaign.facts.disclaimer}</p>
-              </div>
+              <CompositionScene
+                campaign={campaign}
+                scene={activeScene}
+                playhead={playhead}
+              />
             ) : (
               <div className="empty-preview">Ask the agent to add a scene.</div>
             )}
