@@ -692,3 +692,42 @@ page's own tools mapped to `{ name, title, description, readOnly }` and the abse
 does not export it; no `runtime-status.tsx`). Codex still has it on the local
 `codex/wave6` worktree only. Left the existing `Badge` on `/closet` and `/studio`
 unchanged. Will wire as soon as Codex's export lands on main.
+
+### Codex wave 6: responsive room, runtime manifest and independent replay (2026-09-04)
+
+Branch: `codex/wave6` (worktree `../proofframe-webmcp-codex-room`). Pushed after full gates;
+Claude owns merge/deploy.
+
+Landed before the composition follow-up:
+
+1. Phone room order is station, Shopper · Closet, Merchant · Demand. The seven-step rail folds to
+   the current step on phone widths. A nowrap prompt initially forced a hidden 1,277px station;
+   containment was added and re-measured.
+2. Multiline receipt prompt collapses to one line, Show all expands 19px → 133px at 390, and Copy
+   always receives the full source prompt.
+3. Profile, Add five, prompt and human-gate controls have a 44px minimum touch target.
+4. Real five-merchant market renders name, verdict, reason, price and Answering state. Phone shows
+   the answering row plus a truthful expandable summary (at Basics: four others, one could offer).
+5. Page-agnostic `RuntimeStatus` is exported with `{live,toolCount,tools,absent,label?}`: monospace
+   lowercase label, animated green live dot, static amber preview dot, centred manifest dialog.
+6. Room copy uses E-commerce, steps and Hemloop as directed; footer carries Marco ownership and
+   the public GitHub source link.
+7. Independent storage/gate/manifest/hydration replay is recorded in
+   `docs/coordination/judge-review-3-2026-09-03.md`. Out-of-lane CHANGE findings: strict bounded
+   `readCampaign`, strict `readWardrobe` with local image policy, and two manifest descriptions.
+
+Measured with `getBoundingClientRect()` and `documentElement.scrollWidth`:
+
+| width | scrollWidth | rail `x / w` | station `x / w` | shopper `x / w` | merchant `x / w` | order |
+|---:|---:|---:|---:|---:|---:|---|
+| 390 | 390 | 13 / 364 | 24 / 342 | 24 / 342 | 24 / 342 | station → shopper → merchant |
+| 430 | 430 | 13 / 404 | 24 / 382 | 24 / 382 | 24 / 382 | station → shopper → merchant |
+| 820 | 820 | 24.6 / 770.8 | 50 / 720 | 43.6 / 340.4 | 402 / 374.4 | station → two parties |
+| 1440 | 1440 | 43.2 / 1353.6 | 396 / 575 | 62.2 / 315.8 | 989.1 / 388.7 | three columns |
+
+All measured boxes stayed within their containing room after the nowrap fix; body and document
+scroll widths equalled the viewport at all four sizes. Interactive replay at 390: centred header
+manifest opens/closes, market expands from Northlight Answering to the other four real verdicts.
+
+Gate at this checkpoint: **148/148 tests**, tsc clean, oxlint clean, vinext build clean. Composition
+scene extraction is the next separate commit; it is not claimed here.
