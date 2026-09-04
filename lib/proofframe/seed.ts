@@ -16,8 +16,21 @@ import type {
   SceneStyle,
 } from './types';
 import { formatForPlacement } from './types';
+import { MAX_SCENE_SECONDS, MAX_TOTAL_SECONDS } from './validator';
+import {
+  canonicalDate,
+  clampString,
+  isSafeHttpsUrl,
+  isSameOriginProductImage,
+  nonNegFinite,
+  percentInRange,
+  safeCssColor,
+} from './storage-policy';
 
 const DEFAULT_MERCHANT_ID = 'northlight';
+const MAX_SCENES = 12;
+const MAX_BRIEF = 2000;
+const SCENE_ID_RE = /^[a-z][a-z0-9-]{0,31}$/;
 
 function scenesFor(merchant: Merchant): Scene[] {
   if (merchant.id === 'northlight') {
@@ -125,53 +138,89 @@ function isPlacement(value: unknown): value is Placement {
 function parseFacts(value: unknown): CampaignFacts | null {
   if (!value || typeof value !== 'object') return null;
   const f = value as Record<string, unknown>;
-  if (typeof f.productName !== 'string') return null;
-  if (typeof f.currency !== 'string') return null;
-  if (typeof f.regularPrice !== 'number' || !Number.isFinite(f.regularPrice)) return null;
-  if (!(f.salePrice === null || (typeof f.salePrice === 'number' && Number.isFinite(f.salePrice)))) {
-    return null;
+  const productName = clampString(f.productName, 120);
+  const currency = clampString(f.currency, 8);
+  if (!productName || !currency) return null;
+  const regularPrice = nonNegFinite(f.regularPrice, 100_000);
+  if (regularPrice === null) return null;
+  let salePrice: number | null = null;
+  if (f.salePrice !== null && f.salePrice !== undefined) {
+    salePrice = nonNegFinite(f.salePrice, 100_000);
+    if (salePrice === null) return null;
   }
-  if (
-    !(
-      f.discountPercent === null ||
-      (typeof f.discountPercent === 'number' && Number.isFinite(f.discountPercent))
-    )
-  ) {
-    return null;
+  let discountPercent: number | null = null;
+  if (f.discountPercent !== null && f.discountPercent !== undefined) {
+    discountPercent = percentInRange(f.discountPercent);
+    if (discountPercent === null) return null;
   }
-  if (!(f.promoCode === null || typeof f.promoCode === 'string')) return null;
-  if (typeof f.startDate !== 'string') return null;
-  if (typeof f.endDate !== 'string') return null;
-  if (typeof f.disclaimer !== 'string') return null;
-  if (!Array.isArray(f.bannedPhrases) || !f.bannedPhrases.every((p) => typeof p === 'string')) {
-    return null;
+  let promoCode: string | null = null;
+  if (f.promoCode !== null && f.promoCode !== undefined) {
+    promoCode = clampString(f.promoCode, 40);
+    if (!promoCode) return null;
+  }
+  const startDate = canonicalDate(f.startDate);
+  const endDate = canonicalDate(f.endDate);
+  if (!startDate || !endDate || startDate > endDate) return null;
+  const disclaimer = clampString(f.disclaimer, 500);
+  if (!disclaimer) return null;
+  if (!Array.isArray(f.bannedPhrases) || f.bannedPhrases.length > 20) return null;
+  const bannedPhrases: string[] = [];
+  for (const p of f.bannedPhrases) {
+    const phrase = clampString(p, 40);
+    if (!phrase) return null;
+    bannedPhrases.push(phrase);
   }
 
   const facts: CampaignFacts = {
-    productName: f.productName,
-    currency: f.currency,
-    regularPrice: f.regularPrice,
-    salePrice: f.salePrice,
-    discountPercent: f.discountPercent,
-    promoCode: f.promoCode,
-    startDate: f.startDate,
-    endDate: f.endDate,
-    disclaimer: f.disclaimer,
-    bannedPhrases: f.bannedPhrases.filter((p): p is string => typeof p === 'string'),
+    productName,
+    currency,
+    regularPrice,
+    salePrice,
+    discountPercent,
+    promoCode,
+    startDate,
+    endDate,
+    disclaimer,
+    bannedPhrases,
   };
-  if (typeof f.purchaseUrl === 'string') facts.purchaseUrl = f.purchaseUrl;
-  if (typeof f.productImage === 'string') facts.productImage = f.productImage;
-  if (Array.isArray(f.sizesInStock) && f.sizesInStock.every((s) => typeof s === 'string')) {
-    facts.sizesInStock = f.sizesInStock;
+  if (f.purchaseUrl !== undefined) {
+    if (!isSafeHttpsUrl(f.purchaseUrl, 300)) return null;
+    facts.purchaseUrl = f.purchaseUrl;
   }
-  if (typeof f.costPrice === 'number' && Number.isFinite(f.costPrice)) facts.costPrice = f.costPrice;
-  if (typeof f.marginFloorPercent === 'number' && Number.isFinite(f.marginFloorPercent)) {
-    facts.marginFloorPercent = f.marginFloorPercent;
+  if (f.productImage !== undefined) {
+    if (!isSameOriginProductImage(f.productImage)) return null;
+    facts.productImage = f.productImage;
   }
-  if (typeof f.maxDiscountPercent === 'number' && Number.isFinite(f.maxDiscountPercent)) {
-    facts.maxDiscountPercent = f.maxDiscountPercent;
+  if (f.sizesInStock !== undefined) {
+    if (!Array.isArray(f.sizesInStock) || f.sizesInStock.length > 20) return null;
+    const sizes: string[] = [];
+    for (const s of f.sizesInStock) {
+      const size = clampString(s, 10);
+      if (!size) return null;
+      sizes.push(size);
+    }
+    facts.sizesInStock = sizes;
   }
-  if (typeof f.offerId === 'string') facts.offerId = f.offerId;
+  if (f.costPrice !== undefined) {
+    const cost = nonNegFinite(f.costPrice, 100_000);
+    if (cost === null) return null;
+    facts.costPrice = cost;
+  }
+  if (f.marginFloorPercent !== undefined) {
+    const floor = percentInRange(f.marginFloorPercent);
+    if (floor === null) return null;
+    facts.marginFloorPercent = floor;
+  }
+  if (f.maxDiscountPercent !== undefined) {
+    const max = percentInRange(f.maxDiscountPercent);
+    if (max === null) return null;
+    facts.maxDiscountPercent = max;
+  }
+  if (f.offerId !== undefined) {
+    const offerId = clampString(f.offerId, 80);
+    if (!offerId) return null;
+    facts.offerId = offerId;
+  }
   return facts;
 }
 
@@ -179,29 +228,50 @@ function parseSceneStyle(value: unknown): Partial<SceneStyle> | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const s = value as Record<string, unknown>;
   const out: Partial<SceneStyle> = {};
-  if (typeof s.background === 'string') out.background = s.background;
-  if (typeof s.ink === 'string') out.ink = s.ink;
-  if (typeof s.accent === 'string') out.accent = s.accent;
+  if (s.background !== undefined) {
+    const c = safeCssColor(s.background);
+    if (!c) return undefined;
+    out.background = c;
+  }
+  if (s.ink !== undefined) {
+    const c = safeCssColor(s.ink);
+    if (!c) return undefined;
+    out.ink = c;
+  }
+  if (s.accent !== undefined) {
+    const c = safeCssColor(s.accent);
+    if (!c) return undefined;
+    out.accent = c;
+  }
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function parseScene(value: unknown): Scene | null {
   if (!value || typeof value !== 'object') return null;
   const s = value as Record<string, unknown>;
-  if (typeof s.id !== 'string') return null;
+  if (typeof s.id !== 'string' || !SCENE_ID_RE.test(s.id)) return null;
   if (!isSceneKind(s.kind)) return null;
-  if (typeof s.heading !== 'string') return null;
-  if (typeof s.body !== 'string') return null;
+  const heading = clampString(s.heading, 200);
+  const body = clampString(s.body, 800);
+  if (!heading || !body) return null;
   if (typeof s.durationSec !== 'number' || !Number.isFinite(s.durationSec)) return null;
+  if (!(s.durationSec > 0 && s.durationSec <= MAX_SCENE_SECONDS)) return null;
   const scene: Scene = {
     id: s.id,
     kind: s.kind,
-    heading: s.heading,
-    body: s.body,
+    heading,
+    body,
     durationSec: s.durationSec,
   };
-  const style = parseSceneStyle(s.style);
-  if (style) scene.style = style;
+  if (s.style !== undefined) {
+    if (!s.style || typeof s.style !== 'object' || Array.isArray(s.style)) return null;
+    const raw = s.style as Record<string, unknown>;
+    if (Object.keys(raw).length > 0) {
+      const style = parseSceneStyle(s.style);
+      if (!style) return null;
+      scene.style = style;
+    }
+  }
   return scene;
 }
 
@@ -209,24 +279,21 @@ function parseFormat(value: unknown): CampaignFormat | null {
   if (!value || typeof value !== 'object') return null;
   const f = value as Record<string, unknown>;
   if (!isPlacement(f.placement)) return null;
-  if (typeof f.width !== 'number' || !Number.isFinite(f.width)) return null;
-  if (typeof f.height !== 'number' || !Number.isFinite(f.height)) return null;
-  if (typeof f.fps !== 'number' || !Number.isFinite(f.fps)) return null;
-  return {
-    width: f.width,
-    height: f.height,
-    fps: f.fps,
-    placement: f.placement,
-  };
+  const expected = formatForPlacement(f.placement);
+  if (typeof f.width !== 'number' || f.width !== expected.width) return null;
+  if (typeof f.height !== 'number' || f.height !== expected.height) return null;
+  if (typeof f.fps !== 'number' || f.fps !== expected.fps) return null;
+  return { ...expected };
 }
 
 function parseStyle(value: unknown): SceneStyle | null {
   if (!value || typeof value !== 'object') return null;
   const s = value as Record<string, unknown>;
-  if (typeof s.background !== 'string') return null;
-  if (typeof s.ink !== 'string') return null;
-  if (typeof s.accent !== 'string') return null;
-  return { background: s.background, ink: s.ink, accent: s.accent };
+  const background = safeCssColor(s.background);
+  const ink = safeCssColor(s.ink);
+  const accent = safeCssColor(s.accent);
+  if (!background || !ink || !accent) return null;
+  return { background, ink, accent };
 }
 
 /** Rebuild a CampaignState from storage only when facts and scenes (and the
@@ -234,22 +301,28 @@ function parseStyle(value: unknown): SceneStyle | null {
 function parseCampaign(value: unknown): CampaignState | null {
   if (!value || typeof value !== 'object') return null;
   const c = value as Record<string, unknown>;
-  if (typeof c.brief !== 'string') return null;
+  const brief = clampString(c.brief, MAX_BRIEF);
+  if (!brief) return null;
   if (typeof c.factsLocked !== 'boolean') return null;
   const facts = parseFacts(c.facts);
   if (!facts) return null;
-  if (!Array.isArray(c.scenes)) return null;
+  if (!Array.isArray(c.scenes) || c.scenes.length === 0 || c.scenes.length > MAX_SCENES) {
+    return null;
+  }
   const scenes: Scene[] = [];
+  let total = 0;
   for (const row of c.scenes) {
     const scene = parseScene(row);
     if (!scene) return null;
+    total += scene.durationSec;
+    if (total > MAX_TOTAL_SECONDS) return null;
     scenes.push(scene);
   }
   const format = parseFormat(c.format);
   if (!format) return null;
   const style = parseStyle(c.style);
   if (!style) return null;
-  return { brief: c.brief, facts, factsLocked: c.factsLocked, scenes, format, style };
+  return { brief, facts, factsLocked: c.factsLocked, scenes, format, style };
 }
 
 function readCampaignsMap(): Record<string, CampaignState> {

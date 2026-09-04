@@ -2,6 +2,12 @@
 // demand signals. A signal carries no shopper identifier or wardrobe rows.
 import type { Catalog, CatalogProduct } from './shopify';
 import { demoCatalog, kidsCatalog } from './shopify';
+import {
+  canonicalDate,
+  clampString,
+  isSameOriginProductImage,
+  nonNegFinite,
+} from './storage-policy';
 
 export type GarmentCategory =
   | 'hoodie'
@@ -1081,6 +1087,68 @@ export function writePurchases(purchases: Purchase[]): void {
 // as purchases; the seed is what a fresh browser sees on both.
 
 const WARDROBE_KEY = 'hemloop.wardrobe';
+const MAX_WARDROBE_ROWS = 60;
+const SHOPPER_PROFILES: readonly ShopperProfile[] = ['self', 'partner', 'kid'];
+
+/** Rebuild one garment from storage. Drop the row (return null) rather than
+ * pass through a partially checked original object. */
+export function toGarment(value: unknown): Garment | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const g = value as Record<string, unknown>;
+  const id = clampString(g.id, 64);
+  if (!id) return null;
+  if (typeof g.category !== 'string' || !GARMENT_CATEGORIES.includes(g.category as GarmentCategory)) {
+    return null;
+  }
+  const brand = clampString(g.brand, 40);
+  const size = clampString(g.size, 20);
+  const colour = clampString(g.colour, 40);
+  if (!brand || !size || !colour) return null;
+
+  const out: Garment = {
+    id,
+    category: g.category as GarmentCategory,
+    brand,
+    size,
+    colour,
+  };
+  if (g.image !== undefined) {
+    if (!isSameOriginProductImage(g.image)) return null;
+    out.image = g.image;
+  }
+  if (g.price !== undefined) {
+    const price = nonNegFinite(g.price, 100_000);
+    if (price === null) return null;
+    out.price = price;
+  }
+  if (g.currency !== undefined) {
+    const currency = clampString(g.currency, 8);
+    if (!currency) return null;
+    out.currency = currency;
+  }
+  if (g.retailer !== undefined) {
+    const retailer = clampString(g.retailer, 80);
+    if (!retailer) return null;
+    out.retailer = retailer;
+  }
+  if (g.material !== undefined) {
+    const material = clampString(g.material, 80);
+    if (!material) return null;
+    out.material = material;
+  }
+  if (g.purchasedAt !== undefined) {
+    const purchasedAt = canonicalDate(g.purchasedAt);
+    if (!purchasedAt) return null;
+    out.purchasedAt = purchasedAt;
+  }
+  if (g.for !== undefined) {
+    if (typeof g.for !== 'string' || !(SHOPPER_PROFILES as readonly string[]).includes(g.for)) {
+      return null;
+    }
+    out.for = g.for as ShopperProfile;
+  }
+  return out;
+}
 
 export function readWardrobe(): Wardrobe {
   if (!hasStorage()) return seedWardrobe();
@@ -1090,13 +1158,12 @@ export function readWardrobe(): Wardrobe {
     const parsed: unknown = JSON.parse(raw);
     const garments = (parsed as { garments?: unknown })?.garments;
     if (!Array.isArray(garments)) return seedWardrobe();
-    return {
-      garments: garments.filter(
-        (g): g is Garment =>
-          typeof g === 'object' && g !== null && typeof (g as Garment).id === 'string' &&
-          GARMENT_CATEGORIES.includes((g as Garment).category),
-      ),
-    };
+    const cleaned: Garment[] = [];
+    for (const row of garments.slice(0, MAX_WARDROBE_ROWS)) {
+      const garment = toGarment(row);
+      if (garment) cleaned.push(garment);
+    }
+    return { garments: cleaned };
   } catch {
     return seedWardrobe();
   }
