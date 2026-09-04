@@ -41,6 +41,15 @@ function money(value: number | null | undefined, currency: string) {
   }
 }
 
+function humanDate(value: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(`${value}T00:00:00Z`));
+}
+
 function merchantName(campaign: CampaignState) {
   return (
     campaign.scenes.find((candidate) => candidate.kind === 'cta')?.heading ??
@@ -173,13 +182,9 @@ export function CompositionScene({
           <h3>{scene.heading}</h3>
           <p className="composition-body">{scene.body}</p>
           {facts.purchaseUrl ? (
-            <p className="composition-url">
-              {facts.purchaseUrl.replace(/^https?:\/\//, '')}
-            </p>
+            <p className="composition-url">Shop now</p>
           ) : null}
-          <p className="composition-dates">
-            {facts.startDate} — {facts.endDate}
-          </p>
+          <p className="composition-dates">Until {humanDate(facts.endDate)}</p>
         </Copy>
       ) : null}
     </article>

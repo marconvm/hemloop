@@ -892,6 +892,13 @@ Gates: 159 · tsc · lint · build.
 `DUAL-REVIEW-WAVE6-RECONCILED.md` compares both independent verdicts against
 main at `13f5cbf`, records already-landed fixes, and separates AGREED execution
 from ONE-SIDE, DISAGREE and DEFER items. No product code changed in this pass.
+
+### Codex composition CTA polish (2026-09-04)
+
+Branch `codex/composition-2`: the CTA creative keeps `facts.purchaseUrl` as the
+availability source but renders the action as `Shop now`; `facts.endDate` now
+renders as `Until Sep 7, 2026` in UTC rather than raw URL and ISO dates. No
+exporter or Studio surface logic changed.
 ### Cursor kids-photos: flat-lay kids wardrobe stills (2026-09-04)
 
 Branch: `cursor/kids-photos` from `origin/main`.
