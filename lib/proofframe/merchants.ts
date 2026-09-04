@@ -126,7 +126,7 @@ export function seedMerchants(): Merchant[] {
         bannedPhrases: ['free', 'guaranteed', 'lowest price', 'best ever'],
         purchaseUrl: 'https://hemloop.app/closet?product=fieldhouse-fleece',
         productImage: '/products/northlight-hoodie.jpg',
-        sizesInStock: ['S', 'M', 'L', 'XL'],
+        sizesInStock: ['XS', 'S', 'M', 'L', 'XL'],
         costPrice: 45,
         marginFloorPercent: 40,
         maxDiscountPercent: 10,
@@ -157,14 +157,15 @@ function reasonFor(
   verdict: MarketVerdict,
   offer: PersonalOffer | null,
   refuseReason: string | null,
+  size: string | null = null,
 ): string {
   switch (verdict) {
     case 'can-offer':
       return offer
-        ? `${offer.price.toFixed(2)} ${offer.currency}, margin ${offer.marginCheck.resultingMarginPercent}%`
+        ? `margin ${offer.marginCheck.resultingMarginPercent}%`
         : 'Can offer';
     case 'size-not-in-stock':
-      return 'M sold out';
+      return size ? `${size} sold out` : 'Size sold out';
     case 'category-mismatch':
       return 'Other category';
     case 'margin-floor': {
@@ -212,7 +213,7 @@ export function marketScan(
         merchantId: merchant.id,
         name: merchant.name,
         verdict,
-        reason: reasonFor(verdict, null, refuse),
+        reason: reasonFor(verdict, null, refuse, request.size ?? null),
         price: null,
         currency: merchant.facts.currency,
       };
@@ -223,7 +224,7 @@ export function marketScan(
         merchantId: merchant.id,
         name: merchant.name,
         verdict: 'margin-floor' as const,
-        reason: reasonFor('margin-floor', result, null),
+        reason: reasonFor('margin-floor', result, null, request.size ?? null),
         price: null,
         currency: merchant.facts.currency,
       };
@@ -234,7 +235,7 @@ export function marketScan(
         merchantId: merchant.id,
         name: merchant.name,
         verdict: 'over-ceiling' as const,
-        reason: reasonFor('over-ceiling', result, null),
+        reason: reasonFor('over-ceiling', result, null, request.size ?? null),
         price: null,
         currency: merchant.facts.currency,
       };
@@ -244,7 +245,7 @@ export function marketScan(
       merchantId: merchant.id,
       name: merchant.name,
       verdict: 'can-offer' as const,
-      reason: reasonFor('can-offer', result, null),
+      reason: reasonFor('can-offer', result, null, request.size ?? null),
       price: result.price,
       currency: result.currency,
     };

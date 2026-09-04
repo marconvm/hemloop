@@ -93,8 +93,10 @@ Five sample merchants make the refusals concrete on a hoodie · M request. At Ba
 ceiling) Northlight and Overland can answer; Harborview cannot clear its margin floor, Ridgeline
 is out of M, Denim Supply is the wrong category. At Taste, with the shopper's ceiling of 60,
 only Northlight remains — Overland's capped price sits above the ceiling and its rule cannot go
-deeper. The sharing dial changes who can answer. Market rows carry verdict and price only; no
-merchant ever sees another's cost or floor.
+deeper. A hoodie · XS request flips the answering store: Northlight is out of XS, Overland answers
+at 80.10. The sharing dial changes who can answer. Market rows carry verdict and price only; the
+can-offer reason is the margin alone (price lives on the row); no merchant ever sees another's cost
+or floor.
 
 ## Run it three times: the compounding
 
