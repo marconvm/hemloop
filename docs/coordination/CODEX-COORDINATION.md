@@ -680,3 +680,15 @@ getBoundingClientRect at 390 / 430 / 820 / 1000 / 1200 / 1440 (/closet + /studio
 | 1440 | studio | no | yes | — | — | 37 |
 
 Gates: tests + tsc + lint + build. No deploy (Claude deploys immediately).
+
+### Cursor batch4 follow-up: RuntimeStatus on /closet + /studio (2026-09-04)
+
+Asked to replace the closet/studio `Badge` ("9/12 WebMCP tools live") with Codex's
+`RuntimeStatus` (blink + terminal label + centred tool-manifest dialog), passing each
+page's own tools mapped to `{ name, title, description, readOnly }` and the absent
+(human-only) list — same alive status as `/`.
+
+**Blocked:** `RuntimeStatus` is not on `origin/main` yet (`components/loop-room/index.ts`
+does not export it; no `runtime-status.tsx`). Codex still has it on the local
+`codex/wave6` worktree only. Left the existing `Badge` on `/closet` and `/studio`
+unchanged. Will wire as soon as Codex's export lands on main.
