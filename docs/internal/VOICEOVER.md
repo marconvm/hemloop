@@ -1,71 +1,61 @@
-# Demo Voiceover Script v4 (for TTS generation)
+# Demo Voiceover Script v5 (for TTS generation)
 
-Eight segments matching the v4 beats in [DEMO-SCRIPT.md](./DEMO-SCRIPT.md) and the timings in
-[../video/CUE-SHEET.md](../video/CUE-SHEET.md). Those three files must agree; if you change a beat,
-change all three. Generate each segment as a separate audio file so the edit can retime freely.
+Eight segments matching the seven steps of the Hemloop page plus the close, and the timings in
+[../../video/CUE-SHEET.md](../../video/CUE-SHEET.md). The two files must agree; if you change a beat,
+change both. Generate each segment as a separate audio file so the edit can retime freely.
 
 Target voice: warm, confident, mid-pace (about 150 words per minute). **No em dashes anywhere in
 this file**: the clone reads them as a hard stop. Numbers are spelled out for the same reason.
 
-Spoken total is **estimated** at about 2:00 inside a 2:40 runtime, leaving roughly 39 seconds of air
-for tool calls to land and for the two human clicks. That air is deliberate. Do not fill it.
+Spoken total is about 2:05 inside a 2:50 runtime. The air between segments is where the real tool
+calls land and where Marco presses the three buttons. Do not fill it.
 
-**Every per-segment length below is a word-count estimate at 150 wpm, not a measurement.** The eight
-files currently in `video/vo-clone/` are the previous v3 narration (1:58 total) and do not match this
-script. Run the generator below, then measure with `ffprobe` and replace the estimates here and in
-`video/CUE-SHEET.md` before cutting.
-
-Generation. Use the script that already exists rather than the loop that used to be pasted here: it
-reads these segments straight out of this file, so editing the text above is the only step.
+Generation, unchanged from v4: the script reads the segments out of this file.
 
 ```sh
-video/generate-vo.sh elevenlabs-clone   # -> video/vo-clone/  (your cloned voice)
-video/generate-vo.sh heygen             # -> video/vo/        (also writes word timestamps)
-
-# then measure, and put the real numbers in this file and in video/CUE-SHEET.md
+video/generate-vo.sh elevenlabs-clone   # -> video/vo-clone/  (Marco's cloned voice; spends credits)
 for f in video/vo-clone/vo-*.mp3; do printf "%-22s " "$f"; ffprobe -v error -show_entries format=duration -of csv=p=0 "$f"; done
 ```
 
-`elevenlabs-clone` needs `ELEVENLABS_VOICE_ID`, which is already in `~/.config/hemloop-video/env`.
-It spends credits, so it is not run automatically.
+Then put the measured lengths into `video/CUE-SHEET.md`.
 
-## VO-01 the gap (0:00, ~18s est)
+## VO-01 a purchase lands (0:00, ~16s)
 
-This is Hemloop. Watch one request go all the way round. Maya's agent reads her closet through WebMCP and finds the missing hoodie, and a pair of sneakers due for replacement twenty one months after she bought them. The wardrobe itself never leaves this page.
+This is Hemloop. One request, all the way round, inside the agent's own browser. Maya drops a receipt into the chat. Her agent reads it and calls one tool on this page. The purchase lands in her closet, and nothing about it leaves.
 
-## VO-02 the approval gate (0:20, ~19s est)
+## VO-02 what should I buy next (0:20, ~15s)
 
-The agent cannot decide to share. Its first call is refused: human approval required. One press by Maya releases exactly one event. Category, size, need or want. No name, no account, no wardrobe rows. Then the approval is spent, and the very next call is refused again.
+She asks what she should buy next. The agent reads the closet through WebMCP and finds a hoodie she does not own, and a pair of sneakers due for replacement twenty one months after she bought them. The wardrobe itself never leaves this page.
 
-## VO-03 the merchant sees demand (0:50, ~16s est)
+## VO-03 the human gate (0:40, ~20s)
 
-It arrives grouped, with no shopper identifier anywhere in it, and scored against the stock this merchant actually locked. This is intent their own sales data cannot show them. Someone who owns the thing already, and wore it out.
+She tells the store she needs a hoodie in size medium. The agent is refused: human approval required. One press by Maya, and one reply, releases exactly one event. Category, size, need or want. No name, no account, no wardrobe rows. Then the approval is spent, and the very next call is refused again.
 
-## VO-04 the answer, inside locked rules (1:10, ~17s est)
+## VO-04 only the right store answers (1:05, ~19s)
 
-The merchant locked price, offer, code, dates and a margin floor first. Their agent proposes inside those rules and can do nothing else. A human approves before the shopper ever sees it, and there is no tool that can approve for them.
+Five stores see the same packet, and only the rules decide. One has the size sold out. One sells the wrong category. One cannot clear its own margin floor. One is priced above what she would pay. One can answer, at a price its locked rules allow, and a human approves before Maya ever sees it.
 
-## VO-05 the shopper decides (1:30, ~9s est)
+## VO-05 the shopper decides (1:30, ~9s)
 
 The offer comes back addressed to the request, never to a person. Nothing here can buy for her. She decides.
 
-## VO-06 the loop closes (1:50, ~13s est)
+## VO-06 the loop closes (1:45, ~14s)
 
-And this is the part that pays for the whole thing. The purchase records the offer that won it. The merchant learns their offer worked without ever learning who she is.
+And this is the part that pays for the whole thing. The purchase records the offer that won it. The merchant learns their offer worked without ever learning who she is. Both sides gained. Nobody gained a profile.
 
-## VO-07 the trust proof (2:05, ~21s est)
+## VO-07 again, sharper (2:05, ~13s)
 
-One more thing, because the offer that reaches her has to be true. The agent tries fifty per cent off against a locked twenty five. Rejected before anything changes, with a reason it can correct itself from. The wrong frame never existed, and the export refuses to exist while any claim is wrong.
+A receipt from a rival lands in the same closet. Cycle two starts with a sharper picture of what she buys and how, and still not one row has crossed the line.
 
-## VO-08 close (2:35, ~10s est)
+## VO-08 close (2:25, ~11s)
 
-One request. A private closet, real demand, an offer that cannot lie, and a sale the merchant can attribute. Hemloop, built on WebMCP.
+Twenty one tools an agent can call. Three buttons only a person can press. A private closet, real demand, an offer that cannot lie, and a sale the merchant can attribute. Hemloop, built on WebMCP.
 
 ---
 
-## What changed from v3, and why it mattered
+## What changed from v4
 
-v3 was written as nine segments around the export as the climax (though the generator only ever rendered eight), and the actual loop close was not in the
-narration at all. VO-05 also still said the merchant's agent had "nine typed tools" when the studio
-registers twelve. Both were stale enough that recording against v3 would have produced a video that
-contradicted the live app.
+v4 opened on the gap and cut between two pages. v5 opens on the receipt, the first of seven steps
+on the Hemloop page, stays on one page, adds the market scan (VO-04) and the restart (VO-07), and
+names the handshake after the press ("one reply"). The closing count is twenty one tools and three
+human buttons, both true at HEAD.

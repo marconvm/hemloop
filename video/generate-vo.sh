@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render the 8 Hemloop voiceover segments from docs/VOICEOVER.md.
+# Render the 8 Hemloop voiceover segments from docs/internal/VOICEOVER.md.
 # Usage: video/generate-vo.sh [heygen|elevenlabs|elevenlabs-clone]
 #   heygen           → video/vo/        (HeyGen starfish voice, with word timestamps)
 #   elevenlabs       → video/vo-el/     (ElevenLabs stock voice, or your clone if ELEVENLABS_VOICE_ID is set)
@@ -21,7 +21,7 @@ case "$PROVIDER" in
 esac
 mkdir -p "$OUTDIR"
 for i in 01 02 03 04 05 06 07 08; do
-  TEXT=$(awk "/^## VO-$i/{flag=1;next}/^## /{flag=0}flag" docs/VOICEOVER.md | sed '/^$/d' | tr '\n' ' ')
+  TEXT=$(awk "/^## VO-$i/{flag=1;next}/^## /{flag=0}flag" docs/internal/VOICEOVER.md | sed '/^$/d' | tr '\n' ' ')
   if [ "$PROVIDER" = "heygen" ]; then
     OUT="$OUTDIR/vo-$i.wav"
     echo "-- VO-$i (${#TEXT} chars) -> $OUT"
