@@ -734,11 +734,18 @@
 /* ── Demand tab: merchant switcher + market scan ── */
 
 .demand-tab-chrome {
+  /* Same horizontal measure as .merchant-body / .demand-tab-body so "Store:"
+   * never sits on the viewport edge (clipped to "re:" at ~1456 when the
+   * shell or a sibling grid forced a left overflow). */
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin: 0 0 12px;
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto 12px;
+  padding: 0;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .merchant-switcher {
@@ -746,6 +753,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   font-size: 14px;
   font-weight: 650;
   color: var(--ink);
@@ -1078,7 +1086,13 @@
   padding: 18px 0 48px;
 }
 .studio-shell .offer-grid {
-  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.2fr);
+  /* minmax(0,…) — a 280px floor on the facts column forced mid-width overflow
+   * and clipped the Demand chrome / Store label off the left edge. */
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 .studio-shell .composition-grid {
   grid-template-columns: minmax(0, 1fr);
@@ -1117,6 +1131,7 @@
   .studio-shell .offer-grid,
   .studio-shell .composition-grid,
   .studio-shell .demand-tab-body,
+  .studio-shell .demand-tab-chrome,
   .merchant-body {
     grid-template-columns: minmax(0, 1fr);
     width: 100%;
@@ -1126,9 +1141,15 @@
   }
 
   .studio-shell .demand-tab-body,
+  .studio-shell .demand-tab-chrome,
   .merchant-body {
     width: 100%;
     padding: 14px 10px 40px;
+  }
+
+  .studio-shell .demand-tab-chrome {
+    margin-bottom: 0;
+    padding-bottom: 0;
   }
 
   .stat-strip {
