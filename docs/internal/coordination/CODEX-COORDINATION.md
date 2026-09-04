@@ -1040,3 +1040,20 @@ Landed:
 No app / public / video changes. Not merged.
 
 Stretch: `docs/internal/devpost/teaser-portrait.mp4` (~20 s portrait; 02 still + cards-portrait + 04 still).
+
+### Codex demo-flow reliability fix (2026-09-04)
+
+Branch: `codex/demo-flow-fix` from `origin/main` at `d63d729`.
+
+Marco's live rehearsal found two failures: the natural-language receipt prompt could be answered
+without selecting `import_receipt`, and the embedded ChatGPT browser could leave the previous
+prompt on the clipboard after the room advanced. The fix makes every agent-driven step explicitly
+name its intended WebMCP site tool. The receipt prompt also carries immediate, destination-specific
+approval to write the exact receipt to the private Hemloop closet, while the three page buttons
+remain human-only. Clipboard handling now uses the synchronous user-gesture path first, before the
+async Clipboard API fallback can lose activation in an embedded WebView.
+
+Independent browser-control status remains honest: this Codex session exposes three external
+Chrome extension profiles but no `iab` backend, so it cannot automate the ChatGPT in-app demo.
+Marco can retry from a fresh ChatGPT conversation; until `iab` is exposed, the agent portion must
+be driven by Marco rather than relabelled as an automated pass.
