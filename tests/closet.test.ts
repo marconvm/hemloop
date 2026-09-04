@@ -10,6 +10,7 @@ import {
   monthsBetween,
   nextRequestPreview,
   randomGarments,
+  readPurchases,
   readWardrobe,
   writeWardrobe,
   GARMENT_CATEGORIES,
@@ -17,6 +18,7 @@ import {
   seedPurchases,
   seedWardrobe,
   sizesOwned,
+  toPurchase,
   WARDROBE_SEED_VERSION,
   type ConsentField,
   type Purchase,
@@ -1077,6 +1079,50 @@ void test('buyingPattern: seed data derives denim as percent/loyal via catalog m
   assert.equal(pattern.brandLoyalty, 'loyal');
 });
 
+void test('readPurchases: rebuilds exact bounded rows and drops malformed storage', () => {
+  const restore = installFakeWindow();
+  try {
+    const valid = {
+      ...purchase({ id: 'stored-1', at: '2026-01-02', handle: 'crew-tee' }),
+      injected: 'not part of Purchase',
+    };
+    assert.deepEqual(toPurchase(valid), {
+      id: 'stored-1',
+      at: '2026-01-02T00:00:00.000Z',
+      merchant: 'Test Store',
+      brand: 'Test Brand',
+      title: 'Test Item',
+      category: 'tee',
+      size: 'M',
+      price: 30,
+      currency: 'CAD',
+      source: 'manual',
+      handle: 'crew-tee',
+      promoCode: null,
+    });
+
+    const rows: Record<string, unknown>[] = Array.from({ length: 105 }, (_, index) => ({
+      ...valid,
+      id: `stored-${index}`,
+    }));
+    rows.splice(
+      1,
+      0,
+      { ...valid, id: 'bad-price', price: 'oops' },
+      { ...valid, id: 'bad-date', at: 7 },
+      { ...valid, id: 'bad-source', source: 'injected' },
+    );
+    window.localStorage.setItem('hemloop.purchases', JSON.stringify(rows));
+    const read = readPurchases();
+    assert.equal(read.length, 97, 'the first 100 stored rows are considered; malformed rows drop');
+    assert.equal(read[0].at, '2026-01-02T00:00:00.000Z');
+    assert.equal('injected' in read[0], false);
+    assert.doesNotThrow(() => read[0].price.toFixed(2));
+  } finally {
+    restore();
+  }
+});
+
 // ---------- Wave 3: import_receipt tool ----------
 
 void test('import_receipt: success adds purchases and garments, fences the merchant, under 1.5K, never echoes the raw text', async () => {
@@ -1685,4 +1731,3 @@ void test('randomGarments with a fixed rand is deterministic (same ids and rows 
   assert.deepEqual(draw1, draw2);
   assert.equal(draw1.length, 5);
 });
-

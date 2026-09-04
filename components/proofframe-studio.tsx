@@ -43,11 +43,16 @@ import {
 import { seedMerchants } from '@/lib/proofframe/merchants';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import { guessCategory, type DemandSignal } from '@/lib/proofframe/closet';
-import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
-// Namespace import so this component compiles even before a sibling branch
-// adds readOutcomes/subscribeOutcomes to signal-bridge — accessed only
-// through the defensive helpers below.
-import * as signalBridgeModule from '@/lib/proofframe/signal-bridge';
+import {
+  readOffers,
+  readOutcomes,
+  readSignals,
+  subscribeOffers,
+  subscribeOutcomes,
+  subscribeSignals,
+  upsertOffer,
+  type SignalOutcome,
+} from '@/lib/proofframe/signal-bridge';
 import {
   PLACEMENTS,
   formatForPlacement,
@@ -136,53 +141,6 @@ const CONSENT_LEVEL_LABEL: Record<number, string> = {
   2: 'Level 2, Context: adds occasion and fit preference.',
   3: 'Level 3, Taste: adds colour family, materials to avoid, price ceiling.',
 };
-
-/** A purchase-or-not outcome reported back for one demand signal. Optional
- * bridge export — same defensive-access pattern as the fields above. */
-type SignalOutcome = { signalId: string; outcome: 'bought' | 'passed'; at: string };
-
-function readOutcomesSafe(): SignalOutcome[] {
-  const mod = signalBridgeModule as unknown as {
-    readOutcomes?: () => SignalOutcome[];
-  };
-  return typeof mod.readOutcomes === 'function' ? mod.readOutcomes() : [];
-}
-
-function subscribeOutcomesSafe(onChange: () => void): () => void {
-  const mod = signalBridgeModule as unknown as {
-    subscribeOutcomes?: (cb: () => void) => () => void;
-  };
-  return typeof mod.subscribeOutcomes === 'function'
-    ? mod.subscribeOutcomes(onChange)
-    : () => {};
-}
-
-// Same defensive-access pattern for the wave-3 personal-offer store: another
-// agent is adding readOffers/upsertOffer/subscribeOffers to signal-bridge.ts,
-// so this component must compile and render correctly whether or not that
-// landed yet.
-function readOffersSafe(): PersonalOffer[] {
-  const mod = signalBridgeModule as unknown as {
-    readOffers?: () => PersonalOffer[];
-  };
-  return typeof mod.readOffers === 'function' ? mod.readOffers() : [];
-}
-
-function subscribeOffersSafe(onChange: () => void): () => void {
-  const mod = signalBridgeModule as unknown as {
-    subscribeOffers?: (cb: () => void) => () => void;
-  };
-  return typeof mod.subscribeOffers === 'function'
-    ? mod.subscribeOffers(onChange)
-    : () => {};
-}
-
-function upsertOfferSafe(offer: PersonalOffer): boolean {
-  const mod = signalBridgeModule as unknown as {
-    upsertOffer?: (o: PersonalOffer) => boolean;
-  };
-  return typeof mod.upsertOffer === 'function' ? mod.upsertOffer(offer) : false;
-}
 
 type Activity = {
   id: number;
@@ -443,9 +401,9 @@ export function ProofFrameStudio() {
   useEffect(() => {
     let active = true;
     queueMicrotask(() => {
-      if (active) setOutcomes(readOutcomesSafe());
+      if (active) setOutcomes(readOutcomes());
     });
-    const unsubscribe = subscribeOutcomesSafe(() => setOutcomes(readOutcomesSafe()));
+    const unsubscribe = subscribeOutcomes(() => setOutcomes(readOutcomes()));
     return () => {
       active = false;
       unsubscribe();
@@ -455,9 +413,9 @@ export function ProofFrameStudio() {
   useEffect(() => {
     let active = true;
     queueMicrotask(() => {
-      if (active) setOffers(readOffersSafe());
+      if (active) setOffers(readOffers());
     });
-    const unsubscribe = subscribeOffersSafe(() => setOffers(readOffersSafe()));
+    const unsubscribe = subscribeOffers(() => setOffers(readOffers()));
     return () => {
       active = false;
       unsubscribe();
@@ -671,7 +629,7 @@ export function ProofFrameStudio() {
   // proposal. A human still has to approve it before a shopper sees it.
   const stageOfferFromAgent = useCallback(
     (offer: PersonalOffer) => {
-      upsertOfferSafe(offer);
+      upsertOffer(offer);
       pushActivity({
         actor: 'AI',
         title: `Proposed an offer for request #${offer.requestId.slice(0, 8)}`,
@@ -702,7 +660,7 @@ export function ProofFrameStudio() {
         return;
       }
       const offer: PersonalOffer = { ...result, proposedBy: 'human' };
-      upsertOfferSafe(offer);
+      upsertOffer(offer);
       pushActivity({
         actor: 'MC',
         title: `Proposed an offer for request #${signal.signalId.slice(0, 8)}`,
@@ -720,7 +678,7 @@ export function ProofFrameStudio() {
         status: 'approved',
         approvedAt: new Date().toISOString(),
       };
-      upsertOfferSafe(approved);
+      upsertOffer(approved);
       pushActivity({
         actor: 'MC',
         title: `Approved the offer for request #${offer.requestId.slice(0, 8)}`,
@@ -733,7 +691,7 @@ export function ProofFrameStudio() {
 
   const declineOffer = useCallback(
     (offer: PersonalOffer) => {
-      upsertOfferSafe({ ...offer, status: 'declined' });
+      upsertOffer({ ...offer, status: 'declined' });
       pushActivity({
         actor: 'MC',
         title: `Declined the offer for request #${offer.requestId.slice(0, 8)}`,
@@ -749,7 +707,7 @@ export function ProofFrameStudio() {
   // merchant still has to approve it before a shopper sees anything.
   useEffect(() => {
     if (!autoPropose) return;
-    const alreadyOffered = new Set(readOffersSafe().map((o) => o.requestId));
+    const alreadyOffered = new Set(readOffers().map((o) => o.requestId));
     for (const signal of signals) {
       if (alreadyOffered.has(signal.signalId)) continue;
       const request = toDemandSignalLike(signal);
@@ -761,7 +719,7 @@ export function ProofFrameStudio() {
       });
       if (!('offerId' in result)) continue;
       const offer: PersonalOffer = { ...result, proposedBy: 'auto' };
-      upsertOfferSafe(offer);
+      upsertOffer(offer);
       pushActivity({
         actor: 'PF',
         title: `Auto-proposed an offer for request #${signal.signalId.slice(0, 8)}`,
@@ -782,11 +740,11 @@ export function ProofFrameStudio() {
       importProduct: agentImportProduct,
       deliverExport: saveComposition,
       getRequests: () => signalsRef.current,
-      getOffers: () => readOffersSafe(),
+      getOffers: () => readOffers(),
       stageOffer: stageOfferFromAgent,
       getCatalogProduct: getCatalogProductForCampaign,
       getBoughtRequestIds: () =>
-        readOutcomesSafe()
+        readOutcomes()
           .filter((o) => o.outcome === 'bought')
           .map((o) => o.signalId),
     }),

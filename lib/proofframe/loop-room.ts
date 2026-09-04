@@ -181,6 +181,26 @@ export function stationOrder(): StationKey[] {
   return [...ORDER];
 }
 
+/** Pick the next merchant that can answer this request without revisiting one
+ * already attempted for the same signal. Returns null when the active merchant
+ * can answer or every viable merchant has already been tried. */
+export function nextAnsweringMerchant(
+  market: readonly MarketRow[],
+  activeMerchantId: string,
+  attemptedMerchantIds: ReadonlySet<string>,
+): string | null {
+  const active = market.find((row) => row.merchantId === activeMerchantId);
+  if (active?.verdict === 'can-offer') return null;
+  return (
+    market.find(
+      (row) =>
+        row.verdict === 'can-offer' &&
+        row.merchantId !== activeMerchantId &&
+        !attemptedMerchantIds.has(row.merchantId),
+    )?.merchantId ?? null
+  );
+}
+
 // ---------- From evidence to flags ----------
 
 /** What the page has that can prove a station happened. Bridge rows carry

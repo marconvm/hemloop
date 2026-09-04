@@ -38,6 +38,7 @@
 .studio-shell .studio-header {
   border-bottom: 1px solid var(--line);
   background: rgba(251, 250, 245, 0.92);
+  -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   color: var(--ink);
 }

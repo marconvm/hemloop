@@ -1056,6 +1056,76 @@ export function seedPurchases(): Purchase[] {
 }
 
 const PURCHASES_KEY = 'hemloop.purchases';
+const MAX_PURCHASE_ROWS = 100;
+const PURCHASE_SOURCES: readonly Purchase['source'][] = [
+  'receipt',
+  'order-email',
+  'manual',
+  'lookup',
+  'offer',
+];
+
+/** Rebuild one exact, bounded purchase row from untrusted browser storage. */
+export function toPurchase(value: unknown): Purchase | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const row = value as Record<string, unknown>;
+  const id = clampString(row.id, 64);
+  const merchant = clampString(row.merchant, 100);
+  const brand = clampString(row.brand, 80);
+  const title = clampString(row.title, 200);
+  const size = clampString(row.size, 20);
+  const currency = clampString(row.currency, 8);
+  const price = nonNegFinite(row.price, 1_000_000);
+  if (!id || !merchant || !brand || !title || !size || !currency || price === null) {
+    return null;
+  }
+  if (
+    typeof row.category !== 'string' ||
+    !GARMENT_CATEGORIES.includes(row.category as GarmentCategory)
+  ) {
+    return null;
+  }
+  if (
+    typeof row.source !== 'string' ||
+    !(PURCHASE_SOURCES as readonly string[]).includes(row.source)
+  ) {
+    return null;
+  }
+  if (typeof row.at !== 'string' || row.at.length > 64) return null;
+  const atMs = Date.parse(row.at);
+  if (!Number.isFinite(atMs)) return null;
+
+  const purchase: Purchase = {
+    id,
+    at: new Date(atMs).toISOString(),
+    merchant,
+    brand,
+    title,
+    category: row.category as GarmentCategory,
+    size,
+    price,
+    currency,
+    source: row.source as Purchase['source'],
+  };
+  if (row.handle !== undefined) {
+    const handle = clampString(row.handle, 80);
+    if (!handle) return null;
+    purchase.handle = handle;
+  }
+  if (row.promoCode === null) purchase.promoCode = null;
+  else if (row.promoCode !== undefined) {
+    const promoCode = clampString(row.promoCode, 40);
+    if (!promoCode) return null;
+    purchase.promoCode = promoCode;
+  }
+  if (row.offerId === null) purchase.offerId = null;
+  else if (row.offerId !== undefined) {
+    const offerId = clampString(row.offerId, 64);
+    if (!offerId) return null;
+    purchase.offerId = offerId;
+  }
+  return purchase;
+}
 
 /** Read stored purchases, or the seed set when storage is empty,
  * unavailable, or holds something malformed. Never throws. */
@@ -1066,7 +1136,10 @@ export function readPurchases(): Purchase[] {
     if (!raw) return seedPurchases();
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return seedPurchases();
-    return parsed;
+    return parsed
+      .slice(0, MAX_PURCHASE_ROWS)
+      .map(toPurchase)
+      .filter((row): row is Purchase => row !== null);
   } catch {
     return seedPurchases();
   }

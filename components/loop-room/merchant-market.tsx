@@ -8,7 +8,7 @@ const WAITING_MERCHANTS = [
   { id: 'overland', name: 'Overland Trading Co.' },
 ] as const;
 
-const VERDICT_LABEL: Record<MarketVerdict, string> = {
+export const MARKET_VERDICT_LABEL: Record<MarketVerdict, string> = {
   'can-offer': 'Can offer',
   'size-not-in-stock': 'Size unavailable',
   'category-mismatch': 'Different category',
@@ -25,7 +25,7 @@ function MarketResult({ row, active }: { row: MarketRow; active: boolean }) {
       </div>
       <div className="hlr-market-result">
         <span className={`is-${row.verdict}`}>
-          {VERDICT_LABEL[row.verdict]}
+          {MARKET_VERDICT_LABEL[row.verdict]}
         </span>
         {row.price === null ? null : (
           <strong>
