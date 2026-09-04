@@ -783,3 +783,16 @@ Landed:
 6. Hostile storage tests (campaign + wardrobe) + manifest copy assertions
 
 Gates: 155 · tsc · lint · build.
+
+### Cursor closet-sizes: sizes header + Partner seed migration (2026-09-04)
+
+Branch: `cursor/closet-sizes` from `cursor/storage-hardening` @ `c250051`.
+Did not touch `components/loop-room/*`. Styles in `app/closet.css` only.
+
+Landed:
+1. Sizes on file table header row: Brand · Category · Size; brand/category left, size right
+2. `hemloop.wardrobe.seed` version (`WARDROBE_SEED_VERSION = 2`); older stores merge missing seed ids without overwriting user rows
+3. Partner seed refreshed to 7 rows (hoodie×2, tee×2, denim, jacket, accessory) → ~2 essential gaps; Self's three gaps untouched
+4. Migration + partner-gap tests
+
+Gates: 157 · tsc · lint · build.

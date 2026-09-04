@@ -483,6 +483,20 @@ export function seedWardrobe(): Wardrobe {
       },
       {
         id: 'g19',
+        category: 'hoodie',
+        brand: 'Northlight Apparel',
+        size: 'XL',
+        colour: 'ink',
+        image: '/products/northlight-hoodie.jpg',
+        price: 44.9,
+        currency: 'CAD',
+        retailer: 'Northlight Apparel',
+        material: '400gsm brushed cotton fleece',
+        purchasedAt: '2025-08-12',
+        for: 'partner',
+      },
+      {
+        id: 'g20',
         category: 'tee',
         brand: 'Harborview Basics',
         size: 'L',
@@ -496,7 +510,21 @@ export function seedWardrobe(): Wardrobe {
         for: 'partner',
       },
       {
-        id: 'g20',
+        id: 'g21',
+        category: 'tee',
+        brand: 'Aeropostale',
+        size: 'XL',
+        colour: 'black',
+        image: '/products/aero-ribbed-tee.jpg',
+        price: 24.99,
+        currency: 'CAD',
+        retailer: 'Aeropostale',
+        material: 'Ribbed cotton',
+        purchasedAt: '2026-03-02',
+        for: 'partner',
+      },
+      {
+        id: 'g22',
         category: 'denim',
         brand: 'Denim Supply Co.',
         size: '34',
@@ -510,7 +538,7 @@ export function seedWardrobe(): Wardrobe {
         for: 'partner',
       },
       {
-        id: 'g21',
+        id: 'g23',
         category: 'jacket',
         brand: 'Ridgeline Outdoor',
         size: 'L',
@@ -524,45 +552,17 @@ export function seedWardrobe(): Wardrobe {
         for: 'partner',
       },
       {
-        id: 'g22',
-        category: 'footwear',
-        brand: 'Amble',
-        size: '11',
-        colour: 'white',
-        image: '/products/amble-court-sneaker.jpg',
-        price: 89.0,
-        currency: 'CAD',
-        retailer: 'Amble',
-        material: 'Leather upper',
-        purchasedAt: '2026-04-03',
-        for: 'partner',
-      },
-      {
-        id: 'g23',
-        category: 'denim',
-        brand: 'Camden',
-        size: '34',
-        colour: 'khaki',
-        image: '/products/camden-chino.jpg',
-        price: 68.0,
-        currency: 'CAD',
-        retailer: 'Camden',
-        material: 'Cotton twill',
-        purchasedAt: '2026-02-19',
-        for: 'partner',
-      },
-      {
         id: 'g24',
-        category: 'tee',
-        brand: 'Northlight Apparel',
-        size: 'L',
-        colour: 'bone',
-        image: '/products/solstice-graphic-tee.jpg',
-        price: 28.9,
+        category: 'accessory',
+        brand: 'Fieldhouse',
+        size: 'OS',
+        colour: 'navy',
+        image: '/products/fieldhouse-cap.jpg',
+        price: 32.0,
         currency: 'CAD',
-        retailer: 'Northlight Apparel',
-        material: 'Cotton jersey',
-        purchasedAt: '2026-05-16',
+        retailer: 'Fieldhouse',
+        material: 'Cotton twill',
+        purchasedAt: '2026-04-03',
         for: 'partner',
       },
     ],
@@ -1087,6 +1087,9 @@ export function writePurchases(purchases: Purchase[]): void {
 // as purchases; the seed is what a fresh browser sees on both.
 
 const WARDROBE_KEY = 'hemloop.wardrobe';
+/** Bumped when seedWardrobe gains rows browsers with an older store must merge in. */
+const WARDROBE_SEED_KEY = 'hemloop.wardrobe.seed';
+export const WARDROBE_SEED_VERSION = 2;
 const MAX_WARDROBE_ROWS = 60;
 const SHOPPER_PROFILES: readonly ShopperProfile[] = ['self', 'partner', 'kid'];
 
@@ -1154,14 +1157,30 @@ export function readWardrobe(): Wardrobe {
   if (!hasStorage()) return seedWardrobe();
   try {
     const raw = window.localStorage.getItem(WARDROBE_KEY);
-    if (!raw) return seedWardrobe();
+    if (!raw) {
+      const seed = seedWardrobe();
+      writeWardrobe(seed);
+      return seed;
+    }
     const parsed: unknown = JSON.parse(raw);
-    const garments = (parsed as { garments?: unknown })?.garments;
-    if (!Array.isArray(garments)) return seedWardrobe();
+    const garmentsRaw = (parsed as { garments?: unknown })?.garments;
+    if (!Array.isArray(garmentsRaw)) return seedWardrobe();
     const cleaned: Garment[] = [];
-    for (const row of garments.slice(0, MAX_WARDROBE_ROWS)) {
+    for (const row of garmentsRaw.slice(0, MAX_WARDROBE_ROWS)) {
       const garment = toGarment(row);
       if (garment) cleaned.push(garment);
+    }
+    const storedVersion = Number(window.localStorage.getItem(WARDROBE_SEED_KEY) ?? '0');
+    if (!Number.isFinite(storedVersion) || storedVersion < WARDROBE_SEED_VERSION) {
+      const ids = new Set(cleaned.map((g) => g.id));
+      for (const row of seedWardrobe().garments) {
+        if (ids.has(row.id)) continue;
+        cleaned.push(row);
+        ids.add(row.id);
+      }
+      const merged: Wardrobe = { garments: cleaned.slice(0, MAX_WARDROBE_ROWS) };
+      writeWardrobe(merged);
+      return merged;
     }
     return { garments: cleaned };
   } catch {
@@ -1173,6 +1192,7 @@ export function writeWardrobe(wardrobe: Wardrobe): void {
   if (!hasStorage()) return;
   try {
     window.localStorage.setItem(WARDROBE_KEY, JSON.stringify(wardrobe));
+    window.localStorage.setItem(WARDROBE_SEED_KEY, String(WARDROBE_SEED_VERSION));
   } catch {
     /* ignore */
   }

@@ -1158,6 +1158,11 @@ export function ClosetStudio() {
           </div>
           <div className="sizes-table">
             <p className="eyebrow">Sizes on file</p>
+            <div className="size-row size-row-header" aria-hidden="true">
+              <span>Brand</span>
+              <span>Category</span>
+              <strong>Size</strong>
+            </div>
             {sizes.map((row) => (
               <div
                 className="size-row"

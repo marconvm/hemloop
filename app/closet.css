@@ -337,6 +337,50 @@
   border-color: var(--ink);
 }
 
+.studio-shell .sizes-table {
+  margin-top: 14px;
+  display: grid;
+  gap: 0;
+}
+
+.studio-shell .size-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(3rem, auto);
+  gap: 8px 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.studio-shell .size-row > span:first-child,
+.studio-shell .size-row > span:nth-child(2) {
+  text-align: left;
+  min-width: 0;
+}
+
+.studio-shell .size-row > strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.studio-shell .size-row-header {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.studio-shell .size-row-header strong {
+  font-weight: 800;
+  color: var(--moss);
+}
+
 .studio-shell .size-row,
 .studio-shell .purchase-row {
   border-bottom-color: var(--line);

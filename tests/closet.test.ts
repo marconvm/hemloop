@@ -17,6 +17,7 @@ import {
   seedPurchases,
   seedWardrobe,
   sizesOwned,
+  WARDROBE_SEED_VERSION,
   type ConsentField,
   type Purchase,
   type Wardrobe,
@@ -118,12 +119,30 @@ function installFakeWindow(): () => void {
   };
 }
 
-void test('seed wardrobe has a hoodie gap (the demo arc)', () => {
-  const gaps = findGaps(seedWardrobe());
+void test('seed wardrobe has a hoodie gap on self (the demo arc)', () => {
+  const gaps = findGaps(garmentsForProfile(seedWardrobe(), 'self'));
   assert.ok(
     gaps.some((g) => g.category === 'hoodie'),
-    'hoodie must be a gap',
+    'self hoodie must be a gap',
   );
+});
+
+void test('partner seed has 7 rows and only 1–2 essential gaps; self still has three', () => {
+  const wardrobe = seedWardrobe();
+  const partner = garmentsForProfile(wardrobe, 'partner');
+  const self = garmentsForProfile(wardrobe, 'self');
+  assert.equal(partner.garments.length, 7);
+  const categories = new Set(partner.garments.map((g) => g.category));
+  for (const need of ['hoodie', 'tee', 'denim', 'jacket', 'accessory'] as const) {
+    assert.ok(categories.has(need), `partner missing ${need}`);
+  }
+  const partnerGaps = findGaps(partner);
+  assert.ok(
+    partnerGaps.length >= 1 && partnerGaps.length <= 2,
+    `partner gaps 1–2, got ${partnerGaps.length}: ${partnerGaps.map((g) => g.category).join(',')}`,
+  );
+  const selfGaps = findGaps(self);
+  assert.equal(selfGaps.length, 3, `self still three gaps, got ${selfGaps.length}`);
 });
 
 void test('sizesOwned dedupes and filters by brand case-insensitively', () => {
@@ -149,7 +168,7 @@ void test('checkFit maps the northlight hoodie and recommends from owned sizes',
   assert.match(unknown.note, /Unknown product/);
 });
 
-void test('checkFit against the raw (unscoped) wardrobe finds the partner hoodie', () => {
+void test('checkFit against the raw (unscoped) wardrobe finds a partner hoodie size', () => {
   const fit = checkFit(seedWardrobe(), 'northlight-hoodie');
   assert.equal(fit.category, 'hoodie');
   assert.equal(fit.ownedSize, 'L');
@@ -1563,6 +1582,7 @@ void test('readWardrobe: returns seed when empty, returns written wardrobe, drop
       ],
     };
     window.localStorage.setItem('hemloop.wardrobe', JSON.stringify(mixed));
+    window.localStorage.setItem('hemloop.wardrobe.seed', String(WARDROBE_SEED_VERSION));
     const cleaned = readWardrobe();
     assert.equal(cleaned.garments.length, 2);
     assert.deepEqual(cleaned.garments.map((g) => g.id), ['ok-1', 'ok-2']);
@@ -1605,12 +1625,50 @@ void test('readWardrobe: hostile row is rebuilt or dropped (no external image, n
         ],
       }),
     );
+    window.localStorage.setItem('hemloop.wardrobe.seed', String(WARDROBE_SEED_VERSION));
     const wardrobe = readWardrobe();
     assert.equal(wardrobe.garments.length, 1);
     assert.equal(wardrobe.garments[0].id, 'ok');
     assert.equal(wardrobe.garments[0].image, '/products/bluenotes-relaxed-tee.jpg');
     assert.equal(wardrobe.garments[0].purchasedAt, '2025-11-02');
     assert.equal('injected' in wardrobe.garments[0], false);
+  } finally {
+    restore();
+  }
+});
+
+void test('readWardrobe: older seed version merges missing seed rows without overwriting user rows', () => {
+  const restore = installFakeWindow();
+  try {
+    const userRow: Garment = {
+      id: 'user-kept',
+      category: 'tee',
+      brand: 'My Brand',
+      size: 'M',
+      colour: 'black',
+      for: 'self',
+      image: '/products/black-tee.jpg',
+    };
+    // Pre-batch4 store: one self tee only, no seed version key (treated as 0).
+    window.localStorage.setItem(
+      'hemloop.wardrobe',
+      JSON.stringify({ garments: [userRow] }),
+    );
+    const merged = readWardrobe();
+    assert.ok(
+      merged.garments.some((g) => g.id === 'user-kept' && g.brand === 'My Brand'),
+      'user row kept',
+    );
+    const partner = garmentsForProfile(merged, 'partner');
+    assert.equal(partner.garments.length, 7);
+    assert.ok(partner.garments.every((g) => g.for === 'partner'));
+    assert.equal(
+      window.localStorage.getItem('hemloop.wardrobe.seed'),
+      String(WARDROBE_SEED_VERSION),
+    );
+    // Second read must not re-merge / duplicate.
+    const again = readWardrobe();
+    assert.equal(again.garments.length, merged.garments.length);
   } finally {
     restore();
   }
