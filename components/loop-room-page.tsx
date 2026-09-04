@@ -1167,10 +1167,19 @@ export function LoopRoomPage() {
   }, []);
 
   const onCopySay = useCallback(async (prompt: string): Promise<boolean> => {
-    // The embedded ChatGPT browser can reject async Clipboard API access after
-    // the click's user activation has expired. Try the synchronous path while
-    // the click is still active, then fall back to navigator.clipboard.
+    // Start the standard Clipboard API write during the originating click.
+    // Calling it later can lose user activation in embedded WebViews.
+    let clipboardWrite: Promise<void> | null = null;
+    try {
+      if (navigator.clipboard?.writeText) {
+        clipboardWrite = navigator.clipboard.writeText(prompt);
+      }
+    } catch {
+      // Continue to the legacy synchronous compatibility path.
+    }
+
     const ta = document.createElement('textarea');
+    let legacyCopied = false;
     try {
       ta.value = prompt;
       ta.setAttribute('readonly', '');
@@ -1183,22 +1192,25 @@ export function LoopRoomPage() {
       // Intentional compatibility path for embedded WebViews where the
       // asynchronous Clipboard API loses the originating user gesture.
       // oxlint-disable-next-line typescript/no-deprecated -- document.execCommand('copy') preserves the click activation
-      const copied = document.execCommand('copy');
-      if (copied) return true;
+      legacyCopied = document.execCommand('copy');
     } catch {
-      // Fall through to the standard Clipboard API.
+      // The standard Clipboard API may still complete successfully.
     } finally {
       ta.remove();
     }
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(prompt);
+
+    if (clipboardWrite) {
+      try {
+        await clipboardWrite;
         return true;
+      } catch {
+        // A legacy `true` is not reliable enough to report success when the
+        // standard API explicitly failed; select the prompt for manual copy.
+        return false;
       }
-    } catch {
-      // Both clipboard paths failed — caller selects the blockquote for Cmd+C.
     }
-    return false;
+
+    return legacyCopied;
   }, []);
 
   return (

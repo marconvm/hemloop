@@ -1057,3 +1057,15 @@ Independent browser-control status remains honest: this Codex session exposes th
 Chrome extension profiles but no `iab` backend, so it cannot automate the ChatGPT in-app demo.
 Marco can retry from a fresh ChatGPT conversation; until `iab` is exposed, the agent portion must
 be driven by Marco rather than relabelled as an automated pass.
+
+### Codex clipboard false-positive follow-up (2026-09-04)
+
+Live Chrome QA reproduced a narrower failure in the first compatibility fix: the legacy
+`document.execCommand('copy')` path could return `true` and make the button say `Copied` while the
+automation-visible clipboard remained empty. That is consistent with Marco seeing the previous
+prompt after the room advanced. The follow-up begins `navigator.clipboard.writeText()` during the
+originating click, while user activation is live, and no longer trusts a legacy `true` when the
+standard API explicitly rejects. A rejection now selects the prompt and says `Select and copy`
+instead of reporting false success.
+
+Gates: 166/166 tests; TypeScript, oxlint and vinext build clean. Live deployment pending.
