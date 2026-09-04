@@ -851,6 +851,33 @@ Also repaired conflict markers that had been left in this log.
 
 Gates: 159 · tsc · lint · build.
 
+### Codex agreed Wave 6 execution (2026-09-04, 01:41 EDT)
+
+Branch `codex/agreed-wave6`; every reconciled AGREED item landed in a separate,
+bisectable commit (closely related private-boundary fixes share one commit):
+
+1. exact capped purchase storage parser;
+2. per-signal merchant auto-switch oscillation guard;
+3. canonical market labels plus merchant-specific product imagery;
+4. removed five obsolete signal-bridge compatibility shims;
+5. prefixed backdrop filters, document no-cache, and static security headers;
+6. removed unused `tw-animate-css` import/dependency;
+7. sitemap records the real `/merchant` 307;
+8. `get_campaign_state` and both `get_offer` shapes compact storage maxima,
+   visibly report truncation, and declare untrusted output;
+9. preferences now use an exact bounded storage shape, `find_gaps` fences the
+   shopper-written due size, and `report_demand_gap` returns canonical bridge
+   readback when available;
+10. manifests show confirmed registrations only, explicitly label no-runtime
+    preview data, and the header status no longer has a dangling separator;
+11. composition vendor typography comes from the active merchant rather than
+    agent-editable CTA copy.
+
+Final gates: **166/166 tests**, TypeScript clean, oxlint clean, production build
+clean. Local all-route smoke for `/`, `/closet`, `/studio`, `/merchant` (307),
+and `/docs/` passed after the dependency removal. No item remains from the
+AGREED queue; the two recorded DISAGREE rows remain untouched for Marco.
+
 ### Codex dual review Wave 6 filed (2026-09-04)
 
 Independent three-axis verdicts and hostile/output replays are in
