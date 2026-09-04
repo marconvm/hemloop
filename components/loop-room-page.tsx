@@ -188,7 +188,7 @@ function shortOfferId(offerId: string | null | undefined): string {
 }
 
 function sayImport(sample: { text: string }): string {
-  return `Import this receipt:\n${sample.text}`;
+  return `Use Hemloop's import_receipt site tool now. I approve importing this exact receipt into my private Hemloop closet. Do not only summarize it or claim success; call the tool with the receipt text below:\n${sample.text}`;
 }
 
 export function LoopRoomPage() {
@@ -734,7 +734,7 @@ export function LoopRoomPage() {
           label: 'Local demand',
           eyebrow: 'What is true in the closet',
           title: 'What the closet has, then what it is missing',
-          say: 'What should I buy next?',
+          say: "Use Hemloop's find_gaps site tool now, then tell me: What should I buy next?",
           facts: [
             { label: 'Owned', value: ownedByCategory },
             ...(gaps.find((g) => g.due)
@@ -772,8 +772,8 @@ export function LoopRoomPage() {
           eyebrow: 'One human gate',
           title: 'Refused, one human press, then exactly one packet leaves',
           say: shareArmed
-            ? `Yes, send it. Tell the store I need ${request}`
-            : `Tell the store I need ${request}`,
+            ? `Yes, send it now with Hemloop's report_demand_gap site tool. Tell the store I need ${request}`
+            : `Use Hemloop's report_demand_gap site tool now. Tell the store I need ${request}`,
           facts: [
             {
               label: 'Sharing level',
@@ -840,7 +840,7 @@ export function LoopRoomPage() {
           eyebrow: 'Inside locked rules',
           title:
             'Grouped demand, a proposal inside locked rules, one human approval',
-          say: 'Which store can fill this, and what can it offer inside its rules?',
+          say: "Use Hemloop's get_demand and propose_offer site tools now. Which store can fill this, and what can it offer inside its rules?",
           facts: [
             ...(market ?? []).map((row) => ({
               label: row.name,
@@ -886,7 +886,7 @@ export function LoopRoomPage() {
           label: 'Bought',
           eyebrow: 'The shopper decides',
           title: 'The offer returns to the request; a human buys',
-          say: 'Any offers for me?',
+          say: "Use Hemloop's get_offers site tool now. Are there any offers for me?",
           facts: approvedOffer
             ? [
                 { label: 'Merchant', value: activeMerchant.name },
@@ -1167,16 +1167,11 @@ export function LoopRoomPage() {
   }, []);
 
   const onCopySay = useCallback(async (prompt: string): Promise<boolean> => {
+    // The embedded ChatGPT browser can reject async Clipboard API access after
+    // the click's user activation has expired. Try the synchronous path while
+    // the click is still active, then fall back to navigator.clipboard.
+    const ta = document.createElement('textarea');
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(prompt);
-        return true;
-      }
-    } catch {
-      // Secure-context / permission failure — try the legacy path.
-    }
-    try {
-      const ta = document.createElement('textarea');
       ta.value = prompt;
       ta.setAttribute('readonly', '');
       ta.style.position = 'fixed';
@@ -1185,11 +1180,21 @@ export function LoopRoomPage() {
       document.body.appendChild(ta);
       ta.focus();
       ta.select();
-      // Intentional fallback when Clipboard API is missing or denied (S11).
-      // oxlint-disable-next-line typescript/no-deprecated -- document.execCommand('copy') is the last-resort clipboard path
-      const ok = document.execCommand('copy');
-      document.body.removeChild(ta);
-      if (ok) return true;
+      // Intentional compatibility path for embedded WebViews where the
+      // asynchronous Clipboard API loses the originating user gesture.
+      // oxlint-disable-next-line typescript/no-deprecated -- document.execCommand('copy') preserves the click activation
+      const copied = document.execCommand('copy');
+      if (copied) return true;
+    } catch {
+      // Fall through to the standard Clipboard API.
+    } finally {
+      ta.remove();
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(prompt);
+        return true;
+      }
     } catch {
       // Both clipboard paths failed — caller selects the blockquote for Cmd+C.
     }
