@@ -1001,3 +1001,27 @@ Landed:
 3. Cue sheet points at the source and out paths
 
 Gates: hyperframes lint (0 errors); hemloop unit gates unchanged (assets only).
+
+### Codex ChatGPT Desktop E2E attempt (2026-09-04, 01:56–01:58 EDT)
+
+**BLOCKED before navigation; no false pass recorded.** The Pro session's browser runtime did not
+expose the ChatGPT Desktop in-app browser selector (`iab`). Two direct selection attempts returned
+`Browser is not available: iab`. A read-only availability check found only three external Chrome
+extension profiles; it did not inspect cookies, storage, passwords, or profile contents. Because
+the required surface was explicitly ChatGPT Desktop, Codex did not substitute Chrome and call it
+the same test.
+
+- Site navigations: 0
+- Agent turns/tool calls: 0
+- Human approval clicks: 0
+- Browser or Hemloop storage writes: 0
+- Per-turn timings and unexpected agent behaviour: not measurable because no agent turn began
+- Probe time: first failure was immediate (<1 s); troubleshooting, availability inventory, and
+  one clean retry completed in about 70 s wall time
+
+Exact remaining action: expose/open the ChatGPT Desktop in-app browser for this Pro session, then
+rerun the required sequence on `https://hemloop.app`: import receipt image; "What should I buy
+next?"; "Tell the store"; human Approve; "Yes, send it"; "Which store can fill this?"; human
+Approve offer; "Any offers for me?"; human Bought; import the rival receipt for cycle two. Time
+each prompt from submit until final assistant/tool result and record any extra tool calls,
+clarification, reordering, or attempted human-gate crossing.
