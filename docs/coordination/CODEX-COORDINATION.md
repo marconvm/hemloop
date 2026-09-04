@@ -620,6 +620,18 @@ Landed:
 
 Gates: 146/146, tsc, lint, build. No deploy.
 
+### Cursor merchants-2: can-offer reason + XS switch seed (2026-09-03)
+
+Branch: `cursor/merchants-2` (worktree `../hemloop-cursor`), from `origin/main` @ `43aebe7`.
+
+Landed:
+1. `can-offer` reason is margin only (`margin 46.58%`); price stays on `MarketRow.price`.
+2. Overland sizes XS–XL so hoodie · XS → Northlight `size-not-in-stock`, Overland answers at
+   80.10 (active-merchant switch can fire). Size-sold-out reason uses the request size.
+3. marketScan test for the XS case; one line in `02-the-loop.md` (+ `public/docs/` mirror).
+
+Gates: 147/147, tsc, lint, build. No deploy.
+
 ### Cursor batch4: E-commerce wording, receipt cards, family closets (2026-09-03)
 
 Branch: `cursor/batch4` (worktree `../hemloop-cursor`), from `origin/main` @ `25db337`.
