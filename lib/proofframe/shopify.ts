@@ -5,6 +5,7 @@
 // storefront token exists — the importer signature already matches.
 // Refresh: see "Catalog snapshot" in docs/TECH-GUIDE.md.
 import catalogJson from './catalog.json';
+import kidsCatalogJson from './catalog-kids.json';
 import type { CampaignFacts } from './types';
 
 export interface CatalogProduct {
@@ -40,6 +41,7 @@ export interface Catalog {
 }
 
 export const demoCatalog = catalogJson as Catalog;
+export const kidsCatalog = kidsCatalogJson as Catalog;
 
 /** Map one catalog product onto campaign facts. Prices come from the store;
  * promo terms (code, dates, disclaimer, banned phrases) stay human-owned. */

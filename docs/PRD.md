@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Product | Hemloop, a two-sided agent-native commerce loop: shopper-side wardrobe reasoning, human-approved demand with no shopper identifier (zero-ID), locked-offer campaign production |
+| Product | Hemloop, a two-sided agent-native E-commerce loop: shopper-side wardrobe reasoning, human-approved demand with no shopper identifier (zero-ID), locked-offer campaign production |
 | Context | OpenAI WebMCP Challenge, submission deadline 2026-09-03 13:00 PT |
 | Status | Draft for build, v2 (v1 was merchant-side only) |
 | Date | 2026-08-30 |
@@ -108,14 +108,14 @@ Wave 2 turns opt-in into the product mechanic rather than a checkbox in front of
 
 ## 6. Roadmap: Hemloop as the middle layer
 
-Hemloop sits between the shopper's closet and the merchant's offer today. The next layer is Hemloop sitting between the merchant's locked offer and whatever agent does the actual buying. Four threads, ordered by what they build on. Wave 2 (2026-09-02) shipped a first slice of every thread; wave 3 (2026-09-03) closed the commerce-handoff thread with a real, human-approved offer loop. What remains is called out per row.
+Hemloop sits between the shopper's closet and the merchant's offer today. The next layer is Hemloop sitting between the merchant's locked offer and whatever agent does the actual buying. Four threads, ordered by what they build on. Wave 2 (2026-09-02) shipped a first slice of every thread; wave 3 (2026-09-03) closed the E-commerce-handoff thread with a real, human-approved offer loop. What remains is called out per row.
 
 | Layer | Shipped | Still roadmap |
 |---|---|---|
 | Shopper profile | Replacement lifecycle from purchase dates: `find_gaps` returns a `due` block for a category whose oldest garment is past its typical life, and `report_demand_gap` kind `replace` carries that timing to the merchant (wave 4). Preferences card (fit, colour family, materials, price ceiling, liked brands) as `get_preferences`, consent-gated per field; `occasion` on the demand event (season, gift, event); family sub-profiles (Me / Partner / Kid) via `garmentsForProfile` (wave 2); purchase log across every merchant, rivals included, filled by hand, `import_receipt` (till receipt and order-email formats, no OCR), or automatically on Bought; a coarse `buyingPattern` per category derived from it (wave 3) | Receipt OCR; real order-email connectors; a consent receipt the shopper can export; a browser extension surface |
 | Demand visibility | Grouped by category and size with counts; labelled Need or Want; each request carries the shopper's consent grant (level and exact fields) (wave 2); the level-3 grant can carry `buyingPattern` (wave 3); each group scored against the locked stock and readable by the merchant's agent through `get_demand`, with a `replace` count marking shoppers who already own one (wave 4) | Aggregation before disclosure: a k-anonymity floor so a demand cell only becomes visible to the merchant once enough distinct shoppers have contributed to it; per-merchant consent levels |
 | Creative output | Placement selector (Story 9:16, Feed 4:5, Display 16:9) on the existing HTML composition; a human-only control, no WebMCP tool sets it (wave 2) | Image and GIF export matched to those placements, then short video once the still and motion pipelines share one validator; a browser extension surface |
-| Commerce handoff | `get_offer`: locked facts as structured data with sizesInStock, purchaseUrl and an offer-completeness meter (9 facts, `computeCompleteness`); Bought / Passed outcomes recorded per demand event (wave 2); locked offer rules (cost, margin floor, max discount); `matchOffer` auto-matches a personal offer inside them; `propose_offer` and the Auto-propose toggle stage one, a human approves or declines; `get_offer(requestId)` and `get_offers` hand the approved offer to a shopping agent or the shopper; Bought on an approved offer records the purchase with its `offerId` (wave 3) | The outcome written back into the merchant's own reporting, not just displayed; the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam described in `docs/integrations/commerce-agents/README.md` |
+| E-commerce handoff | `get_offer`: locked facts as structured data with sizesInStock, purchaseUrl and an offer-completeness meter (9 facts, `computeCompleteness`); Bought / Passed outcomes recorded per demand event (wave 2); locked offer rules (cost, margin floor, max discount); `matchOffer` auto-matches a personal offer inside them; `propose_offer` and the Auto-propose toggle stage one, a human approves or declines; `get_offer(requestId)` and `get_offers` hand the approved offer to a shopping agent or the shopper; Bought on an approved offer records the purchase with its `offerId` (wave 3) | The outcome written back into the merchant's own reporting, not just displayed; the `ToolContract`/`ApprovalReceipt`/`PresentationEvent` seam described in `docs/integrations/commerce-agents/README.md` |
 
 The merchant already answers demand at two levels, Need and Want (`DemandSignal.kind`: `gap`/`fit` read as Need, `want` reads as Want). The roadmap above deepens both levels; it does not add a third.
 

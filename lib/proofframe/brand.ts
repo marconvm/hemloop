@@ -3,7 +3,7 @@
 export const BRAND = {
   name: 'Hemloop',
   tagline: 'The closet stays private. The demand gets through.',
-  sub: 'A two-sided, agent-native commerce loop: shoppers share demand without an identifier, merchants see the gap, and every promotion traces back to human-locked facts.',
+  sub: 'A two-sided, agent-native E-commerce loop: shoppers share demand without an identifier, merchants see the gap, and every promotion traces back to human-locked facts.',
   challenge: 'OpenAI WebMCP Challenge entry',
 } as const;
 

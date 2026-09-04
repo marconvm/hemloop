@@ -164,4 +164,4 @@ writing the outcome back into the merchant's own reporting, rather than only dis
 ## Built with
 
 TypeScript, React 19, Vite, Cloudflare Workers, WebMCP, and a Shopify catalog snapshot as the demo's
-commerce connector.
+E-commerce connector.

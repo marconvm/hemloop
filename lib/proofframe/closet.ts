@@ -1,7 +1,7 @@
 // Shopper-side domain: a private wardrobe, fit knowledge, and data-minimized
 // demand signals. A signal carries no shopper identifier or wardrobe rows.
 import type { Catalog, CatalogProduct } from './shopify';
-import { demoCatalog } from './shopify';
+import { demoCatalog, kidsCatalog } from './shopify';
 
 export type GarmentCategory =
   | 'hoodie'
@@ -263,8 +263,8 @@ export function seedWardrobe(): Wardrobe {
         brand: 'Little Trailhead',
         size: '8',
         colour: 'red',
-        image: '/products/black-tee.jpg',
-        price: 14.0,
+        image: '/products/kids-tee.jpg',
+        price: 16.0,
         currency: 'CAD',
         retailer: 'Little Trailhead',
         material: 'Cotton jersey',
@@ -277,12 +277,82 @@ export function seedWardrobe(): Wardrobe {
         brand: 'Little Trailhead',
         size: '2Y',
         colour: 'blue',
-        image: '/products/white-sneaker.jpg',
-        price: 32.0,
+        image: '/products/kids-sneakers.jpg',
+        price: 42.0,
         currency: 'CAD',
         retailer: 'Little Trailhead',
         material: 'Canvas upper, rubber sole',
         purchasedAt: '2026-05-01',
+        for: 'kid',
+      },
+      {
+        id: 'g14',
+        category: 'denim',
+        brand: 'Little Trailhead',
+        size: '10',
+        colour: 'khaki',
+        image: '/products/kids-chino.jpg',
+        price: 32.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Cotton twill',
+        purchasedAt: '2026-03-18',
+        for: 'kid',
+      },
+      {
+        id: 'g15',
+        category: 'denim',
+        brand: 'Little Trailhead',
+        size: '8',
+        colour: 'indigo',
+        image: '/products/kids-denim.jpg',
+        price: 38.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Cotton denim',
+        purchasedAt: '2026-02-08',
+        for: 'kid',
+      },
+      {
+        id: 'g16',
+        category: 'jacket',
+        brand: 'Little Trailhead',
+        size: '8',
+        colour: 'olive',
+        image: '/products/kids-jacket.jpg',
+        price: 48.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Nylon shell',
+        purchasedAt: '2025-12-02',
+        for: 'kid',
+      },
+      {
+        id: 'g17',
+        category: 'accessory',
+        brand: 'Little Trailhead',
+        size: 'OS',
+        colour: 'olive',
+        image: '/products/kids-cap.jpg',
+        price: 18.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Cotton twill',
+        purchasedAt: '2026-06-11',
+        for: 'kid',
+      },
+      {
+        id: 'g18',
+        category: 'tee',
+        brand: 'Little Trailhead',
+        size: '10',
+        colour: 'sage',
+        image: '/products/kids-crew.jpg',
+        price: 28.0,
+        currency: 'CAD',
+        retailer: 'Little Trailhead',
+        material: 'Cotton fleece',
+        purchasedAt: '2026-01-22',
         for: 'kid',
       },
       {
@@ -297,6 +367,90 @@ export function seedWardrobe(): Wardrobe {
         retailer: 'Bluenotes online store',
         material: 'Cotton fleece',
         purchasedAt: '2026-01-20',
+        for: 'partner',
+      },
+      {
+        id: 'g19',
+        category: 'tee',
+        brand: 'Harborview Basics',
+        size: 'L',
+        colour: 'white',
+        image: '/products/harborview-crew-tee.jpg',
+        price: 22.9,
+        currency: 'CAD',
+        retailer: 'Harborview Basics',
+        material: 'Cotton jersey',
+        purchasedAt: '2025-10-14',
+        for: 'partner',
+      },
+      {
+        id: 'g20',
+        category: 'denim',
+        brand: 'Denim Supply Co.',
+        size: '34',
+        colour: 'indigo',
+        image: '/products/east-side-straight-jean.jpg',
+        price: 79.0,
+        currency: 'CAD',
+        retailer: 'Denim Supply Co. online store',
+        material: '13oz rigid denim',
+        purchasedAt: '2025-11-30',
+        for: 'partner',
+      },
+      {
+        id: 'g21',
+        category: 'jacket',
+        brand: 'Ridgeline Outdoor',
+        size: 'L',
+        colour: 'navy',
+        image: '/products/tidewater-shell-jacket.jpg',
+        price: 128.0,
+        currency: 'CAD',
+        retailer: 'Ridgeline Outdoor',
+        material: 'Nylon shell',
+        purchasedAt: '2025-09-08',
+        for: 'partner',
+      },
+      {
+        id: 'g22',
+        category: 'footwear',
+        brand: 'Amble',
+        size: '11',
+        colour: 'white',
+        image: '/products/amble-court-sneaker.jpg',
+        price: 89.0,
+        currency: 'CAD',
+        retailer: 'Amble',
+        material: 'Leather upper',
+        purchasedAt: '2026-04-03',
+        for: 'partner',
+      },
+      {
+        id: 'g23',
+        category: 'denim',
+        brand: 'Camden',
+        size: '34',
+        colour: 'khaki',
+        image: '/products/camden-chino.jpg',
+        price: 68.0,
+        currency: 'CAD',
+        retailer: 'Camden',
+        material: 'Cotton twill',
+        purchasedAt: '2026-02-19',
+        for: 'partner',
+      },
+      {
+        id: 'g24',
+        category: 'tee',
+        brand: 'Northlight Apparel',
+        size: 'L',
+        colour: 'bone',
+        image: '/products/solstice-graphic-tee.jpg',
+        price: 28.9,
+        currency: 'CAD',
+        retailer: 'Northlight Apparel',
+        material: 'Cotton jersey',
+        purchasedAt: '2026-05-16',
         for: 'partner',
       },
     ],
@@ -319,22 +473,23 @@ export function garmentsForProfile(
  * both stop here. */
 export const MAX_CLOSET_ROWS = 20;
 
-/** Draw `count` garments for one profile from the catalog snapshot, so every
- * row has a real brand, photo and size, as if they came from a variety of
- * stores or were added by the Hemloop layer. Pure given `rand` (0..1); never
- * pushes the profile past MAX_CLOSET_ROWS. Dates land inside the last six
- * months so a random draw cannot invent a worn-out garment. */
+/** Draw `count` garments for one profile from a profile-appropriate catalog
+ * pool (adult demo catalog for self/partner; kids catalog for kid), so every
+ * row has a real brand, photo and size. Pure given `rand` (0..1); never pushes
+ * the profile past MAX_CLOSET_ROWS. Dates land inside the last six months so a
+ * random draw cannot invent a worn-out garment. */
 export function randomGarments(
   count: number,
   wardrobe: Wardrobe,
   profile: ShopperProfile,
   rand: () => number = Math.random,
-  catalog: Catalog = demoCatalog,
+  catalog?: Catalog,
   now: Date = new Date(),
 ): Garment[] {
+  const poolCatalog = catalog ?? (profile === 'kid' ? kidsCatalog : demoCatalog);
   const owned = garmentsForProfile(wardrobe, profile).garments.length;
   const room = Math.max(0, Math.min(count, MAX_CLOSET_ROWS - owned));
-  const pool = catalog.products.filter((p) => guessCategory(p) !== null);
+  const pool = poolCatalog.products.filter((p) => guessCategory(p) !== null);
   const out: Garment[] = [];
   const stamp = now.getTime().toString(36);
   for (let i = 0; i < room && pool.length > 0; i++) {

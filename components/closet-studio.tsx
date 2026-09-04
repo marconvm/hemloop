@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Download,
   Import,
   Pencil,
   Radio,
@@ -1068,6 +1069,63 @@ export function ClosetStudio() {
             recognised items, garments to the wardrobe.
           </p>
           <div className="import-form">
+            <ul className="receipt-cards" aria-label="Sample receipts">
+              {SAMPLE_RECEIPTS.map((sample) => (
+                <li key={sample.label} className="receipt-card">
+                  <div className="receipt-card-preview">
+                    {sample.kind === 'email' && sample.email ? (
+                      <div className="eml-preview" aria-hidden="true">
+                        <div className="eml-headers">
+                          <p>
+                            <span>From</span> {sample.email.from}
+                          </p>
+                          <p>
+                            <span>Subject</span> {sample.email.subject}
+                          </p>
+                          <p>
+                            <span>Date</span> {sample.email.date}
+                          </p>
+                        </div>
+                        {/* oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured */}
+                        <img
+                          src={sample.image}
+                          alt=""
+                          className="eml-body-thumb"
+                        />
+                      </div>
+                    ) : (
+                      // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
+                      <img
+                        src={sample.image}
+                        alt=""
+                        className="receipt-thumb"
+                      />
+                    )}
+                  </div>
+                  <div className="receipt-card-body">
+                    <p className="receipt-card-label">{sample.label}</p>
+                    <div className="receipt-card-actions">
+                      <button
+                        type="button"
+                        className="import-sample-button"
+                        onClick={() => setReceiptText(sample.text)}
+                      >
+                        Use this sample
+                      </button>
+                      <a
+                        className="receipt-download-icon"
+                        href={sample.image}
+                        download={sample.downloadName}
+                        aria-label={`Download ${sample.label}`}
+                        title="Download"
+                      >
+                        <Download aria-hidden="true" size={18} />
+                      </a>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
             <textarea
               className="import-textarea"
               value={receiptText}
@@ -1077,16 +1135,6 @@ export function ClosetStudio() {
               aria-label="Receipt or order email text"
             />
             <div className="import-actions">
-              {SAMPLE_RECEIPTS.map((sample) => (
-                <button
-                  key={sample.label}
-                  type="button"
-                  className="import-sample-button"
-                  onClick={() => setReceiptText(sample.text)}
-                >
-                  Paste sample: {sample.label}
-                </button>
-              ))}
               <button
                 type="button"
                 className="import-submit-button"
@@ -1096,22 +1144,6 @@ export function ClosetStudio() {
                 <Import aria-hidden="true" />
                 Import
               </button>
-            </div>
-            <div className="receipt-downloads">
-              <a
-                className="receipt-download"
-                href="/receipts/northlight-till-receipt.png"
-                download="northlight-till-receipt.png"
-              >
-                Download sample receipt: Till (Northlight)
-              </a>
-              <a
-                className="receipt-download"
-                href="/receipts/harborview-order-email.png"
-                download="harborview-order-email.png"
-              >
-                Download sample receipt: Order email (Harborview)
-              </a>
             </div>
           </div>
         </aside>

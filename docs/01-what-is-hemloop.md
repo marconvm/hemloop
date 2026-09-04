@@ -3,7 +3,7 @@
 Your AI tells a store what you need, without telling it who you are. The store answers with an
 offer that cannot lie about the price, priced inside rules a human locked.
 
-Hemloop is a commerce loop between a shopper's private closet and a merchant's studio, built on
+Hemloop is an E-commerce loop between a shopper's private closet and a merchant's studio, built on
 WebMCP. Two web pages register **21 typed tools** in the browser itself. An agent can reason over a
 wardrobe, send a store one approved request with no identity attached, and on the other side
 propose an offer that a matcher keeps inside the merchant's margin. A human gate sits on each side,

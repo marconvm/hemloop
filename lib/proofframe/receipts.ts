@@ -130,11 +130,22 @@ export function parseReceipt(text: string): ParsedReceipt | null {
   };
 }
 
-/** Two paste-ready samples for the studio's "Paste sample" buttons and for
- * tests, one per format parseReceipt understands. */
-export const SAMPLE_RECEIPTS: { label: string; text: string }[] = [
+/** Two paste-ready samples for the closet import cards and for tests, one
+ * per format parseReceipt understands. Cards show the receipt image (or an
+ * .eml-style email preview); the parser still reads only `text`. */
+export const SAMPLE_RECEIPTS: {
+  label: string;
+  text: string;
+  image: string;
+  downloadName: string;
+  kind: 'receipt' | 'email';
+  email?: { from: string; subject: string; date: string };
+}[] = [
   {
     label: 'Till receipt (Northlight Apparel)',
+    kind: 'receipt',
+    image: '/receipts/northlight-till-receipt.png',
+    downloadName: 'northlight-till-receipt.png',
     text: [
       'Northlight Apparel',
       '482 King St W, Toronto ON',
@@ -146,6 +157,14 @@ export const SAMPLE_RECEIPTS: { label: string; text: string }[] = [
   },
   {
     label: 'Order email (Harborview Basics)',
+    kind: 'email',
+    image: '/receipts/harborview-order-email.png',
+    downloadName: 'harborview-order-email.png',
+    email: {
+      from: 'orders@harborview.example',
+      subject: 'Your Harborview Basics order #78421',
+      date: '2026-04-27',
+    },
     text: [
       'Order #78421',
       'Thank you for your order at Harborview Basics',
