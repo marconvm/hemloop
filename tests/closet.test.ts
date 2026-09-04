@@ -8,6 +8,7 @@ import {
   garmentsForProfile,
   makeSignal,
   monthsBetween,
+  nextRequestPreview,
   randomGarments,
   readWardrobe,
   writeWardrobe,
@@ -250,6 +251,89 @@ void test('consentFieldsForRequest: level 3 adds colourFamily/avoidMaterials/pri
   for (const f of ['colourFamily', 'avoidMaterials', 'priceCeiling'] as ConsentField[]) {
     assert.ok(fields.includes(f), f);
   }
+});
+
+void test('nextRequestPreview: top due gap drafts kind replace and greys held-back fields', () => {
+  const gap = {
+    category: 'hoodie' as const,
+    reason: 'worn',
+    due: {
+      lastBoughtAt: '2020-01-01',
+      monthsSince: 48,
+      typicalMonths: 36,
+      size: 'M',
+    },
+  };
+  const prefs = seedPreferences();
+  const at1 = nextRequestPreview(gap, {
+    consentLevel: 1,
+    sizeHint: 'L',
+    profile: 'self',
+    preferences: prefs,
+    pattern: { discountSensitivity: 'none', spendBand: 'under-50', brandLoyalty: 'loyal' },
+  });
+  assert.ok(at1);
+  assert.equal(at1!.kind, 'replace');
+  const byField = Object.fromEntries(at1!.rows.map((r) => [r.field, r]));
+  assert.equal(byField.kind.value, 'replace');
+  assert.equal(byField.kind.travels, true);
+  assert.equal(byField.category.value, 'hoodie');
+  assert.equal(byField.category.travels, true);
+  assert.equal(byField.size.value, 'M');
+  assert.equal(byField.size.travels, true);
+  assert.equal(byField.level.value, 'Need');
+  assert.equal(byField.level.travels, true);
+  assert.equal(byField.for.travels, false);
+  assert.equal(byField.fitPreference.travels, false);
+  assert.equal(byField.colourFamily.travels, false);
+
+  const at2 = nextRequestPreview(gap, {
+    consentLevel: 2,
+    sizeHint: 'L',
+    profile: 'partner',
+    preferences: prefs,
+    pattern: null,
+  });
+  assert.equal(at2!.rows.find((r) => r.field === 'for')?.travels, true);
+  assert.equal(at2!.rows.find((r) => r.field === 'for')?.value, 'Partner');
+  assert.equal(at2!.rows.find((r) => r.field === 'colourFamily')?.travels, false);
+
+  const at0 = nextRequestPreview(gap, {
+    consentLevel: 0,
+    sizeHint: null,
+    profile: 'self',
+    preferences: prefs,
+    pattern: null,
+  });
+  assert.ok(at0!.rows.every((r) => !r.travels));
+});
+
+void test('nextRequestPreview: absence gap is kind gap and uses sizeHint', () => {
+  const preview = nextRequestPreview(
+    { category: 'denim', reason: 'No denim in the wardrobe.' },
+    {
+      consentLevel: 1,
+      sizeHint: '32',
+      profile: 'self',
+      preferences: seedPreferences(),
+      pattern: null,
+    },
+  );
+  assert.equal(preview!.kind, 'gap');
+  assert.equal(preview!.rows.find((r) => r.field === 'size')?.value, '32');
+});
+
+void test('nextRequestPreview: no gap means no draft', () => {
+  assert.equal(
+    nextRequestPreview(undefined, {
+      consentLevel: 1,
+      sizeHint: 'M',
+      profile: 'self',
+      preferences: seedPreferences(),
+      pattern: null,
+    }),
+    null,
+  );
 });
 
 void test('closet tool surface: 9 tools, reads flagged readOnly', () => {
