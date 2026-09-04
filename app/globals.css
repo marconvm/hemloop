@@ -487,16 +487,13 @@ select {
   padding: 10px;
 }
 
-/* The closet is not the studio. The studio's widest column is its canvas, so
-   .studio-grid puts the weight in the middle; the closet's most important
-   column is the wardrobe, which sits first and was inheriting the NARROWEST
-   track - 142px cards with three-line brand names (wave-4 review, Codex).
-   The class was already on the element and simply had no rule. */
+/* The closet is not the studio. The wardrobe tab has two children only
+   (wardrobe column + gaps/sizes column). A third fr track left a dead strip
+   on the right and starved the garment grid (~570px at 1456), which then
+   crushed cards. Tracks use minmax(0,…) so mid-width never forces overflow
+   past the viewport and clips the left edge. */
 .closet-grid {
-  grid-template-columns:
-    minmax(340px, 1.3fr)
-    minmax(300px, 1fr)
-    minmax(300px, 1.05fr);
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
 }
 
 .panel {
@@ -1457,10 +1454,13 @@ select {
 .garment-list {
   display: grid;
   /* auto-fill rather than a fixed 2, so a card drops to one per row when the
-     column is genuinely narrow instead of wrapping every word. No media query
-     needed: the track count follows the space it actually has. */
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+     column is genuinely narrow instead of wrapping every word. 220px floor
+     keeps Edit + Delete inside the card beside the 56px thumb; 160px tracks
+     crushed three cards into a ~570px column with Delete overflowing. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 .garment-card {
   display: grid;
@@ -1485,6 +1485,8 @@ select {
 }
 .garment-card > :not(.garment-thumb) {
   grid-column: 2;
+  min-width: 0;
+  max-width: 100%;
 }
 /* A garment added by hand or from a receipt has no image; don't leave it a
    56px gutter. Falls back to the two-column card where :has() is missing,
@@ -2060,7 +2062,7 @@ select {
 
 /* Thumbnails */
 .garment-card:has(.garment-thumb) {
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 56px minmax(0, 1fr);
   column-gap: 10px;
   align-items: start;
 }
@@ -2113,14 +2115,19 @@ select {
 /* Closet: inline edit / delete, and clear-all */
 .garment-row-actions {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-top: 4px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .garment-icon-button {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex: 0 1 auto;
+  max-width: 100%;
   padding: 3px 8px;
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   border-radius: 999px;
@@ -2128,6 +2135,7 @@ select {
   color: inherit;
   cursor: pointer;
   font-size: 10px;
+  box-sizing: border-box;
 }
 
 .garment-icon-button svg {

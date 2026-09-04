@@ -733,3 +733,21 @@ Landed:
 4. Empty state: "What should I buy next?" → Tell the store / Press Approve / Reply Yes, send it.
 
 Verified 1440 / 1000 / 430 (no overflow; dial 4-col → 2-col at 430). Gates: 151 · tsc · lint · build.
+### Cursor closet-fix: real desktop wardrobe width (2026-09-04)
+
+Branch: `cursor/closet-fix`. Live hemloop.app at 1456 still crushed three cards into a
+~570px wardrobe column (Delete overflowing) because `.closet-grid` was three fr tracks
+for a two-child DOM — third track empty, wardrobe starved. globals still had
+`minmax(160px)` / `minmax(340px|300px|300px)`.
+
+Landed (CSS only: `app/closet.css` + `app/globals.css`):
+1. Closet grid → two columns `minmax(0, 1.7fr) minmax(0, 1fr)` (wardrobe | gaps)
+2. Garment list → `auto-fill minmax(220px, 1fr)`; card content `minmax(0, 1fr)`
+3. Row actions wrap/shrink inside the card
+
+Verified getBoundingClientRect at 1000 / 1200 / 1456:
+- panel.left >= 0, no body overflow
+- card.right <= column.right, delete.right <= card.right
+- 1456: wardrobe ~890px (3×276 cards), gaps ~524px, no dead third column
+
+Gates: tests · tsc · lint · build. Deploy immediately.
