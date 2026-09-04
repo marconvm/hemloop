@@ -1705,6 +1705,7 @@ export function ProofFrameStudio() {
                 campaign={campaign}
                 scene={activeScene}
                 playhead={playhead}
+                merchantName={activeMerchant?.name ?? 'Northlight Apparel'}
               />
             ) : (
               <div className="empty-preview">Ask the agent to add a scene.</div>

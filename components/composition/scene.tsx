@@ -8,6 +8,7 @@ interface CompositionSceneProps {
   campaign: CampaignState;
   scene: Scene;
   playhead: number;
+  merchantName: string;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -50,13 +51,6 @@ function humanDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
-function merchantName(campaign: CampaignState) {
-  return (
-    campaign.scenes.find((candidate) => candidate.kind === 'cta')?.heading ??
-    campaign.facts.productName
-  );
-}
-
 function PricePair({ campaign }: { campaign: CampaignState }) {
   const regular = money(campaign.facts.regularPrice, campaign.facts.currency);
   const sale = money(
@@ -94,9 +88,10 @@ export function CompositionScene({
   campaign,
   scene,
   playhead,
+  merchantName,
 }: CompositionSceneProps) {
   const facts = campaign.facts;
-  const brand = merchantName(campaign);
+  const brand = merchantName;
   const progress = entranceProgress(campaign, scene, playhead);
   const imageScale = 1.04 - progress * 0.04;
   const preferredSize = facts.sizesInStock?.includes('L')
