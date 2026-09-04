@@ -17,6 +17,7 @@ import {
   type ShopperProfile,
 } from './closet';
 import { demoCatalog, type CatalogProduct } from './shopify';
+import { isSafeHttpsUrl, isSameOriginProductImage } from './storage-policy';
 
 const KEY = 'proofframe-demand-signals';
 const EVENT = 'proofframe-signal';
@@ -378,7 +379,7 @@ export function toOffer(x: unknown): PersonalOffer | null {
   if (typeof s.validFrom !== 'string' || Number.isNaN(Date.parse(s.validFrom))) return null;
   if (typeof s.validTo !== 'string' || Number.isNaN(Date.parse(s.validTo))) return null;
   if (typeof s.disclaimer !== 'string' || s.disclaimer.length > 400) return null;
-  if (typeof s.purchaseUrl !== 'string' || s.purchaseUrl.length === 0 || s.purchaseUrl.length > 300) return null;
+  if (typeof s.purchaseUrl !== 'string' || !isSafeHttpsUrl(s.purchaseUrl, 300)) return null;
   if (typeof s.status !== 'string' || !OFFER_STATUSES.has(s.status)) return null;
   if (typeof s.proposedBy !== 'string' || !OFFER_PROPOSERS.has(s.proposedBy)) return null;
   if (typeof s.proposedAt !== 'string' || Number.isNaN(Date.parse(s.proposedAt))) return null;
@@ -415,7 +416,10 @@ export function toOffer(x: unknown): PersonalOffer | null {
       ok: mc.ok,
     },
   };
-  if (typeof s.image === 'string' && s.image.length <= 300) offer.image = s.image;
+  if (typeof s.image === 'string') {
+    if (!isSameOriginProductImage(s.image)) return null;
+    offer.image = s.image;
+  }
   if (
     Array.isArray(s.sizesInStock) &&
     s.sizesInStock.every((v) => typeof v === 'string')

@@ -336,7 +336,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     {
       name: 'get_campaign_state',
       description:
-        'Read the campaign: human-locked facts (price, discount, code, dates, disclaimer), brief, scenes, format. Locked facts are immutable to agents; write copy that matches them.',
+        'Read the campaign: facts (price, discount, code, dates, disclaimer), their human lock state, brief, scenes, and format. When facts are locked, agents cannot change them — write copy that matches.',
       inputSchema: { type: 'object', properties: {} },
       annotations: { readOnlyHint: true },
       execute: () => ok({ state: cb.getState() }),
@@ -597,7 +597,7 @@ export function buildTools(cb: ProofFrameCallbacks): WebMcpTool[] {
     tools.push({
       name: 'import_product',
       description:
-        'Import product facts by handle from the connected demo storefront. Imported facts become the (still human-locked) campaign facts.',
+        'Import product facts by handle from the connected demo storefront into the unlocked fact set. The merchant must review and lock afterward; import is refused while facts are locked.',
       inputSchema: {
         type: 'object',
         properties: { handle: { type: 'string' } },

@@ -768,3 +768,38 @@ B. Header first link Loop → Hemloop; "Waiting on Hemloop"; closet/docs/README 
 C. Studio density: shorter empty/stat copy, body-size ink, numbers first on stat strip.
 
 Gates: 149 · tsc · lint · build.
+
+### Cursor storage-hardening: campaign/wardrobe bounds + manifest copy (2026-09-04)
+
+Branch: `cursor/storage-hardening` from `origin/main` @ `532e369`.
+Judge review 3 P0s + P1 + hostile regressions. Did not touch `components/loop-room/*`.
+
+Landed:
+1. `lib/proofframe/storage-policy.ts` — shared https URL + `/products/…` image + date/percent bounds
+2. Strict `parseCampaign` / `parseFacts` / scenes / format preset / CSS colours; fail → seed
+3. `toGarment()` rebuild in `readWardrobe` (same-origin images only, profile enum, row cap 60)
+4. `toOffer` purchaseUrl https-only; image same-origin product path
+5. Manifest: `get_campaign_state` / `import_product` copy no longer call unlocked facts human-locked
+6. Hostile storage tests (campaign + wardrobe) + manifest copy assertions
+
+Gates: 155 · tsc · lint · build.
+
+### Dual review wave 6: Claude reviewer's verdicts filed (2026-09-04)
+
+`DUAL-REVIEW-WAVE6-CLAUDE.md` exists (Opus subagent, reviewed at `532e369`, before
+`cursor/storage-hardening` merged). Codex's `DUAL-REVIEW-WAVE6-CODEX.md` is pending; reconciliation
+follows in `DUAL-REVIEW-WAVE6-RECONCILED.md`. Nothing from the review is executed until both are in.
+Already overtaken by main since the review: S14/S15 (Codex's P0s and the manifest copy) landed in
+`9f58c54`; S13 (`readPurchases` unvalidated) remains open.
+### Cursor closet-sizes: sizes header + Partner seed migration (2026-09-04)
+
+Branch: `cursor/closet-sizes` from `cursor/storage-hardening` @ `c250051`.
+Did not touch `components/loop-room/*`. Styles in `app/closet.css` only.
+
+Landed:
+1. Sizes on file table header row: Brand · Category · Size; brand/category left, size right
+2. `hemloop.wardrobe.seed` version (`WARDROBE_SEED_VERSION = 2`); older stores merge missing seed ids without overwriting user rows
+3. Partner seed refreshed to 7 rows (hoodie×2, tee×2, denim, jacket, accessory) → ~2 essential gaps; Self's three gaps untouched
+4. Migration + partner-gap tests
+
+Gates: 157 · tsc · lint · build.

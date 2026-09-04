@@ -1381,6 +1381,94 @@ void test('readCampaign/writeCampaign: per-merchant storage, active id, legacy h
   }
 });
 
+void test('readCampaign: hostile storage falls back to seed (bounds, protocols, lock)', () => {
+  const restore = installFakeWindow();
+  try {
+    const seed = seedCampaign('northlight');
+    const hostile = {
+      brief: 'X'.repeat(10_000),
+      factsLocked: true,
+      facts: {
+        ...seed.facts,
+        productName: 'Y'.repeat(10_000),
+        regularPrice: -99,
+        discountPercent: 900,
+        purchaseUrl: 'javascript:alert(1)',
+        productImage: 'https://tracker.invalid/pixel',
+      },
+      scenes: Array.from({ length: 100 }, (_, i) => ({
+        id: `s${i}`,
+        kind: 'hero',
+        heading: 'h',
+        body: 'b',
+        durationSec: -100,
+      })),
+      format: { width: -1, height: 1e12, fps: -30, placement: 'story' },
+      style: { background: 'url(javascript:alert(1))', ink: '#fff', accent: '#f00' },
+      injected: 'drop-me',
+    };
+    window.localStorage.setItem(
+      'hemloop.campaigns',
+      JSON.stringify({ northlight: hostile }),
+    );
+    const got = readCampaign('northlight');
+    assert.equal(got.brief, seed.brief);
+    assert.equal(got.facts.productName, seed.facts.productName);
+    assert.equal(got.facts.regularPrice, seed.facts.regularPrice);
+    assert.equal(got.facts.purchaseUrl, seed.facts.purchaseUrl);
+    assert.equal(got.facts.productImage, seed.facts.productImage);
+    assert.equal(got.scenes.length, seed.scenes.length);
+    assert.equal(got.format.width, seed.format.width);
+    assert.equal('injected' in got, false);
+
+    // Valid shape with only a bad URL still falls back.
+    window.localStorage.setItem(
+      'hemloop.campaigns',
+      JSON.stringify({
+        northlight: {
+          ...seed,
+          facts: { ...seed.facts, purchaseUrl: 'http://insecure.example/checkout' },
+        },
+      }),
+    );
+    assert.equal(readCampaign('northlight').facts.purchaseUrl, seed.facts.purchaseUrl);
+
+    // Canonical timestamps: ISO date with time becomes YYYY-MM-DD on wardrobe path
+    // (campaign dates already go through canonicalDate in parseFacts).
+    window.localStorage.setItem(
+      'hemloop.campaigns',
+      JSON.stringify({
+        northlight: {
+          ...seed,
+          facts: {
+            ...seed.facts,
+            startDate: '2026-08-28T15:00:00.000Z',
+            endDate: '2026-09-07T15:00:00.000Z',
+          },
+        },
+      }),
+    );
+    const dated = readCampaign('northlight');
+    assert.equal(dated.facts.startDate, '2026-08-28');
+    assert.equal(dated.facts.endDate, '2026-09-07');
+  } finally {
+    restore();
+  }
+});
+
+void test('manifest copy: get_campaign_state and import_product do not call unlocked facts human-locked', () => {
+  const tools = buildTools({
+    ...makeStore().cb,
+    importProduct: async () => seedCampaign().facts,
+  });
+  const getState = tools.find((t) => t.name === 'get_campaign_state')!;
+  const importProduct = tools.find((t) => t.name === 'import_product')!;
+  assert.ok(!/human-locked facts/i.test(getState.description));
+  assert.match(getState.description, /lock state/i);
+  assert.ok(!/still human-locked/i.test(importProduct.description));
+  assert.match(importProduct.description, /unlocked fact set/i);
+});
+
 void test('sizesInStockFromInventory: qty > 0 only, first-seen size order', () => {
   assert.deepEqual(
     sizesInStockFromInventory([
