@@ -705,3 +705,16 @@ Landed:
 - Header Loop link is the way back; rail slot is empty
 
 Did not touch `components/loop-room/*`.
+
+### Cursor batch4: footer credit + docs mirror (2026-09-04)
+
+Branch: `cursor/batch4`. Mirrors Codex's `site-footer` credit line.
+
+Landed:
+- `components/site-footer.tsx`: `Demo data, real brands` → `© 2026 Marco Cheung · Source on GitHub`
+  (link `https://github.com/marconvm/hemloop`, `rel=noopener`, `target=_blank`)
+- `public/docs/index.html` static footer byte-mirrors that `<p>` markup (+ `p a` chrome CSS)
+- `app/globals.css`: same `p a` rule Codex has (dropped unused `p > span` dot)
+- Closet/studio headers: no `Demo data, real brands` Badge after SiteHeader move (WebMCP status only)
+
+Did not touch `components/loop-room/*`.
