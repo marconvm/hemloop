@@ -21,6 +21,9 @@
   --font-display: 'Manrope', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --shadow-soft: 0 12px 30px rgba(23, 33, 28, 0.17);
+  /* Same column + rhythm as studio.css: tabs → 16px → content. */
+  --surface-col: min(1180px, calc(100% - 40px));
+  --surface-after-tabs: 16px;
 
   min-height: 100vh;
   background:
@@ -137,12 +140,14 @@
    * keeps the row inside the viewport so panel.left never goes negative. */
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
   gap: 14px;
-  padding: 14px;
+  padding: 0 0 64px;
   background: transparent;
-  width: 100%;
+  width: var(--surface-col);
   max-width: 100%;
+  margin: var(--surface-after-tabs) auto 0;
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
 }
 
 .studio-shell .panel {
@@ -739,9 +744,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  width: min(1180px, calc(100% - 28px));
+  width: var(--surface-col);
   margin: 14px auto 0;
-  padding: 0 4px;
+  padding: 0;
+  box-sizing: border-box;
 }
 .studio-shell .surface-tab {
   border: 1px solid var(--line);
@@ -762,6 +768,15 @@
 }
 .studio-shell .closet-requests-grid {
   grid-template-columns: minmax(0, 1fr);
+  width: var(--surface-col);
+  max-width: 100%;
+  margin: var(--surface-after-tabs) auto 0;
+  padding: 0 0 64px;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+  gap: 14px;
 }
 
 /* ── Phone / ChatGPT in-app browser (≈390–430) ── */
@@ -778,7 +793,7 @@
     width: 100%;
     max-width: 100%;
     margin: 12px 0 0;
-    padding: 0 12px 6px;
+    padding: 0 10px 6px;
     box-sizing: border-box;
   }
 
@@ -793,12 +808,13 @@
     line-height: 1.2;
   }
 
-  .studio-shell .studio-grid.closet-grid {
+  .studio-shell .studio-grid.closet-grid,
+  .studio-shell .closet-requests-grid {
     grid-template-columns: minmax(0, 1fr);
-    padding: 10px;
-    gap: 12px;
     width: 100%;
     max-width: 100%;
+    margin: var(--surface-after-tabs) 0 0;
+    padding: 0 10px 40px;
     box-sizing: border-box;
   }
 
