@@ -27,3 +27,24 @@ and whether the kids' stock photos stay (faces of children in a demo).
    flag; the iOS in-app browser shows the page with tools in preview (Cursor, README + USER-GUIDE).
 5. From the Claude review, executed ahead of reconciliation because Marco asked: the Copy prompt
    button gets a Copied state and a fallback (Cursor, `cursor/copy-button`).
+
+## After submission (next session, after Marco sleeps): launch plan
+
+Marco's first hackathon; 6,897 builders on the challenge, so a judge may never open the entry
+unaided. Session 08 starts with a progressive promo schedule, not code:
+
+- Channels: X, Threads, LinkedIn, GitHub (README with the loop GIF, a pinned issue "try it in
+  ChatGPT's browser", topics `webmcp`, `chatgpt`, `shopify`, `commerce-agents`), Devpost page itself
+  (gallery images, the video first, one-line hook).
+- Targets: Shopify (the studio is Polaris-shaped and the demand story is theirs), OpenAI's WebMCP
+  and ChatGPT teams, Cloudflare (Workers + WebMCP), Anthropic commerce-agents (the fence convention
+  is theirs), judges named on the Devpost page; direct tags where a person is public.
+- Assets to make first: 20-second cut of the demo for social (vertical from the 1080x1920 cards),
+  three stills (market scan, the packet card, the outcome panel), a one-paragraph story ("the store
+  never learns who she is").
+- Schedule: day 0 submission post; day 1 the loop GIF and the packet card; day 2 the market scan
+  with the Shopify angle and tags; day 3 the security angle (three buttons no agent can press, the
+  fence convention); day 5 the docs flow maps as a thread; repeat the strongest one at the judging
+  midpoint.
+- Tooling: check `registry.py --find "launch promo schedule"` and the `channel-build-manifest`
+  skill before writing anything new.
