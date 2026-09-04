@@ -132,13 +132,10 @@
 /* ── Grid + panels ── */
 
 .studio-shell .studio-grid.closet-grid {
-  /* Wardrobe stays the widest column — do not reintroduce the narrow-first bug.
-   * Tracks must be allowed to shrink (minmax(0,…)) so a mid-width viewport
-   * never forces the grid wider than the shell and clips the left edge. */
-  grid-template-columns:
-    minmax(0, 1.3fr)
-    minmax(0, 1fr)
-    minmax(0, 1.05fr);
+  /* Two children only (wardrobe + gaps). A third fr track wasted width and
+   * left the garment grid too narrow for its auto-fill floor. minmax(0,…)
+   * keeps the row inside the viewport so panel.left never goes negative. */
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
   gap: 14px;
   padding: 14px;
   background: transparent;
@@ -180,9 +177,9 @@
 /* ── Garment cards: thumb column 1, content column 2 ── */
 
 .studio-shell .garment-list {
-  /* 240px floor: Edit + Delete need ~150px beside the 56px thumb. 160px tracks
-   * produced five crushed columns at ~1000px with Delete spilling the card. */
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  /* 220px floor: Edit + Delete need room beside the 56px thumb. 160px tracks
+   * crushed three cards into a ~570px wardrobe column with Delete spilling. */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   min-width: 0;
   max-width: 100%;
 }
@@ -254,19 +251,22 @@
   color: var(--moss);
 }
 
+.studio-shell .garment-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .studio-shell .garment-icon-button {
   border: 1px solid var(--line);
   background: var(--white);
   color: var(--ink);
   border-radius: 999px;
-}
-
-.studio-shell .garment-row-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex: 0 1 auto;
   max-width: 100%;
-  min-width: 0;
+  box-sizing: border-box;
 }
 
 .studio-shell .garment-icon-button.danger {
