@@ -27,7 +27,6 @@
   body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); font: 16px/1.62 var(--font-body); }
   a { color: var(--forest); }
 
-  /* Same chrome as components/site-header.tsx (class names + tokens). */
   .site-header {
     position: sticky; top: 0; z-index: 50;
     display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
@@ -75,7 +74,6 @@
     display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0;
   }
 
-  /* Same chrome as components/site-footer.tsx (Codex). */
   .site-footer {
     margin-top: auto;
     display: grid; grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
@@ -116,6 +114,7 @@
   article { background: var(--white); border: 1px solid var(--line); border-radius: 22px; padding: 42px 46px; }
   article h1 { margin: 0 0 18px; font: 760 clamp(30px, 3.6vw, 44px)/1.02 var(--font-display); letter-spacing: -.05em; }
   article h2 { margin: 36px 0 12px; font: 750 22px/1.15 var(--font-display); letter-spacing: -.03em; }
+  article h3 { margin: 28px 0 10px; font: 700 17px/1.25 var(--font-display); letter-spacing: -.02em; }
   article p, article li { max-width: 72ch; }
   article code { background: var(--cream); padding: 2px 6px; border-radius: 6px; font-size: .92em; }
   article pre { background: var(--ink); color: #eef3ea; padding: 18px 20px; border-radius: 14px; overflow: auto; font-size: 13px; line-height: 1.5; }
@@ -126,11 +125,23 @@
   article blockquote { border-left: 3px solid var(--loop); margin: 16px 0; padding: 4px 16px; color: var(--muted); }
   article img { display: block; max-width: 100%; margin: 22px 0; border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 18px 50px rgba(23,33,28,.10); }
 
-  /* Use-case tabs, rendered above the article when a use case is open. */
-  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
-  .tabs[hidden] { display: none; } /* author display:flex beat the UA [hidden] rule, so tabs showed on every page */
-  .tabs a { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--white); color: var(--ink); text-decoration: none; font: 650 13px/1 var(--font-body); }
-  .tabs a.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  /* Inline flow maps: scroll horizontally below ~520 so they stay readable at 430. */
+  article .flow-diagram {
+    margin: 22px 0;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--cream);
+    padding: 14px 12px;
+  }
+  article .flow-diagram svg {
+    display: block;
+    width: 640px;
+    max-width: none;
+    height: auto;
+  }
 
   @media (max-width: 860px) {
     .site-header {
@@ -157,7 +168,7 @@
 </head>
 <body>
 <header class="site-header">
-  <a class="site-brand" href="/" aria-label="Hemloop loop room">
+  <a class="site-brand" href="/" aria-label="Hemloop home">
     <span class="site-brand-mark" aria-hidden="true"><span></span></span>
     <span>hemloop</span>
   </a>
@@ -175,17 +186,15 @@
     <p class="kicker">Read in order</p>
     <div id="toc"></div>
     <div class="group"><p class="kicker">Use cases</p><div id="toc-uc"></div></div>
-    <div class="group"><p class="kicker">Guides</p><div id="toc-guides"></div></div>
     <p class="foot">Product photos in the shopper's wardrobe are real, from the author's own catalogs, used with permission. The merchant is fictional. <a href="#PHOTO-CREDITS.md">Provenance</a>.</p>
   </nav>
   <main>
-    <div id="tabs" class="tabs" hidden></div>
     <article id="content">Loading…</article>
   </main>
 </div>
 
 <footer class="site-footer">
-  <a class="site-brand" href="/" aria-label="Hemloop loop room">
+  <a class="site-brand" href="/" aria-label="Hemloop home">
     <span class="site-brand-mark" aria-hidden="true"><span></span></span>
     <span>hemloop</span>
   </a>
@@ -199,15 +208,15 @@
 </footer>
 
 <script>
-  // Five documents in the order a reader should take them, then the use cases
-  // as tabs. Nothing else is on this site: the working record stays in the
-  // repository, where it is a record and not a pitch.
+  // Five reading-order docs + use cases from the sidebar. Guides (USER-GUIDE,
+  // TECH-GUIDE, SECURITY) stay in the repo mirror for developers; the site
+  // folds visitor needs into Quick start. Provenance stays reachable from the foot.
   const DOCS = [
     ["01-what-is-hemloop.md", "What is Hemloop"],
     ["02-the-loop.md", "The loop, and what each side gets"],
     ["03-the-problem.md", "The problem in the real world"],
     ["04-webmcp-overview.md", "Hemloop and WebMCP"],
-    ["05-quick-start.md", "Quick start and implementation"],
+    ["05-quick-start.md", "Quick start"],
   ];
   const USE_CASES = [
     ["uc-right-time.md", "Right time"],
@@ -217,41 +226,45 @@
     ["uc-handoff.md", "Handoff to a shopping agent"],
   ];
   const EXTRA = [
-    ["USER-GUIDE.md", "User guide"],
-    ["TECH-GUIDE.md", "Tech guide"],
-    ["SECURITY.md", "Security"],
     ["PHOTO-CREDITS.md", "Provenance"],
   ];
   const ALL = [...DOCS, ...USE_CASES, ...EXTRA];
 
   const toc = document.getElementById("toc");
   const tocUc = document.getElementById("toc-uc");
-  const tocGuides = document.getElementById("toc-guides");
-  const tabs = document.getElementById("tabs");
   const content = document.getElementById("content");
-  const links = {};
-  const addLink = (parent, file, label, cls) => {
+  const addLink = (parent, file, label) => {
     const a = document.createElement("a");
     a.href = "#" + file; a.textContent = label; a.dataset.file = file;
-    if (cls) a.className = cls;
     parent.appendChild(a); return a;
   };
-  for (const [file, label] of DOCS) links[file] = addLink(toc, file, label);
-  for (const [file, label] of USE_CASES) links[file] = addLink(tocUc, file, label);
-  for (const [file, label] of EXTRA) links[file] = addLink(tocGuides, file, label);
-  const tabLinks = {};
-  for (const [file, label] of USE_CASES) tabLinks[file] = addLink(tabs, file, label);
+  for (const [file, label] of DOCS) addLink(toc, file, label);
+  for (const [file, label] of USE_CASES) addLink(tocUc, file, label);
+
+  const PURIFY = {
+    ADD_TAGS: [
+      'svg', 'g', 'path', 'rect', 'circle', 'line', 'polyline', 'polygon',
+      'text', 'tspan', 'defs', 'marker', 'use', 'title', 'desc', 'foreignObject',
+    ],
+    ADD_ATTR: [
+      'viewBox', 'xmlns', 'fill', 'stroke', 'stroke-width', 'stroke-linecap',
+      'stroke-linejoin', 'stroke-dasharray', 'd', 'x', 'y', 'x1', 'y1', 'x2', 'y2',
+      'cx', 'cy', 'r', 'width', 'height', 'rx', 'ry', 'transform', 'text-anchor',
+      'font-size', 'font-family', 'font-weight', 'opacity', 'marker-end', 'marker-start',
+      'dx', 'dy', 'class', 'role', 'aria-hidden', 'aria-label', 'points', 'refX', 'refY',
+      'orient', 'markerWidth', 'markerHeight', 'id', 'href', 'xlink:href', 'letter-spacing',
+    ],
+  };
 
   async function load(file) {
-    for (const f in links) links[f].classList.toggle("active", f === file);
-    const isUc = USE_CASES.some(([f]) => f === file);
-    tabs.hidden = !isUc;
-    for (const f in tabLinks) tabLinks[f].classList.toggle("active", f === file);
+    document.querySelectorAll("nav.toc a[data-file]").forEach((el) => {
+      el.classList.toggle("active", el.dataset.file === file);
+    });
     try {
       const res = await fetch(file);
       if (!res.ok) throw new Error(res.status);
       const md = await res.text();
-      content.innerHTML = DOMPurify.sanitize(marked.parse(md));
+      content.innerHTML = DOMPurify.sanitize(marked.parse(md), PURIFY);
       window.scrollTo(0, 0);
     } catch (e) {
       content.innerHTML = "<p>Could not load " + file + ".</p>";
