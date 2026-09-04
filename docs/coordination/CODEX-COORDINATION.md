@@ -808,3 +808,11 @@ Landed:
 3. Removed human Export button from `/studio` SiteHeader actions; `export_composition` + `deliverExport` unchanged (12 tools)
 
 Gates: 157 · tsc · lint · build.
+
+### Cursor studio-polaris fold-in: Demand spacing rhythm (2026-09-04)
+
+Same branch @ `e03810d`. Styles in `studio.css` / `closet.css` only.
+
+Rhythm: tabs → 16px → Store → 24px → Locked stock card; shared `--surface-col` left edge.
+Offer / Composition / Closet: tabs → 16px → content, same left.
+Verified rects @ 1000 and 1440: gaps 16/24, lefts equal (20 @ 1000, 130 @ 1440).
