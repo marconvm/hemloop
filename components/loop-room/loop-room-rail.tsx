@@ -19,8 +19,30 @@ export function LoopRoomRail({
   stations: StationCard[];
   processing: boolean;
 }) {
+  const currentIndex = stations.findIndex(
+    (station) => station.state === 'current',
+  );
+  const focusIndex = currentIndex >= 0 ? currentIndex : stations.length - 1;
+  const focused = stations[focusIndex];
+
   return (
     <nav className="hlr-rail" aria-label="Loop progress">
+      {focused ? (
+        <p className="hlr-rail-summary">
+          <span className="hlr-rail-node" aria-hidden="true">
+            {focused.state === 'done' ? <Check /> : focusIndex + 1}
+          </span>
+          <span>
+            <small>
+              {currentIndex >= 0
+                ? `Step ${focusIndex + 1} of ${stations.length}`
+                : 'Loop complete'}
+            </small>
+            <b>{focused.label}</b>
+          </span>
+          {processing ? <em>Processing</em> : null}
+        </p>
+      ) : null}
       <ol>
         {stations.map((station, index) => (
           <li
