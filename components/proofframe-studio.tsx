@@ -42,7 +42,7 @@ import {
 } from '@/lib/proofframe/seed';
 import { seedMerchants } from '@/lib/proofframe/merchants';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
-import type { DemandSignal } from '@/lib/proofframe/closet';
+import { guessCategory, type DemandSignal } from '@/lib/proofframe/closet';
 import { readSignals, subscribeSignals } from '@/lib/proofframe/signal-bridge';
 // Namespace import so this component compiles even before a sibling branch
 // adds readOutcomes/subscribeOutcomes to signal-bridge — accessed only
@@ -261,9 +261,24 @@ function demandLabel(signal: DemandSignal): 'Need' | 'Want' {
   return demandLevel(signal) === 'want' ? 'Want' : 'Need';
 }
 
+/** Category label from live facts (e.g. Hoodie) — never a catalog constant. */
+function productTypeFromFacts(facts: CampaignFacts): string {
+  const category = guessCategory({
+    handle: '',
+    title: facts.productName,
+    description: '',
+    currency: facts.currency,
+    price: facts.regularPrice,
+    compareAtPrice: null,
+  });
+  if (!category) return '—';
+  return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
 /** The catalog product behind the locked facts. Pure, so both render (the
- * inventory insight) and the agent callbacks can use it. */
-function catalogProductFor(facts: CampaignFacts) {
+ * inventory insight) and the agent callbacks can use it. Vendor is always the
+ * active merchant name — never Hemloop / catalog fallbacks. */
+function catalogProductFor(facts: CampaignFacts, merchantName: string) {
   const f = facts as FactsView;
   const match = demoCatalog.products.find((p) => p.title === f.productName);
   return {
@@ -271,8 +286,8 @@ function catalogProductFor(facts: CampaignFacts) {
     title: match?.title ?? f.productName,
     image: match?.image ?? f.productImage,
     sizesInStock: f.sizesInStock,
-    vendor: match?.vendor ?? BRAND.name,
-    productType: match?.productType ?? 'Apparel',
+    vendor: merchantName.trim() || '—',
+    productType: productTypeFromFacts(facts),
   };
 }
 
@@ -644,8 +659,12 @@ export function ProofFrameStudio() {
   // synthetic product built from the facts alone. Reads campaignRef.current
   // directly so it stays correct even if this function is captured once.
   const getCatalogProductForCampaign = useCallback(
-    () => catalogProductFor(campaignRef.current.facts),
-    [],
+    () =>
+      catalogProductFor(
+        campaignRef.current.facts,
+        merchants.find((m) => m.id === activeMerchantIdRef.current)?.name ?? '',
+      ),
+    [merchants],
   );
 
   // Called only by the propose_offer WebMCP tool: an agent staged a
@@ -861,9 +880,9 @@ export function ProofFrameStudio() {
         signals,
         outcomeById,
         campaign.facts,
-        catalogProductFor(campaign.facts),
+        catalogProductFor(campaign.facts, activeMerchant?.name ?? ''),
       ),
-    [signals, outcomeById, campaign.facts],
+    [signals, outcomeById, campaign.facts, activeMerchant?.name],
   );
   // The most recent offer per request (a request can be re-proposed after a
   // decline). proposedAt is an ISO timestamp, so string comparison sorts.
@@ -997,7 +1016,10 @@ export function ProofFrameStudio() {
     }
   };
 
-  const catalogProduct = catalogProductFor(campaign.facts);
+  const catalogProduct = catalogProductFor(
+    campaign.facts,
+    activeMerchant?.name ?? '',
+  );
   const sellPrice = campaign.facts.salePrice ?? campaign.facts.regularPrice;
   const computedMargin =
     campaign.facts.costPrice !== undefined && sellPrice > 0
@@ -1069,7 +1091,7 @@ export function ProofFrameStudio() {
         role="tabpanel"
         aria-labelledby="tab-offer"
         hidden={tab !== 'offer'}
-        className="tab-panel studio-grid offer-grid"
+        className="tab-panel offer-grid"
         aria-label={`${BRAND.name} offer and rules`}
       >
         <div className="polaris-offer">
@@ -1168,9 +1190,11 @@ export function ProofFrameStudio() {
                   />
                 </label>
                 <div className="polaris-field">
-                  <span className="polaris-label">Margin</span>
+                  <span className="polaris-label">Margin at sale price</span>
                   <p className="polaris-static polaris-margin">
-                    {computedMargin === null ? '—' : `${computedMargin}%`}
+                    {computedMargin === null
+                      ? '—'
+                      : `${computedMargin}% · floor ${campaign.facts.marginFloorPercent ?? '—'}%`}
                   </p>
                 </div>
               </div>
@@ -1415,8 +1439,8 @@ export function ProofFrameStudio() {
           </div>
 
           <Button
-            variant="outline"
-            className="safety-demo"
+            variant="secondary"
+            className="polaris-false-claim"
             onClick={runBlockedDemo}
           >
             <ShieldCheck data-icon="inline-start" />
@@ -1475,10 +1499,12 @@ export function ProofFrameStudio() {
               </div>
             )}
             {sortedSignals.length === 0 ? (
-              <p className="panel-intro">
-                No requests yet. Shopper agents can report a human-approved,
-                schema-limited demand event from the closet page.
-              </p>
+              <div className="polaris-proof-empty">
+                <p className="polaris-proof-empty-title">No requests yet</p>
+                <p className="polaris-proof-empty-hint">
+                  Approve a request on the closet or the Hemloop page
+                </p>
+              </div>
             ) : (
               sortedSignals.slice(0, 4).map((signal) => {
                 const isNew = newSignalIds.has(signal.signalId);
