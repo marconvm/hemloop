@@ -67,6 +67,30 @@ export interface ClosetRow {
 
 export type ShopperProfileKey = 'self' | 'partner' | 'kid';
 
+/** Why one merchant can or cannot answer the request in transit. The first
+ * three come from matchOffer; margin-floor is matchOffer's marginCheck.ok=false
+ * (even 0% discount cannot clear the floor); over-ceiling is the offer price
+ * above the ceiling the shopper let travel at sharing level 3. */
+export type MarketVerdict =
+  | 'can-offer'
+  | 'size-not-in-stock'
+  | 'category-mismatch'
+  | 'margin-floor'
+  | 'over-ceiling';
+
+/** One merchant's answer in the market scan. Carries verdict and price only:
+ * no merchant's cost or floor ever reaches another merchant or the shopper. */
+export interface MarketRow {
+  merchantId: string;
+  name: string;
+  verdict: MarketVerdict;
+  /** One line a human reads: "M sold out", "margin 26.5% under the 30% floor". */
+  reason: string;
+  /** The price this merchant could offer; null unless can-offer. */
+  price: number | null;
+  currency: string;
+}
+
 /** Everything the room renders. */
 export interface LoopRoomView {
   stations: StationCard[];
@@ -80,6 +104,11 @@ export interface LoopRoomView {
   /** The most recent station that ran tools, kept until the next call lands,
    * so "tool that ran" does not vanish the moment a station flips to done. */
   lastRan: { station: StationKey; tools: string[] } | null;
+  /** Every merchant's verdict on the request in transit; null until a request
+   * exists in this loop. Only the right store answers, everyone else says why not. */
+  market: MarketRow[] | null;
+  /** The merchant whose 12 studio tools are registered on this page. */
+  activeMerchant: { id: string; name: string };
   /** 0..7, how many stations are done. */
   progress: number;
   /** Which loop this is. Goes up on restart; the outcome panel compares. */

@@ -684,6 +684,10 @@ export function LoopRoomPage() {
     closet,
     profiles: { active: activeProfile, options: PROFILES },
     lastRan,
+    // Multi-merchant lands on cursor/merchants (MERCHANTS-BRIEF.md): until then
+    // there is one merchant and no market scan.
+    market: null,
+    activeMerchant: { id: 'northlight', name: 'Northlight Apparel' },
     progress: stationCards.filter((s) => s.state === 'done').length,
     loopNumber: loop.number,
     packet: lastSignal
