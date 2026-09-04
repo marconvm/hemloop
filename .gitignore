@@ -44,3 +44,4 @@ video/voice-samples/
 video/vo-track.wav
 video/vo-clone-track.wav
 /.claude/
+.tmp-logo-frames/

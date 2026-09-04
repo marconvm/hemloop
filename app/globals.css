@@ -123,33 +123,11 @@ select {
   text-decoration: none;
 }
 
-.site-brand-mark {
-  position: relative;
-  display: inline-grid;
+.site-brand-logo {
+  display: block;
   width: 31px;
   height: 31px;
-  place-items: center;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.site-brand-mark::after {
-  position: absolute;
-  top: 2px;
-  right: -4px;
-  width: 10px;
-  height: 10px;
-  border-top: 2px solid currentColor;
-  content: '';
-  transform: rotate(35deg);
-}
-
-.site-brand-mark > span {
-  width: 8px;
-  height: 8px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  background: var(--loop);
+  flex: 0 0 auto;
 }
 
 .site-nav {

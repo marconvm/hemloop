@@ -95,6 +95,14 @@ https://hemloop.app
 https://github.com/marconvm/hemloop
 ```
 
+## Gallery / logo asset
+
+```
+Looping mark (transparent GIF, 256px) for the Devpost gallery and README:
+https://github.com/marconvm/hemloop/blob/main/public/logo-loop.gif
+Static SVG source (same geometry): public/logo.svg
+```
+
 ## Video
 
 ```
