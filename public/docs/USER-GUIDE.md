@@ -79,15 +79,30 @@ Market rows show verdict and price only — never another merchant's cost or flo
 Human-only on this page: **Lock / Unlock offer facts**, placement (Story / Feed / Display),
 **Approve** or **Decline** on a proposal, and the Auto-propose toggle. No WebMCP tool can do those.
 
+## How to run the demo
+
+**Supported hosts:** `https://hemloop.app` and
+`https://hemloop.marcoatwill.workers.dev`. Either URL works the same way.
+
+**Supported browsers:**
+
+- **ChatGPT’s desktop-app built-in browser** — open a supported host inside ChatGPT
+  (GPT-5.6 Sol/Terra); tools are picked up automatically.
+- **Chrome** — enable `chrome://flags/#enable-webmcp-testing`, press **Relaunch**, reopen
+  the host. Chrome 149+ may already carry an origin-trial token for these hosts.
+
+The header badge shows how many tools registered (**live**), or amber **preview** when the
+runtime is absent. The **iOS in-app browser** shows the page with tools in preview.
+
+On `/` the count is all 21 once they are live. No account; state is `localStorage` in this
+browser (incognito is a clean install). Walk the stations in the table above, or follow the
+numbered path in the [README](../README.md#how-to-run-the-demo).
+
 ## Enable WebMCP
 
-- **Challenge-supported Chrome:** Chrome 149+ carries an origin-trial token for this domain. On an
-  older build, enable `chrome://flags/#enable-webmcp-testing`, press **Relaunch**, reopen the URL.
-- **ChatGPT desktop:** open `https://hemloop.app` inside ChatGPT's built-in browser (GPT-5.6
-  Sol/Terra); tools are picked up automatically.
-
-The header badge shows how many tools registered, or "preview mode" when the runtime is absent.
-On `/` it counts all 21 once they are live.
+Same hosts and browsers as [How to run the demo](#how-to-run-the-demo). If tools stay in
+preview on desktop Chrome after enabling the flag, confirm you relaunched and reopened the
+URL (not a stale tab).
 
 ## When the agent gets blocked
 
