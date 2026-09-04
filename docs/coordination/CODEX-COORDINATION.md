@@ -850,3 +850,16 @@ Landed:
 Also repaired conflict markers that had been left in this log.
 
 Gates: 159 · tsc · lint · build.
+
+### Cursor studio-polaris-2: Offer clip + merchant facts + density (2026-09-04)
+
+Branch: `cursor/studio-polaris-2` from `origin/main` @ `5cc1b5c`.
+Styles in `app/studio.css` only. Did not touch `components/loop-room/*`.
+
+Landed:
+1. Offer three-column grid (`main | rail | proof`) via `polaris-offer { display: contents }` + `minmax(0, …)` tracks; dropped `studio-grid` class so globals 250/430/280 floors cannot clip left cards. Verified getBoundingClientRect at 1000 / 1200 / 1456: `panel.left >= 0`, no body overflow, SKUs fully visible.
+2. Product card Vendor = active merchant name (e.g. Harborview Basics); Product type from `guessCategory` on facts (Hoodie) — never Hemloop / Apparel constants.
+3. Right column density: `Try a false claim` → secondary button (`polaris-false-claim`); empty state → "No requests yet" + "Approve a request on the closet or the Hemloop page".
+4. Margin cell → "Margin at sale price" with `8.2% · floor 30%` (sale margin + floor at a glance).
+
+Gates: 159 · tsc · lint · build.

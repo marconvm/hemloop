@@ -1186,9 +1186,11 @@
 
 /* Surface tabs / demand column rhythm live near .merchant-body above. */
 .studio-shell .offer-grid {
-  /* minmax(0,…) — a 280px floor on the facts column forced mid-width overflow
-   * and clipped the Demand chrome / Store label off the left edge. */
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  /* True three tracks (main | rail | proof): polaris-offer uses display:contents
+   * so its children participate here. All minmax(0,…) — globals .studio-grid
+   * floors (250/430/280) and a 200px rail floor clipped the left cards at ~1000px. */
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 220px) minmax(0, 0.9fr);
   width: var(--surface-col);
   max-width: 100%;
   margin: var(--surface-after-tabs) auto 0;
@@ -1216,17 +1218,15 @@
 /* ── Polaris-style offer product page (no @shopify/polaris) ── */
 
 .studio-shell .polaris-offer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
-  gap: 16px;
-  align-items: start;
-  min-width: 0;
+  /* Promote main + rail into .offer-grid tracks */
+  display: contents;
 }
 
 .studio-shell .polaris-main {
   display: grid;
   gap: 14px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .studio-shell .polaris-card {
@@ -1235,6 +1235,9 @@
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .studio-shell .polaris-card-title {
@@ -1402,6 +1405,39 @@
   position: sticky;
   top: 12px;
   min-width: 0;
+  max-width: 100%;
+}
+
+.studio-shell .offer-grid > .proof-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.studio-shell .polaris-false-claim {
+  width: auto;
+  align-self: flex-start;
+  margin-top: 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.studio-shell .polaris-proof-empty {
+  margin: 16px 0 4px;
+}
+
+.studio-shell .polaris-proof-empty-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.studio-shell .polaris-proof-empty-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
 }
 
 .studio-shell .polaris-lock-badge {
@@ -1439,6 +1475,13 @@
 
 .studio-shell .polaris-rail .brief-button {
   width: 100%;
+}
+
+/* Mid desktop: shrink pricing fields; three offer tracks stay minmax(0,…) */
+@media (max-width: 1200px) {
+  .studio-shell .polaris-field-row-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ── Phone / ChatGPT in-app browser (≈390–430) ── */
