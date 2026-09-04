@@ -551,3 +551,7 @@ Marco's call: Antigravity / Gemini 3.8 Flash was far slower than expected and ne
 `gemini/docs` (worktree `../hemloop-gemini`, nothing committed there worth keeping). The lane in
 `GEMINI-WAVE5.md` (docs to the Loop Room and the four-route sitemap, three tests, delete
 `components/landing.tsx`) goes to Cursor when it has quota, or to Claude in session 08.
+
+Correction (Claude, later the same evening): Gemini had drafted the three tests before it was dropped.
+Pushed as `origin/gemini/docs` @ `9084260`, unverified, for Cursor to cherry-pick onto `cursor/docs`.
+The `../hemloop-gemini` worktree is removed. Cursor is carrying the whole docs lane on `cursor/docs`.
