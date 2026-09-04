@@ -81,8 +81,8 @@ Human-only on this page: **Lock / Unlock offer facts**, placement (Story / Feed 
 
 ## How to run the demo
 
-**Supported hosts:** `https://hemloop.app` and
-`https://hemloop.marcoatwill.workers.dev`. Either URL works the same way.
+**Host:** `https://hemloop.app`. The app deploys to Cloudflare Workers (wrangler) or Vercel and
+runs the same way on either.
 
 **Supported browsers:**
 

@@ -110,8 +110,8 @@ the real fields that would travel at that level before Approve.
 
 ## Hosts and browsers
 
-**Supported hosts:** [hemloop.app](https://hemloop.app) and
-[hemloop.marcoatwill.workers.dev](https://hemloop.marcoatwill.workers.dev).
+**Host:** [hemloop.app](https://hemloop.app). The app deploys to Cloudflare Workers (wrangler) or
+Vercel and runs the same way on either.
 
 **Supported browsers:** ChatGPT's desktop-app built-in browser, or Chrome with
 `chrome://flags/#enable-webmcp-testing` (Relaunch, then reopen). The **iOS in-app browser** shows
