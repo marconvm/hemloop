@@ -647,3 +647,36 @@ Landed:
    Self gaps unchanged. Tests for profile counts + kid pool.
 
 Gates: 147/147, tsc, lint, build. No deploy.
+### Cursor closet-fix: /closet mid-width overflow (2026-09-04)
+
+Branch: `cursor/closet-fix` (worktree `../hemloop-cursor`), from `origin/main` @ `9b1bb31`.
+Urgent production fix before batch4. `app/closet.css` only.
+
+Cause: garment-list `minmax(160px)` made ~5 crushed columns at ~1000px so Edit/Delete
+spilled the card; closet-grid tracks used `minmax(340px|300px)` (could force overflow);
+panels had padding 0 so headings sat on the edge. Wave6's ≤820 one-column rule was fine;
+the break was the mid-width single-column + skinny auto-fill tracks.
+
+Fix:
+1. Closet grid tracks `minmax(0, fr)` + width/max-width 100%; stack to one column ≤1200px.
+2. Garment list `minmax(240px, 1fr)`; card `overflow:hidden; min-width:0`; actions wrap.
+3. Panel padding `18px 20px`.
+
+getBoundingClientRect at 390 / 430 / 820 / 1000 / 1200 / 1440 (/closet + /studio?tab=offer):
+
+| w | page | body overflow | panels left≥0 | cards≤col | actions≤card | eyebrow left |
+|---|---|---|---|---|---|---|
+| 390 | closet | no | yes | yes | yes | 31 |
+| 390 | studio | no | yes | — | — | 33 |
+| 430 | closet | no | yes | yes | yes | 31 |
+| 430 | studio | no | yes | — | — | 33 |
+| 820 | closet | no | yes | yes | yes | 31 |
+| 820 | studio | no | yes | — | — | 33 |
+| 1000 | closet | no | yes | yes | yes | 35 |
+| 1000 | studio | no | yes | — | — | 37 |
+| 1200 | closet | no | yes | yes | yes | 35 |
+| 1200 | studio | no | yes | — | — | 37 |
+| 1440 | closet | no | yes | yes | yes | 35 |
+| 1440 | studio | no | yes | — | — | 37 |
+
+Gates: tests + tsc + lint + build. No deploy (Claude deploys immediately).
