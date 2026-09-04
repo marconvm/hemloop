@@ -105,15 +105,15 @@ Static SVG source (same geometry): public/logo.svg
 
 ### Gallery
 
-Five framed stills (3:2, 1800×1200 JPG) in `docs/internal/devpost/gallery/` — light theme captures from hemloop.app, paper / ink / lime chrome matching the video cards:
+Five framed stills (3:2, 1800×1200 JPG) in `docs/internal/devpost/gallery/`: light theme captures from hemloop.app, paper / ink / lime chrome matching the video cards:
 
-1. `01-hero.jpg` — Hemloop with a request in flight. Caption: Your AI tells a store what you need, without telling it who you are
-2. `02-human-gate.jpg` — `report_demand_gap` refused plus Approve next request
-3. `03-market-scan.jpg` — Market scan, five merchants with verdicts
-4. `04-outcome.jpg` — Outcome panel after Bought (loop closed)
-5. `05-studio-approve.jpg` — Studio proposal with Approve offer
+1. `01-hero.jpg`: Hemloop with a request in flight. Caption: Your AI tells a store what you need, without telling it who you are
+2. `02-human-gate.jpg`: `report_demand_gap` refused plus Approve next request
+3. `03-market-scan.jpg`: Market scan, five merchants with verdicts
+4. `04-outcome.jpg`: Outcome panel after Bought (loop closed)
+5. `05-studio-approve.jpg`: Studio proposal with Approve offer
 
-Stretch: `docs/internal/devpost/teaser-portrait.mp4` — ~20 s vertical (gate still + cards-portrait + outcome still).
+Stretch: `docs/internal/devpost/teaser-portrait.mp4`: ~20 s vertical (gate still + cards-portrait + outcome still).
 
 ## Video
 
