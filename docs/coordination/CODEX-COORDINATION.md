@@ -987,3 +987,17 @@ Landed:
 4. Grep: no leftover refs to retired screenshot names
 
 Gates: tests · tsc · lint · build.
+
+### Cursor video-cards: intro + 7 step cards (2026-09-04)
+
+Branch: `cursor/video-cards` from `origin/main` (post docs-v2-shots).
+
+Landed:
+1. HyperFrames composition in `video/cards/` — paper/ink/lime, ring+dot mark, single paused GSAP
+   timeline (10.9 s): intro 2.5 s + seven rail step cards 1.2 s each (label rises 12 px, dot
+   orbits once)
+2. Landscape `index.html` (1920×1080) + `variants/portrait.html` (1080×1920); renders at 30 fps
+   to `video/cards/out/cards-landscape.mp4` and `cards-portrait.mp4` (~1.4 MB total)
+3. Cue sheet points at the source and out paths
+
+Gates: hyperframes lint (0 errors); hemloop unit gates unchanged (assets only).
