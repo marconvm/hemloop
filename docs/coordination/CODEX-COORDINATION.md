@@ -916,3 +916,20 @@ supported hosts (`hemloop.app`, `hemloop.marcoatwill.workers.dev`), both support
 and that the iOS in-app browser shows the page with tools in preview.
 
 Gates: 159 · tsc · lint · build.
+### Cursor docs-v2: rewrite docs site for current product (2026-09-04)
+
+Branch: `cursor/docs-v2` from `origin/main` (includes demo-hosts fold-in).
+Screenshots deferred to `cursor/docs-v2-shots` after this merges live.
+
+Landed:
+1. Sidebar: Read in order + Use cases only; Guides group removed from site nav
+   (USER-GUIDE / TECH-GUIDE / SECURITY remain in docs/ + mirror for repo readers)
+2. Use-case pill tabs removed; each uc-* is sidebar-only with one screenshot + one SVG map
+3. Sections 01–05 rewritten: seven stations, Yes send it, sharing dial + preview, five
+   merchants / market scan, composition, 21-tool table, hosts (ChatGPT desktop / flagged
+   Chrome / iOS preview). No stale test counts or "Loop Room" product name.
+4. Five inline SVG flow maps (Hemloop tokens), `.flow-diagram` scrolls at 430px:
+   end-to-end loop + gates; sharing levels; market scan; tool boundary; composition pipeline
+5. DOMPurify allowlist for SVG; public/docs byte-identical mirror
+
+Gates: tests · tsc · lint · build.

@@ -1,123 +1,93 @@
-# The loop, and what each side gets out of it
+# The loop, and what each side gets
 
 Hemloop's claim is not two dashboards. It is that **one request has a complete lifecycle**, and that
 every time it completes, both sides come out sharper without either side accumulating a profile of
-the other. The home page is **Hemloop** (`/`): seven stations in one shared space. The full
-shopper and merchant surfaces live at `/closet` and `/studio`.
+the other. The home page is **Hemloop** (`/`): seven stations in one shared space. The full shopper
+and merchant surfaces live at `/closet` and `/studio`.
 
-## One request, end to end
+## Seven stations
 
-```
-        SHOPPER (private)                                 MERCHANT (locked)
-        ─────────────────                                 ────────────────
+| Station | What happens |
+|---|---|
+| **New item** | A purchase lands in the closet (`import_receipt`, or Bought). |
+| **Local demand** | `find_gaps` — missing categories and worn-out items from purchase dates. |
+| **Approved request** | `report_demand_gap` is refused until a human presses **Approve next request**, then the shopper replies **Yes, send it**. One press → one event. |
+| **Matched offer** | Merchant `get_demand` + `propose_offer` inside locked rules; human presses **Approve offer**. |
+| **Bought** | Shopper `get_offers`; human presses **Bought**. |
+| **Learned** | Purchase records the offer id; local pattern sharpens. |
+| **Again** | A rival receipt (or another new item) starts the next cycle. |
 
-   0. New item — a purchase lands in the closet
-      (import_receipt, or Bought)                          cost price · margin floor
-   wardrobe · sizes · purchase dates                       max discount · offer facts
-   preferences · buying pattern                                      │
-              │                                                      │
-              │ 1. Local demand — find_gaps                          │
-              ▼                                                      │
-     "no hoodie · size M"                                            │
-     "sneakers due, 21 months"                                       │
-              │                                                      │
-              │ 2. Approved request                                  │
-              │    report_demand_gap  ┌──────────────┐               │
-              │    REFUSED ───────────│ HUMAN GATE   │               │
-              │                       │ Approve next │               │
-              │    one press ────────▶│   request    │               │
-              │    then "Yes, send it"└──────────────┘               │
-              ▼                                                      ▼
-        ┌───────────────────────────────────────────────────────────────┐
-        │  category · size · need-or-want · consent level                │
-        │  NO name · NO account · NO hash · NO wardrobe rows             │
-        └───────────────────────────────────────────────────────────────┘
-              │                                                      │
-              │                              3. Matched offer ───────┤
-              │                                 get_demand           │
-              │                                 propose_offer        │
-              │                        ┌──────────────┐│             │
-              │                        │ HUMAN GATE   ││             │
-              │                        │ Approve offer│◀┘            │
-              │                        └──────────────┘              │
-              │  4. Bought — get_offers ◀────────────┘               │
-              ▼                                                      │
-        ┌──────────────┐                                             │
-        │ HUMAN GATE   │                                             │
-        │   Bought     │                                             │
-        └──────────────┘                                             │
-              │ 5. Learned — purchase records the OFFER ID           │
-              ▼                                                      ▼
-      pattern sharpens locally                      demand picture sharpens
-              │                                                      │
-              │ 6. Again — a rival receipt, cycle N+1                │
-              └───────────────▶ next loop is better ◀────────────────┘
-                        and neither side learned who the other is
-```
+<div class="flow-diagram" role="img" aria-label="End-to-end loop with two human gates marked in coral">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 320" font-family="DM Sans, system-ui, sans-serif">
+  <rect width="640" height="320" fill="#f4f0e6" rx="12"/>
+  <text x="24" y="28" fill="#687169" font-size="11" font-weight="700" letter-spacing="0.08em">SHOPPER · CLOSET</text>
+  <text x="360" y="28" fill="#687169" font-size="11" font-weight="700" letter-spacing="0.08em">MERCHANT · STUDIO</text>
+  <!-- shopper column -->
+  <rect x="24" y="44" width="200" height="36" rx="10" fill="#fff" stroke="rgba(23,33,28,0.13)"/>
+  <text x="124" y="66" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">New item → Local demand</text>
+  <path d="M124 80 v14" stroke="#346b45" stroke-width="2"/>
+  <rect x="24" y="94" width="200" height="44" rx="10" fill="#fff" stroke="#ee6f4d" stroke-width="2.5"/>
+  <text x="124" y="112" text-anchor="middle" fill="#ee6f4d" font-size="11" font-weight="800">HUMAN GATE</text>
+  <text x="124" y="128" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">Approve next request</text>
+  <text x="124" y="152" text-anchor="middle" fill="#687169" font-size="11">then “Yes, send it”</text>
+  <path d="M124 158 v16" stroke="#346b45" stroke-width="2"/>
+  <rect x="24" y="174" width="200" height="36" rx="10" fill="#b9f227" stroke="rgba(23,33,28,0.13)"/>
+  <text x="124" y="196" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">Request on the bridge</text>
+  <!-- bridge -->
+  <path d="M224 192 H360" stroke="#183e30" stroke-width="2.5" stroke-dasharray="5 4"/>
+  <text x="292" y="184" text-anchor="middle" fill="#687169" font-size="10">no shopper id</text>
+  <!-- merchant -->
+  <rect x="360" y="44" width="256" height="36" rx="10" fill="#fff" stroke="rgba(23,33,28,0.13)"/>
+  <text x="488" y="66" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">Locked stock · margin floor</text>
+  <path d="M488 80 v14" stroke="#346b45" stroke-width="2"/>
+  <rect x="360" y="94" width="256" height="36" rx="10" fill="#fff" stroke="rgba(23,33,28,0.13)"/>
+  <text x="488" y="116" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">get_demand → propose_offer</text>
+  <path d="M488 130 v14" stroke="#346b45" stroke-width="2"/>
+  <rect x="360" y="144" width="256" height="44" rx="10" fill="#fff" stroke="#ee6f4d" stroke-width="2.5"/>
+  <text x="488" y="162" text-anchor="middle" fill="#ee6f4d" font-size="11" font-weight="800">HUMAN GATE</text>
+  <text x="488" y="178" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">Approve offer</text>
+  <path d="M360 192 H224" stroke="#183e30" stroke-width="2.5"/>
+  <!-- bought -->
+  <path d="M124 210 v16" stroke="#346b45" stroke-width="2"/>
+  <rect x="24" y="226" width="200" height="44" rx="10" fill="#fff" stroke="#ee6f4d" stroke-width="2.5"/>
+  <text x="124" y="244" text-anchor="middle" fill="#ee6f4d" font-size="11" font-weight="800">HUMAN GATE</text>
+  <text x="124" y="260" text-anchor="middle" fill="#17211c" font-size="12" font-weight="700">Bought</text>
+  <text x="24" y="300" fill="#687169" font-size="11">Coral outline = human-only. No WebMCP tool can press a gate.</text>
+</svg>
+</div>
 
-The rail across Hemloop (and under the header on `/closet` and `/studio`) shows where one
-request is: **New item · Local demand · Approved request · Matched offer · Bought · Learned ·
-Again**.
+![The shopper's closet with real wardrobe brands](img/closet-real-brands.jpg)
 
-![The shopper's closet with the rail under the header](img/closet-real-brands.jpg)
+## The “Yes, send it” handshake
+
+1. The agent calls `report_demand_gap` and is refused: `human-approval-required`. Nothing has left.
+2. The shopper reads the **next-request preview** (exact fields that would travel at the current
+   sharing level) and presses **Approve next request**.
+3. The shopper replies **Yes, send it** in the chat. The retry succeeds once.
+4. A third send is refused again — one press releases one event.
 
 ## What the customer gets
 
-- The right item, in her size, at a price shaped by how she actually shops, without handing over
-  her wardrobe, her history, or her name.
-- A visible packet, before anything leaves, showing exactly what would go.
+- The right item, in her size, at a price shaped by how she shops, without handing over wardrobe,
+  history, or a name.
+- A visible packet before anything leaves.
 - An offer she can act on or ignore. Nothing on the page can buy for her.
-- Over time, an agent that negotiates better on her behalf, because her own purchase log sharpens
-  the pattern it reasons from.
 
 ## What the merchant gets
 
-- Stated intent, grouped by category and size, scored against the stock they actually locked.
-  Intent their own sales data cannot show them: someone who owns the thing already and wore it out.
-- An offer their agent built **inside** their rules, not around them. The margin floor is enforced
-  in code, and the proposal says which rules shaped it.
-- An attributable sale: the purchase carries the id of the offer that won it.
-- Restock and assortment intelligence: which category and size combinations they persistently
-  cannot fill.
+- Stated intent, grouped by category and size, scored against **per-merchant locked stock**.
+- An offer built **inside** locked rules (cost, margin floor, max discount).
+- An attributable sale: the purchase carries the offer id.
+- Restock intelligence: which category · size combinations they cannot fill.
 
-![The merchant's proposal, with its margin check, waiting for a human to approve](img/studio-proposal-approve.jpg)
+## Five merchants and the market scan
 
-## Only the right store answers
+Hemloop ships five sample merchants (Northlight, Harborview Basics, Ridgeline, Denim Supply,
+Overland). A market scan takes one request and returns a **verdict table** — who can answer, who is
+size-out, who is category-mismatch — and routes the answering store. Verdicts and prices only; no
+merchant's cost or floor leaves toward another merchant or the shopper.
 
-A request is scored against every merchant's locked rules at once. The market scan returns a
-verdict per store: `can-offer`, `size-not-in-stock`, `category-mismatch`, `margin-floor`, or
-`over-ceiling`. Only a `can-offer` merchant may propose. Hemloop shows the whole market so
-the point is visible; the studio is one merchant's desk with a switcher for which store you are.
+## Composition
 
-Five sample merchants make the refusals concrete on a hoodie · M request. At Basics (no price
-ceiling) Northlight and Overland can answer; Harborview cannot clear its margin floor, Ridgeline
-is out of M, Denim Supply is the wrong category. At Taste, with the shopper's ceiling of 60,
-only Northlight remains — Overland's capped price sits above the ceiling and its rule cannot go
-deeper. A hoodie · XS request flips the answering store: Northlight is out of XS, Overland answers
-at 80.10. The sharing dial changes who can answer. Market rows carry verdict and price only; the
-can-offer reason is the margin alone (price lives on the row); no merchant ever sees another's cost
-or floor.
-
-## Run it three times: the compounding
-
-**Loop one.** Maya's pattern is thin, so the offer is generic: the merchant's standard 25%.
-
-**Loop two.** Her purchase log now shows most category buys went through without a promo code. Her
-discount sensitivity reads `none`, and the matcher caps her discount at 15%. She still buys. **The
-merchant kept ten points of margin they would have given away**, because the shopper's own behaviour
-said the discount was not what closed her. An ad platform would have served the bigger discount,
-because a conversion is a conversion.
-
-**Loop three.** She buys a competing brand. Her pattern flips to `switcher`, and the next offer comes
-in at the maximum the merchant permits, because winning her back is worth more than the margin on one
-sale. That is not a bid. It is the merchant's own positioning deciding what she is worth, executed
-automatically.
-
-If any of those moves would break the floor, the offer trims its own discount in five-point steps
-until the margin holds, and says so.
-
-**What accumulated:** on her side, a sharper local picture of how she actually shops. On theirs, a
-sharper picture of what they cannot fill. **What did not accumulate: any profile of Maya anywhere.**
-
-Ad platforms compound by knowing more about the person. This compounds by both sides getting better
-at their own half.
+On Studio → Composition, locked facts feed scene templates; every claim is checked before export.
+See Quick start for the pipeline map.

@@ -15,36 +15,33 @@ So both sides lose. The store guesses. The shopper gets offers for things she al
 ## Three things a merchant cannot see today
 
 **Replacement timing.** Purchase history says what sold. It does not say what the customer still
-owns, or that the sneakers they bought twenty-one months ago are past a twelve-month life. That
-timing lives in a closet, not a CRM.
+owns, or that sneakers bought twenty-one months ago are past a twelve-month life. That timing lives
+in a closet, not a CRM.
 
-**Stated need, at the size.** Search and browse data show curiosity. They do not show "no hoodie,
-size M, need not want". A wishlist shows want. Nothing shows the gap.
+**Stated need, at the size.** Search and browse show curiosity. They do not show "no hoodie, size M,
+need not want".
 
-**What they cannot fill.** Demand that arrives as clicks does not carry a size. Demand that arrives
-as a stated request does, which means a merchant can finally see that six people asked for XXL and
-they do not stock it.
+**What they cannot fill.** Click demand does not carry a size. A stated request does — so a merchant
+can see that six people asked for XXL and they do not stock it.
 
 ## Two things a shopper will not give up
 
-**The wardrobe itself.** Every row is a fact about her: brand loyalties, sizes, what she paid,
-what she wore out. Handed over wholesale it becomes a profile she cannot revoke.
+**The wardrobe itself.** Every row is a fact about her. Handed over wholesale it becomes a profile
+she cannot revoke.
 
-**The decision.** An agent that can share on her behalf, or buy on her behalf, without a press from
-her is an agent she cannot trust with either.
+**The decision.** An agent that can share or buy without a press from her is an agent she cannot
+trust with either.
 
-## The other half of the problem: promotional copy
+## The other half: promotional copy
 
-Agents are simultaneously most useful and most dangerous in the promotional creative that answers
-demand. A wrong percentage in a promo is not a bad impression, it is a legal problem. "50% off"
-written against a 25% offer has to be caught before it renders, not after it ships.
+Agents are most useful and most dangerous in the creative that answers demand. A wrong percentage
+in a promo is a legal problem. "50% off" written against a 25% offer has to be caught before it
+renders.
 
-## What a channel would have to be, to fix this
+## What a channel would have to be
 
-Narrow enough to be safe: carry a stated need instead of an inferred identity. Gated on both sides:
-a human releases the request, a human approves the offer. Bounded on the merchant side: the agent
-sets a price, but inside rules it cannot touch. And checked: every rendered claim validated against
-locked facts before it applies.
+Narrow enough to be safe: carry a stated need instead of an inferred identity. Gated on both sides.
+Bounded on the merchant side: the agent sets a price inside rules it cannot touch. Checked: every
+rendered claim validated against locked facts before it applies.
 
-That is the shape WebMCP made possible in the browser, with no backend and no credential grant.
-The next page is how.
+That is the shape WebMCP made possible in the browser. The next page is how.
