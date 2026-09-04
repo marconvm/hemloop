@@ -718,3 +718,18 @@ Landed:
 - Closet/studio headers: no `Demo data, real brands` Badge after SiteHeader move (WebMCP status only)
 
 Did not touch `components/loop-room/*`.
+
+### Cursor consent-ui: Requests dial + real next-request preview (2026-09-04)
+
+Branch: `cursor/consent-ui` (worktree `../hemloop-cursor`), from `origin/main`.
+Did not touch `components/loop-room/*`.
+
+Landed:
+1. Stepped sharing control (0 Private · 1 Basics · 2 Context · 3 Taste), body-size type,
+   short What leaves / What you gain lines, no grey-on-grey.
+2. `nextRequestPreview` from top wardrobe gap (kind `replace` when `due`, else `gap`);
+   payload rows show real values; travelling in ink, held back greyed; dial changes light rows.
+3. Tool counter readable (14px body ink, not monospace grey).
+4. Empty state: "What should I buy next?" → Tell the store / Press Approve / Reply Yes, send it.
+
+Verified 1440 / 1000 / 430 (no overflow; dial 4-col → 2-col at 430). Gates: 151 · tsc · lint · build.

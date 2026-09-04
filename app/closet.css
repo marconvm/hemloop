@@ -585,28 +585,48 @@
 /* ── Offers / consent / activity ── */
 
 .studio-shell .consent-dial,
-.studio-shell .consent-level,
-.studio-shell .consent-copy {
+.studio-shell .consent-segment,
+.studio-shell .consent-copy,
+.studio-shell .payload-preview,
+.studio-shell .tool-counter,
+.studio-shell .empty-prompt {
   color: var(--ink);
 }
 
-.studio-shell .consent-level {
+.studio-shell .consent-segment {
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--white);
 }
 
-.studio-shell .consent-level.active,
-.studio-shell .consent-level[aria-checked='true'] {
-  border-color: var(--moss);
-  box-shadow: 0 0 0 3px rgba(185, 242, 39, 0.2);
+.studio-shell .consent-segment.active {
+  border-color: var(--ink);
+  background: #eef8d7;
+  color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(185, 242, 39, 0.28);
 }
 
 .studio-shell .payload-preview {
-  border-color: var(--line);
-  background: #f1eee6;
+  border: 1px solid var(--line);
+  background: var(--white);
   color: var(--ink);
-  border-radius: 12px;
+  border-radius: 14px;
+}
+
+.studio-shell .payload-preview-row.is-held,
+.studio-shell .payload-preview-held {
+  color: #5c6560;
+}
+
+.studio-shell .empty-prompt {
+  border-color: var(--line);
+  background: #eef8d7;
+}
+
+.studio-shell .tool-counter {
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
 }
 
 .studio-shell .offer-card,

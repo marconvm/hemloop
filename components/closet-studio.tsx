@@ -25,9 +25,10 @@ import { useSurfaceTab } from '@/components/use-surface-tab';
 
 import '@/app/closet.css';
 import {
-  consentFieldsForRequest,
+  buyingPattern,
   findGaps,
   garmentsForProfile,
+  nextRequestPreview,
   readPreferences,
   readPurchases,
   seedPreferences,
@@ -38,7 +39,6 @@ import {
   writePreferences,
   writePurchases,
   writeWardrobe,
-  type ConsentField,
   type DemandSignal,
   type Garment,
   type GarmentCategory,
@@ -133,43 +133,28 @@ const CONSENT_LEVELS: {
   {
     level: 0,
     label: 'Private',
-    leaves: 'nothing',
-    gains: 'fit checks and gap finding stay local',
+    leaves: 'Nothing leaves this page.',
+    gains: 'Fit checks and gap finding stay local.',
   },
   {
     level: 1,
     label: 'Basics',
-    leaves: 'category, size, need or want',
-    gains: 'offers in the right size',
+    leaves: 'Category, size, need or want.',
+    gains: 'Offers in the right size.',
   },
   {
     level: 2,
     label: 'Context',
-    leaves: '+ occasion (season, gift, event), fit preference, who you are shopping for',
-    gains: 'offers timed and cut for the occasion',
+    leaves: 'Plus occasion, fit preference, and who for.',
+    gains: 'Offers timed and cut for the occasion.',
   },
   {
     level: 3,
     label: 'Taste',
-    leaves:
-      '+ colour family, materials to avoid, price ceiling, buying pattern (discount sensitivity, spend band, brand loyalty)',
-    gains: 'creatives that match, no wasted offers',
+    leaves: 'Plus colour, materials to avoid, price ceiling, and buying pattern.',
+    gains: 'Creatives that match — fewer wasted offers.',
   },
 ];
-
-const FIELD_LABEL: Record<ConsentField, string> = {
-  category: 'Category',
-  size: 'Size',
-  level: 'Need or want',
-  handle: 'Product handle',
-  occasion: 'Occasion',
-  for: 'Shopping for',
-  fitPreference: 'Fit preference',
-  colourFamily: 'Colour family',
-  avoidMaterials: 'Materials to avoid',
-  priceCeiling: 'Price ceiling',
-  buyingPattern: 'Buying pattern',
-};
 
 const PROFILE_LABEL: Record<ShopperProfile, string> = {
   self: 'Me',
@@ -688,15 +673,21 @@ export function ClosetStudio() {
     () => offers.filter((o) => o.status === 'approved' && sentSignalIdSet.has(o.requestId)),
     [offers, sentSignalIdSet],
   );
-  const previewFields = useMemo(
-    () =>
-      consentFieldsForRequest(consentLevel, {
-        hasSize: true,
-        hasHandle: true,
-        hasOccasion: true,
-      }),
-    [consentLevel],
-  );
+  const preview = useMemo(() => {
+    const top = gaps[0];
+    const sizeHint =
+      top?.due?.size ??
+      sizes.find((s) => s.category === top?.category)?.size ??
+      sizes[0]?.size ??
+      null;
+    return nextRequestPreview(top, {
+      consentLevel,
+      sizeHint,
+      profile: activeProfile,
+      preferences,
+      pattern: top ? buyingPattern(purchases, top.category) : null,
+    });
+  }, [gaps, sizes, consentLevel, activeProfile, preferences, purchases]);
   const statusLabel =
     webMcpStatus === 'active'
       ? `${toolCount} WebMCP tools live`
@@ -1192,7 +1183,6 @@ export function ClosetStudio() {
         <aside className="panel">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">What leaves this page</p>
               <h2>Requests sent</h2>
               <p
                 className="tool-counter"
@@ -1205,12 +1195,7 @@ export function ClosetStudio() {
             <Radio aria-hidden="true" />
           </div>
           <p className="panel-intro">
-            Only one request at a time can leave, and only after you approve
-            it. Each entry below is the complete{' '}
-            <span title="The exact data sent in one message, nothing more.">
-              payload
-            </span>
-            .
+            One Approve releases one request. Raise the dial to choose what travels.
           </p>
 
           <fieldset className="consent-dial">
@@ -1222,31 +1207,46 @@ export function ClosetStudio() {
                 className={`consent-segment ${consentLevel === entry.level ? 'active' : ''}`}
                 onClick={() => setConsent(entry.level)}
                 aria-pressed={consentLevel === entry.level}
-                title={`Level ${entry.level} ${entry.label}. Leaves: ${entry.leaves}. Gains: ${entry.gains}.`}
               >
-                {entry.level} {entry.label}
+                <span className="consent-segment-level">{entry.level}</span>
+                <span className="consent-segment-label">{entry.label}</span>
               </button>
             ))}
           </fieldset>
           <div className="consent-copy">
             <div>
-              <p className="eyebrow">What leaves</p>
+              <p className="consent-copy-label">What leaves</p>
               <p>{CONSENT_LEVELS[consentLevel].leaves}</p>
             </div>
             <div>
-              <p className="eyebrow">What you gain</p>
+              <p className="consent-copy-label">What you gain</p>
               <p>{CONSENT_LEVELS[consentLevel].gains}</p>
             </div>
           </div>
 
           <div className="payload-preview">
-            <p className="eyebrow">Payload preview</p>
-            {previewFields.length === 0 ? (
-              <p className="panel-intro">Nothing. Sharing is set to Private.</p>
+            <p className="payload-preview-title">Next request</p>
+            {!preview ? (
+              <p className="payload-preview-empty">
+                No gap in this wardrobe yet — nothing to send.
+              </p>
             ) : (
-              <ul>
-                {previewFields.map((f) => (
-                  <li key={f}>{FIELD_LABEL[f]}</li>
+              <ul className="payload-preview-rows">
+                {preview.rows.map((row) => (
+                  <li
+                    key={row.field}
+                    className={
+                      row.travels
+                        ? 'payload-preview-row is-travels'
+                        : 'payload-preview-row is-held'
+                    }
+                  >
+                    <span className="payload-preview-field">{row.label}</span>
+                    <span className="payload-preview-value">{row.value}</span>
+                    {!row.travels ? (
+                      <span className="payload-preview-held">Held back</span>
+                    ) : null}
+                  </li>
                 ))}
               </ul>
             )}
@@ -1256,11 +1256,10 @@ export function ClosetStudio() {
             <>
               <button type="button" className="share-approval" disabled>
                 <ShieldCheck aria-hidden="true" />
-                Approve next request (level 0)
+                Approve next request (Private)
               </button>
               <p className="human-only-note">
-                Sharing is set to Private. Raise the level above to approve a
-                request.
+                Private blocks every request. Raise the dial to approve one.
               </p>
             </>
           ) : (
@@ -1288,16 +1287,20 @@ export function ClosetStudio() {
                   : `Approve next request (level ${consentLevel})`}
               </button>
               <p className="human-only-note">
-                One-shot human approval · no WebMCP tool can arm it
+                One-shot · no WebMCP tool can arm this
               </p>
             </>
           )}
           <div className="activity-list" aria-live="polite">
             {signals.length === 0 ? (
-              <p className="panel-intro">
-                Nothing sent yet. Ask your agent to report a demand gap after a
-                fit check.
-              </p>
+              <div className="empty-prompt">
+                <p className="empty-prompt-ask">What should I buy next?</p>
+                <ol>
+                  <li>Tell the store I need …</li>
+                  <li>Press Approve</li>
+                  <li>Reply Yes, send it</li>
+                </ol>
+              </div>
             ) : (
               signals.map((s) => {
                 const isNew = newSignalIds.has(s.signalId);

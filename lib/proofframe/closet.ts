@@ -121,6 +121,112 @@ export function consentFieldsForRequest(
   return fields;
 }
 
+/** One row in the closet payload preview: a field with its draft value, and
+ * whether the current sharing level would let it travel. */
+export interface NextRequestPreviewRow {
+  field: ConsentField | 'kind';
+  label: string;
+  value: string;
+  travels: boolean;
+}
+
+const PREVIEW_FIELD_LABEL: Record<ConsentField | 'kind', string> = {
+  kind: 'Kind',
+  category: 'Category',
+  size: 'Size',
+  level: 'Need or want',
+  handle: 'Product handle',
+  occasion: 'Occasion',
+  for: 'Shopping for',
+  fitPreference: 'Fit preference',
+  colourFamily: 'Colour family',
+  avoidMaterials: 'Materials to avoid',
+  priceCeiling: 'Price ceiling',
+  buyingPattern: 'Buying pattern',
+};
+
+/** Build the ACTUAL next-request draft from the top wardrobe gap, then mark
+ * each field as travelling or held back at the current consent level. Pure.
+ * Returns null when there is no gap to report. */
+export function nextRequestPreview(
+  gap: Gap | undefined,
+  args: {
+    consentLevel: 0 | 1 | 2 | 3;
+    sizeHint: string | null;
+    profile: ShopperProfile;
+    preferences: Preferences;
+    pattern: BuyingPattern | null;
+  },
+): { kind: DemandSignal['kind']; rows: NextRequestPreviewRow[] } | null {
+  if (!gap) return null;
+  const kind: DemandSignal['kind'] = gap.due ? 'replace' : 'gap';
+  const size = gap.due?.size ?? args.sizeHint;
+  const hasSize = typeof size === 'string' && size.length > 0;
+  const traveling = new Set(
+    consentFieldsForRequest(args.consentLevel, {
+      hasSize,
+      hasHandle: false,
+      hasOccasion: false,
+    }),
+  );
+  const patternText = args.pattern
+    ? `${args.pattern.discountSensitivity} · ${args.pattern.spendBand} · ${args.pattern.brandLoyalty}`
+    : null;
+  const draft: { field: ConsentField | 'kind'; value: string | null }[] = [
+    { field: 'kind', value: kind },
+    { field: 'category', value: gap.category },
+    { field: 'level', value: 'Need' },
+    { field: 'size', value: hasSize ? size! : null },
+    {
+      field: 'for',
+      value: args.profile === 'self' ? 'Me' : args.profile === 'partner' ? 'Partner' : 'Kid',
+    },
+    { field: 'fitPreference', value: args.preferences.fitPreference },
+    { field: 'colourFamily', value: args.preferences.colourFamily },
+    {
+      field: 'avoidMaterials',
+      value:
+        args.preferences.avoidMaterials.length > 0
+          ? args.preferences.avoidMaterials.join(', ')
+          : null,
+    },
+    { field: 'priceCeiling', value: String(args.preferences.priceCeiling) },
+    { field: 'buyingPattern', value: patternText },
+  ];
+  // Kind always describes the draft; consent only gates the payload fields.
+  // Rows without a value stay out so the preview matches what report_demand_gap
+  // would actually send (no empty handle / occasion).
+  const rows: NextRequestPreviewRow[] = [];
+  for (const entry of draft) {
+    if (entry.value === null) continue;
+    if (entry.field === 'kind') {
+      rows.push({
+        field: 'kind',
+        label: PREVIEW_FIELD_LABEL.kind,
+        value: entry.value,
+        travels: args.consentLevel > 0,
+      });
+      continue;
+    }
+    // Only show fields this draft can carry at full Taste (L3), so raising
+    // the dial visibly adds rows (Basics → Context → Taste) rather than
+    // listing every ConsentField enum member.
+    const atFull = consentFieldsForRequest(3, {
+      hasSize,
+      hasHandle: false,
+      hasOccasion: false,
+    });
+    if (!atFull.includes(entry.field)) continue;
+    rows.push({
+      field: entry.field,
+      label: PREVIEW_FIELD_LABEL[entry.field],
+      value: entry.value,
+      travels: traveling.has(entry.field),
+    });
+  }
+  return { kind, rows };
+}
+
 export function seedWardrobe(): Wardrobe {
   return {
     garments: [
