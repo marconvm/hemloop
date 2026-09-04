@@ -23,7 +23,7 @@ already reviewed.
 - [ ] One real ChatGPT desktop pass of C1 to C3 on live: Marco's recording is this pass (Codex could not select the in-app browser)
 - [ ] Video under 3:00, plays with sound, link is unlisted not private
 - [x] WRITEUP.md and DEVPOST-SUBMISSION.md have no em dash, no stale tool count (9 closet, 12 studio, 21 total), test count matches `npm test`
-- [ ] Judge can reach docs from the landing CTA "Read the docs"
+- [x] Judge can reach docs from the landing page: header and footer "Docs" links to /docs/ are in the server HTML, /docs/ is 200 (there is no "Read the docs" CTA; the wording was stale)
 
 ## After 01:00 PDT
 
