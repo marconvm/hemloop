@@ -575,3 +575,25 @@ aria-current on `/docs/`: Claude correction — the four matches are Docs (heade
 to fix. An earlier mistaken "fix" on this branch was reverted.
 
 Gates: 144/144, tsc, lint, build. No deploy.
+
+### Cursor wave6: closet + studio at phone width (2026-09-03)
+
+Branch: `cursor/wave6` (worktree `../hemloop-cursor`). Codex owns Loop Room; this lane is
+`app/closet.css` + `app/studio.css` only.
+
+Landed:
+1. One column under 820px (closet grid, offer/composition/demand bodies).
+2. Surface tabs: `flex-wrap: nowrap` + horizontal scroll strip (no body overflow).
+3. Touch targets ≥44px for Approve next request, Bought, Lock/Unlock offer facts, Approve offer
+   (and matching Decline / profile / import controls on narrow).
+
+getBoundingClientRect / overflow (`scrollWidth <= innerWidth`) at four widths:
+
+| width | closet overflow | studio overflow | tabs | Approve next (h) | Bought (h) | Lock facts (h) | Approve offer (h) |
+|---|---|---|---|---|---|---|---|
+| 390 | no (390) | no (390) | nowrap, h=44 | 46, in-view | 44, in-view | 50, in-view | 46, in-view |
+| 430 | no (430) | no (430) | nowrap, h=44 | 46, in-view | 44, in-view | 50, in-view | 46, in-view |
+| 820 | no (820) | no (820) | nowrap, h=44 | 46, in-view | 44, in-view | 50, in-view | 46, in-view |
+| 1440 | no (1440) | no (1440) | wrap OK | 46, in-view | 44, in-view | 50, in-view | 44, in-view |
+
+Gates: 144/144, tsc, lint, build. No deploy.
