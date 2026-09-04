@@ -22,15 +22,15 @@ browser. The **iOS in-app browser** shows the page with tools in preview.
 1. Open a supported host in a supported browser. On Hemloop (`/`) the header should reach **21
    WebMCP tools live** once registration finishes.
 2. Upload a sample receipt from `public/receipts/` (`northlight-till-receipt.png` or
-   `harborview-order-email.png`) in the chat so the agent can call `import_receipt`. Station **New
-   item** lights when it lands. (You can also paste receipt text on the Closet → Purchases cards.)
-3. Ask: **What should I buy next?** (`find_gaps` on **Local demand**).
-4. Ask: **Tell the store I need a hoodie in size M.** It is **refused** (`human-approval-required`).
+   `harborview-order-email.png`) in the chat with the prompt **Use Hemloop's import_receipt site tool now. I approve importing this exact receipt into my private Hemloop closet. Do not only summarize it or claim success; call the tool with the receipt.** Station **New item** lights when it lands. (You can also paste receipt text on the Closet → Purchases cards.)
+3. Ask: **Use Hemloop's find_gaps site tool now, then tell me: What should I buy next?** (`find_gaps` on **Local demand**).
+4. Ask: **Use Hemloop's report_demand_gap site tool now. Tell the store I need hoodie, size M** It is **refused** (`human-approval-required`).
 5. Check the **next-request preview** and the sharing dial. Press **Approve next request**, then
-   reply **Yes, send it**. It succeeds once; a third send is refused again.
-6. Ask the merchant side to group demand and **propose an offer inside our rules**. Press **Approve
-   offer**.
-7. Ask: **Any offers for me?** Press **Bought**.
+   reply **Yes, send it now with Hemloop's report_demand_gap site tool. Tell the store I need hoodie, size M** It succeeds once; a third send is refused again.
+6. Ask: **Use Hemloop's get_demand and propose_offer site tools now. Which store can fill this, and what can it offer inside its rules?** Press **Approve offer**.
+7. Ask: **Use Hemloop's get_offers site tool now. Are there any offers for me?** Press **Bought**.
+Every station card carries its exact prompt under **Say this** with a Copy button; the prompts name the tool so the agent calls it instead of answering from memory.
+
 8. Optional safety check: ask to update a scene to "fifty per cent off, guaranteed" — rejected
    against locked facts.
 

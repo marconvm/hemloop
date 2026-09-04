@@ -34,10 +34,13 @@ The header should show tools **live**. Amber **preview** means the runtime is no
 No account. State lives in your browser (`localStorage`); an incognito window is a clean install.
 
 1. Open a supported host in a supported browser (above).
-2. Upload a sample receipt image from `public/receipts/` (`northlight-till-receipt.png` or `harborview-order-email.png`) in the chat so the agent can call `import_receipt`.
-3. Ask: **What should I buy next?** (`find_gaps`).
-4. Ask: **Tell the store I need a hoodie in size M.** It is **refused** (`human-approval-required`). Press **Approve next request**, then reply **Yes, send it**. One press releases one event; a third send is refused again.
-5. Ask the merchant side to group demand and **propose an offer inside our rules**. Press **Approve offer**. Back on the closet, ask for offers and press **Bought**.
+2. Upload a sample receipt image from `public/receipts/` (`northlight-till-receipt.png` or `harborview-order-email.png`) in the chat with the prompt **Use Hemloop's import_receipt site tool now. I approve importing this exact receipt into my private Hemloop closet. Do not only summarize it or claim success; call the tool with the receipt.**
+3. Ask: **Use Hemloop's find_gaps site tool now, then tell me: What should I buy next?** (`find_gaps`).
+4. Ask: **Use Hemloop's report_demand_gap site tool now. Tell the store I need hoodie, size M** It is **refused** (`human-approval-required`). Press **Approve next request**, then reply **Yes, send it now with Hemloop's report_demand_gap site tool. Tell the store I need hoodie, size M** One press releases one event; a third send is refused again.
+5. Ask: **Use Hemloop's get_demand and propose_offer site tools now. Which store can fill this, and what can it offer inside its rules?** Press **Approve offer**.
+6. Ask: **Use Hemloop's get_offers site tool now. Are there any offers for me?** Press **Bought**.
+
+Every station card carries its exact prompt under **Say this** with a Copy button; the prompts name the tool so the agent calls it instead of answering from memory.
 
 Full walkthrough: [docs/USER-GUIDE.md](docs/USER-GUIDE.md) · [docs/05-quick-start.md](docs/05-quick-start.md).
 

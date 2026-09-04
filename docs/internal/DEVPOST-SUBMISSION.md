@@ -127,9 +127,10 @@ TODO: paste YouTube URL when processing finishes
 No account. Fresh incognito = clean install.
 
 1. Open https://hemloop.app/ in ChatGPT's desktop browser or Chrome with WebMCP available. Header should show tools live.
-2. Upload public/receipts/northlight-till-receipt.png (or harborview-order-email.png) in the chat.
-3. Ask: What should I buy next?
-4. Ask: Tell the store I need a hoodie in size M. Expect refusal. Press Approve next request, then reply: Yes, send it.
-5. Ask for demand + propose an offer inside locked rules. Press Approve offer. On the closet, ask for offers and press Bought.
-6. Optional safety check: ask the studio to update the hero to "fifty per cent off, guaranteed", and expect rejection against the locked discount.
+2. Upload public/receipts/northlight-till-receipt.png (or harborview-order-email.png) in the chat with: Use Hemloop's import_receipt site tool now. I approve importing this exact receipt into my private Hemloop closet. Do not only summarize it or claim success; call the tool with the receipt.
+3. Ask: Use Hemloop's find_gaps site tool now, then tell me: What should I buy next?
+4. Ask: Use Hemloop's report_demand_gap site tool now. Tell the store I need hoodie, size M Expect refusal. Press Approve next request, then reply: Yes, send it now with Hemloop's report_demand_gap site tool. Tell the store I need hoodie, size M
+5. Ask: Use Hemloop's get_demand and propose_offer site tools now. Which store can fill this, and what can it offer inside its rules? Press Approve offer.
+6. Ask: Use Hemloop's get_offers site tool now. Are there any offers for me? Press Bought.
+7. Optional safety check: ask the studio to update the hero to "fifty per cent off, guaranteed", and expect rejection against the locked discount.
 ```
