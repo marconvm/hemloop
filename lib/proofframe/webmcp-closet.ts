@@ -56,6 +56,9 @@ export interface ClosetCallbacks {
   /** Deliver a signal to the bridge. Returns false when storage rejected it,
    * the tool must then report failure, never a false `ok`. */
   emitSignal(signal: DemandSignal): boolean;
+  /** Canonical storage readback after emitSignal; lets the result show the
+   * exact row that survived the bridge parser rather than the draft. */
+  getSignal?(signalId: string): DemandSignal | null;
   /** Who the shopper is currently shopping for. Reads, not just
    * report_demand_gap, are scoped to this profile's rows. Default 'self'. */
   getActiveProfile(): ShopperProfile;
@@ -165,11 +168,23 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
       description:
         "Categories missing or thin, plus categories whose oldest garment is past its replacement life (a `due` block: report it with report_demand_gap kind 'replace'). Carries only the date, months elapsed and size.",
       inputSchema: { type: 'object', properties: {} },
-      annotations: { readOnlyHint: true },
-      execute: () =>
-        ok({
-          gaps: findGaps(garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile())),
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: () => ({
+        ...ok({
+          gaps: findGaps(garmentsForProfile(cb.getWardrobe(), cb.getActiveProfile())).map((gap) =>
+            gap.due
+              ? {
+                  ...gap,
+                  due: {
+                    ...gap.due,
+                    size: fence(truncate(gap.due.size, 20), 'closet_data'),
+                  },
+                }
+              : gap,
+          ),
         }),
+        note: UNTRUSTED_NOTE,
+      }),
     },
     {
       name: 'check_fit',
@@ -387,7 +402,7 @@ export function buildClosetTools(cb: ClosetCallbacks): WebMcpTool[] {
             'bridge-unavailable',
           );
         }
-        return ok({ sent: signal });
+        return ok({ sent: cb.getSignal?.(signal.signalId) ?? signal });
       },
     },
     {

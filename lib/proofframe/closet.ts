@@ -838,6 +838,44 @@ export function seedPreferences(): Preferences {
 }
 
 const PREFERENCES_KEY = 'hemloop.preferences';
+const FIT_PREFERENCES: readonly Preferences['fitPreference'][] = [
+  'slim',
+  'regular',
+  'relaxed',
+  'oversized',
+];
+
+/** Rebuild the exact stored shape and bound every free-text collection. */
+function toPreferences(value: unknown): Preferences | null {
+  if (!value || typeof value !== 'object') return null;
+  const p = value as Record<string, unknown>;
+  if (
+    typeof p.fitPreference !== 'string' ||
+    !(FIT_PREFERENCES as readonly string[]).includes(p.fitPreference) ||
+    typeof p.colourFamily !== 'string' ||
+    p.colourFamily.length === 0 ||
+    p.colourFamily.length > 60 ||
+    !Array.isArray(p.avoidMaterials) ||
+    p.avoidMaterials.length > 10 ||
+    !p.avoidMaterials.every((x) => typeof x === 'string' && x.length > 0 && x.length <= 40) ||
+    typeof p.priceCeiling !== 'number' ||
+    !Number.isFinite(p.priceCeiling) ||
+    p.priceCeiling < 0 ||
+    p.priceCeiling > 100_000 ||
+    !Array.isArray(p.likedBrands) ||
+    p.likedBrands.length > 10 ||
+    !p.likedBrands.every((x) => typeof x === 'string' && x.length > 0 && x.length <= 60)
+  ) {
+    return null;
+  }
+  return {
+    fitPreference: p.fitPreference as Preferences['fitPreference'],
+    colourFamily: p.colourFamily,
+    avoidMaterials: [...p.avoidMaterials] as string[],
+    priceCeiling: p.priceCeiling,
+    likedBrands: [...p.likedBrands] as string[],
+  };
+}
 
 function hasStorage(): boolean {
   return typeof window !== 'undefined' && !!window.localStorage;
@@ -850,29 +888,7 @@ export function readPreferences(): Preferences {
   try {
     const raw = window.localStorage.getItem(PREFERENCES_KEY);
     if (!raw) return seedPreferences();
-    const parsed = JSON.parse(raw) as Partial<Preferences>;
-    const seed = seedPreferences();
-    return {
-      fitPreference:
-        parsed.fitPreference === 'slim' ||
-        parsed.fitPreference === 'regular' ||
-        parsed.fitPreference === 'relaxed' ||
-        parsed.fitPreference === 'oversized'
-          ? parsed.fitPreference
-          : seed.fitPreference,
-      colourFamily:
-        typeof parsed.colourFamily === 'string' ? parsed.colourFamily : seed.colourFamily,
-      avoidMaterials: Array.isArray(parsed.avoidMaterials)
-        ? parsed.avoidMaterials.filter((m): m is string => typeof m === 'string')
-        : seed.avoidMaterials,
-      priceCeiling:
-        typeof parsed.priceCeiling === 'number' && Number.isFinite(parsed.priceCeiling)
-          ? parsed.priceCeiling
-          : seed.priceCeiling,
-      likedBrands: Array.isArray(parsed.likedBrands)
-        ? parsed.likedBrands.filter((b): b is string => typeof b === 'string')
-        : seed.likedBrands,
-    };
+    return toPreferences(JSON.parse(raw)) ?? seedPreferences();
   } catch {
     return seedPreferences();
   }
@@ -881,7 +897,9 @@ export function readPreferences(): Preferences {
 export function writePreferences(prefs: Preferences): void {
   if (!hasStorage()) return;
   try {
-    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
+    const canonical = toPreferences(prefs);
+    if (!canonical) return;
+    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(canonical));
   } catch {
     /* ignore */
   }
