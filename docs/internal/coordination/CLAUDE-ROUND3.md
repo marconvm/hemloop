@@ -3,7 +3,7 @@
 Repo at `88b3905`, working tree clean, nothing edited or committed. `npm test` = **63/63 pass**.
 Live headers on `https://hemloop.app/` and `/closet` match the brief exactly (HSTS, permissions-policy,
 referrer-policy, nosniff, `server: cloudflare`). Replay scripts:
-`/Users/marco/.claude/jobs/d6e49122/tmp/replay.ts` and `replay2.ts`, driving the real
+`~/.claude/jobs/d6e49122/tmp/replay.ts` and `replay2.ts`, driving the real
 `buildClosetTools` / `buildTools` from `lib/proofframe`.
 
 ---

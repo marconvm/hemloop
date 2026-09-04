@@ -3,7 +3,7 @@
 Identical brief to two reviewers, in parallel: **Codex** (cmux surface:19, `webmcp-help`) and a
 **Claude subagent** (general-purpose, Opus). Coordinator: Claude session `webmcp-hemloop-07`
 (surface:95). Reviewers propose; Marco assigns. Verdicts land in
-`docs/coordination/DUAL-REVIEW-WAVE6-<CODEX|CLAUDE>.md`; the reconciliation table lands in
+`docs/internal/coordination/DUAL-REVIEW-WAVE6-<CODEX|CLAUDE>.md`; the reconciliation table lands in
 `DUAL-REVIEW-WAVE6-RECONCILED.md`. Only AGREED items are executed. Deadline context: the hackathon
 submission is in; Marco is polishing for judges and for a real demo in ChatGPT's in-app browser,
 so "neat and fast" must not become a rewrite.

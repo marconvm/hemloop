@@ -11,7 +11,7 @@ Codex and Claude collided today by running two terminals in ONE working director
 in one switched the other, and commits landed on the wrong branch. Do not repeat it.
 
 ```sh
-cd /Users/marco/projects/proofframe-webmcp
+cd ~/projects/proofframe-webmcp
 git fetch origin
 git worktree add ../hemloop-cursor -b cursor/reskin origin/main
 cd ../hemloop-cursor
@@ -39,7 +39,7 @@ display: Manrope, tight tracking (-.05em on headings)   body: DM Sans
 The look to match: white cards on cream paper, pill buttons (`border-radius: 999px`), ink primary
 buttons, **coral for every human-only act** (Approve next request, Approve offer, Bought, Lock
 facts), lime for "live" and for done states, generous radius, soft shadow
-`0 12px 30px rgba(23,33,28,.17)`. Reference: `/Users/marco/projects/hemloop-loop-site/app/globals.css`
+`0 12px 30px rgba(23,33,28,.17)`. Reference: `~/projects/hemloop-loop-site/app/globals.css`
 and the live docs site at https://hemloop.app/docs/ which already wears these tokens.
 
 ## Where your styles go

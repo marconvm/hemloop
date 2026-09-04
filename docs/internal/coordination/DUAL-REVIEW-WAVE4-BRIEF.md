@@ -2,12 +2,12 @@
 
 Handoff-safe: assume zero chat context.
 
-**Repo** `/Users/marco/projects/proofframe-webmcp`, branch `main`, HEAD after wave 4 (`58d06cd` +
+**Repo** `~/projects/proofframe-webmcp`, branch `main`, HEAD after wave 4 (`58d06cd` +
 coordination commit). **Live** https://hemloop.app (Cloudflare Worker, version `0322742d`).
 **Deadline** Devpost today 1pm PT — this is a pre-submission review, not a refactor window.
 **Reviewers** Codex session `webmcp-help` (cmux surface:19) and a Claude general-purpose subagent.
 **Rule** only items BOTH reviewers mark CHANGE get executed. Disagreements go to Marco; nothing
-happens meanwhile. Everything deferred gets written into `docs/coordination/CODEX-COORDINATION.md`.
+happens meanwhile. Everything deferred gets written into `docs/internal/coordination/CODEX-COORDINATION.md`.
 
 ## What changed since the last review (wave 4)
 

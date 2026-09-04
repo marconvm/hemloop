@@ -9,7 +9,7 @@ JSX out, no bridge access.
 ## Rule zero: your own worktree, your own branch
 
 ```sh
-cd /Users/marco/projects/proofframe-webmcp-codex-room
+cd ~/projects/proofframe-webmcp-codex-room
 git fetch origin
 git checkout -b codex/loop-room-wave5 origin/main
 npm install

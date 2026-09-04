@@ -20,7 +20,7 @@ display. He wants Codex to try building something showcase-grade. Reference he s
 ## 1. What is already true (do not re-do)
 
 Live: <https://hemloop.app>, Cloudflare Worker version **`cb5bea9e-bc71-4a8b-8121-d87675fed053`**.
-Repo `/Users/marco/projects/proofframe-webmcp`, branch `main`, pushed. Gates at HEAD: **136 tests**,
+Repo `~/projects/proofframe-webmcp`, branch `main`, pushed. Gates at HEAD: **136 tests**,
 tsc clean, oxlint clean, build clean, `public/docs/*` byte-identical to `docs/*`.
 
 Your three acceptance-replay findings were all independently verified and **two are fixed**:
@@ -55,7 +55,7 @@ regression stand.
 You have full authority on this lane from Marco. Deploy when your own gate is green.
 
 ```sh
-cd /Users/marco/projects/proofframe-webmcp
+cd ~/projects/proofframe-webmcp
 
 # 1. Gates. All four must pass before you touch the Worker.
 npm test                     # expect 136+ passing, 0 failing
@@ -153,7 +153,7 @@ docs, say so in `CODEX-COORDINATION.md` before you start and I will stay off tho
   skill, `docs/VERIFICATION.md` (rule 4, always yours).
 - **Mine:** `lib/proofframe/*`, `components/*`, `app/globals.css`, `tests/*`. Propose changes to
   these in `CODEX-COORDINATION.md` rather than editing, the same way I propose to yours.
-- **Both:** `docs/coordination/*` is append-only shared log. Anything that exists only in a cmux
+- **Both:** `docs/internal/coordination/*` is append-only shared log. Anything that exists only in a cmux
   message does not exist; cmux messages are session-local and were already lost once.
 - Record a fix as **FIXED (pending re-review)**. Neither of us closes our own finding.
 

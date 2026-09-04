@@ -58,7 +58,7 @@ side sees**. Nothing advances without the real call landing on the bridge.
 |---|---|---|
 | **Codex** | `app/globals.css` (theme tokens, fonts), `components/site-header.tsx`, `components/loop-room/*` (presentational: rail, stage card, packet-in-transit, gate button, outcome panel, tool manifest dialog) | look, layout, motion. Port the Loop Room's design system in. Props in, JSX out, no bridge access. |
 | **Claude** | `lib/proofframe/*`, `app/page.tsx` (composition of Codex's components over real state), `components/closet-studio.tsx` and `proofframe-studio.tsx` (wiring + reskin hooks only), `public/docs/*`, `docs/*`, `tests/*` | state, tools, bridge, docs, gates, deploy |
-| **shared** | `docs/coordination/*` | append-only log |
+| **shared** | `docs/internal/coordination/*` | append-only log |
 
 Codex works on branch `codex/loop-room-design`; Claude merges into `main` and deploys. Small
 commits, pull often. If either needs a file in the other's lane, say so in

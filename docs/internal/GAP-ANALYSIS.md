@@ -2,7 +2,7 @@
 
 Inputs: Marco's 14-point third-party read of the site, his product vision, Anthropic's
 "The anatomy of effective commerce agents", and an independent judge-level review
-(docs/coordination/judge-review-2026-09-02.md, which carries the per-item detail).
+(docs/internal/coordination/judge-review-2026-09-02.md, which carries the per-item detail).
 
 ## What Hemloop is, in one breath
 

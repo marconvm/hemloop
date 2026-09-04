@@ -1,9 +1,9 @@
 # Hemloop x anthropics/commerce-agents: gap and fit
 
 Read 2026-09-02. Reference repo cloned shallow to
-`/Users/marco/.claude/jobs/d6e49122/tmp/commerce-agents` (public, Apache-2.0, header says
+`~/.claude/jobs/d6e49122/tmp/commerce-agents` (public, Apache-2.0, header says
 "reference implementation; it is not maintained and does not accept contributions" —
-`README.md`). Hemloop read at `/Users/marco/projects/proofframe-webmcp`.
+`README.md`). Hemloop read at `~/projects/proofframe-webmcp`.
 
 **Two facts to fix before anything below is quoted.**
 
@@ -56,7 +56,7 @@ than returning a blob.
 
 ## B. Schema fit table
 
-Repo paths are relative to the clone; Hemloop paths to `/Users/marco/projects/proofframe-webmcp`.
+Repo paths are relative to the clone; Hemloop paths to `~/projects/proofframe-webmcp`.
 
 | Contract | commerce-agents shape | Hemloop today | Delta to interoperate | Effort |
 |---|---|---|---|---|

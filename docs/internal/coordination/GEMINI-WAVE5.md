@@ -10,7 +10,7 @@ doc must exist in the repo at the commit you are on.
 ## Rule zero: your own worktree, your own branch
 
 ```sh
-cd /Users/marco/projects/proofframe-webmcp
+cd ~/projects/proofframe-webmcp
 git fetch origin
 git worktree add ../hemloop-gemini -b gemini/docs origin/main
 cd ../hemloop-gemini

@@ -265,7 +265,7 @@ run in the directory containing the exported `index.html`.
 `catalog.json` is generated from the real development store (Admin API via Shopify CLI), then committed. To refresh:
 
 ```sh
-shopify store execute --store playground-6mz3jwlf.myshopify.com \
+shopify store execute --store <your-store>.myshopify.com \
   --query '{ shop { currencyCode } products(first: 20, query: "status:active") { nodes { title handle description variants(first:1){nodes{price compareAtPrice}} } } }'
 ```
 

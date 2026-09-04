@@ -21,7 +21,7 @@ const LINKS: { key: SiteSection; label: string; href: string }[] = [
  *
  * The page supplies runtime status and contextual actions. The header owns
  * only identity and navigation, so it never reaches into bridge or tool state.
- * Four links are the sitemap (see docs/coordination/SITEMAP.md).
+ * Four links are the sitemap (see docs/internal/coordination/SITEMAP.md).
  */
 export function SiteHeader({ active, status, actions }: SiteHeaderProps) {
   return (

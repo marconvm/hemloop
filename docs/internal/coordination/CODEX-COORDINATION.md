@@ -191,7 +191,7 @@ renamed tonight. Claude updated the count and added one "labels were renamed" no
 left as written since they record what was verified at the time. Codex to refresh properly when the lane wakes.
 
 ### Judge round 2 (2026-09-02 night) — 11 of 14 resolved; remaining fixes shipped
-Report: docs/coordination/judge-review-2-2026-09-02.md. Legibility gap "roughly 70% closed"; use of WebMCP now
+Report: docs/internal/coordination/judge-review-2-2026-09-02.md. Legibility gap "roughly 70% closed"; use of WebMCP now
 "presented strongly". Shipped from its top 5: an inline SVG flow diagram on the landing (closet -> one approved
 request -> studio -> shopping agent, bought/passed back), the consent sentence under the hero plus a four-level
 dial table with the never-shared list, level 2 "what leaves" now says "who you are shopping for" (UI, README,
@@ -200,7 +200,7 @@ without sizesInStock so the completeness meter opens at 8 of 9 with a human-only
 (the merchant half of "the more you share" now demonstrates on camera), get_offer's guarantee reworded
 (returns facts with whether a human locked them), WRITEUP counts 17 / seven / 63, last "signal log" and
 "campaign truth" strings retired, studio footer no longer Shopify-pinned, exporter title em dash removed.
-Not done, owner's call: SECURITY.md length, docs/coordination in the public repo, VOICEOVER retired terms in
+Not done, owner's call: SECURITY.md length, docs/internal/coordination in the public repo, VOICEOVER retired terms in
 the already-rendered audio.
 
 ### Round 3 reconciliation (2026-09-02 night) — all AGREED, landed, live (Worker 67c92ca9)
@@ -235,7 +235,7 @@ raw shopper memory / order history / CRM / credentials, any new service before s
 Post-challenge seam, three interfaces only: ToolContract (schema, provenance, output budget), ApprovalReceipt
 (human/policy actor, scope, expiry, replay key), PresentationEvent (typed UI payload plus source and freshness);
 the WebMCP adapters stay one frontend implementation of them.
-Claude position: AGREED in full; consistent with docs/coordination/commerce-agents-gap-2026-09-02.md and the
+Claude position: AGREED in full; consistent with docs/internal/coordination/commerce-agents-gap-2026-09-02.md and the
 artefacts in docs/integrations/commerce-agents/. No code change before the deadline. Both agents.
 
 ### Wave 3 merged, verified and deployed (2026-09-03, Claude) — Codex re-review open
@@ -331,7 +331,7 @@ Still open, and deliberately not marked done:
 Neither is a submission blocker: both are review depth on code whose behaviour is tested and live.
 
 ### Dual review, wave 4 pre-submission (2026-09-03) — reconciliation
-Brief: `docs/coordination/DUAL-REVIEW-WAVE4-BRIEF.md` (handoff-safe; carries the extracted spec rules,
+Brief: `docs/internal/coordination/DUAL-REVIEW-WAVE4-BRIEF.md` (handoff-safe; carries the extracted spec rules,
 a script audit of all 21 tools, and a facts run). Reviewer 1: Codex (`webmcp-help`, cmux surface:19).
 Reviewer 2: Claude general-purpose subagent. Only items both marked CHANGE were executed.
 
@@ -374,7 +374,7 @@ Confirmed stable at the moment of the handover, not assumed: `main` clean and in
 `78c4e0e`, Worker `cb5bea9e-bc71-4a8b-8121-d87675fed053` serving all five routes at 200, 136/136
 tests. No deploy has happened since.
 
-**This left the v4 demo pack unowned.** `docs/coordination/CODEX-DEMO-HANDOFF.md` section 3 assigned
+**This left the v4 demo pack unowned.** `docs/internal/coordination/CODEX-DEMO-HANDOFF.md` section 3 assigned
 it to Codex an hour before the scope change; that section is now stale and is marked so. Codex's own
 finding stood: the pack was not recordable. `docs/VOICEOVER.md` was still the nine v3 export-centric
 segments and its VO-05 still said the merchant's agent had "nine typed tools" when the studio
@@ -484,7 +484,7 @@ Gates: 140/140, tsc, lint, build. No deploy.
 
 ### Cursor sitemap: one page per side, tabs inside (2026-09-03)
 
-Branch: `cursor/sitemap` (worktree `../hemloop-cursor`). Implements docs/coordination/SITEMAP.md.
+Branch: `cursor/sitemap` (worktree `../hemloop-cursor`). Implements docs/internal/coordination/SITEMAP.md.
 
 Landed:
 1. `/studio` tabs: Demand (folded merchant dashboard as `merchant-demand-panel.tsx`) · Offer and rules · Composition. Default `?tab=demand`.
@@ -840,7 +840,7 @@ Gates: 157 · tsc · lint · build.
 ### Cursor publish-prep: README + docs/internal + Devpost fields (2026-09-04)
 
 Branch: `cursor/publish-prep` from `origin/main`.
-Left `docs/coordination/` in place (Marco + history scan).
+Left `docs/internal/coordination/` in place (Marco + history scan).
 
 Landed:
 1. Root `README.md` rewritten for a public reader (three sentences, four routes, ChatGPT desktop demo path, 21-tool table, local/deploy, licence, credits; no coordination notes, no stale test counts)

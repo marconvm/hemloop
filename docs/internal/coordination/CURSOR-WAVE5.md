@@ -9,7 +9,7 @@ their css files). Behaviour of those pages does not change; only what wraps them
 ## Rule zero: your own worktree, your own branch
 
 ```sh
-cd /Users/marco/projects/hemloop-cursor
+cd ~/projects/hemloop-cursor
 git fetch origin
 git checkout -b cursor/wave5 origin/main
 npm install

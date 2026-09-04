@@ -81,7 +81,7 @@ container units are native modern CSS
 | Static cache policy | **KEEP** | S | A live hashed CSS chunk is an immutable Cloudflare HIT for one year; dynamic RSC HTML correctly is not cached. |
 | HSTS, nosniff, frame denial, referrer and permissions headers | **KEEP** | S | Live replay confirms all five; `DENY` protects the human-only buttons from framing. |
 | CSP | **DEFER** | M | Do not bolt on a permissive or broken CSP before judging; add nonce/hash support with a vinext/RSC-aware test after the demo (`next.config.ts:4-19`). |
-| Public source link while repository is private | **CHANGE** | S | Finish the already-approved history scan and fresh-clone check, then Marco flips visibility; until then the footer promises a source page judges cannot open (`components/site-footer.tsx:26-34`; `docs/coordination/PUBLISH-CHECKLIST.md:13,21`). |
+| Public source link while repository is private | **CHANGE** | S | Finish the already-approved history scan and fresh-clone check, then Marco flips visibility; until then the footer promises a source page judges cannot open (`components/site-footer.tsx:26-34`; `docs/internal/coordination/PUBLISH-CHECKLIST.md:13,21`). |
 | Public docs surface | **KEEP (FIXED)** | S | Process/checklist files are now absent from `public/docs`, and the mirror allowlist prevents them returning; keep internal coordination out of the rendered site. |
 | Smart Placement, Tail Workers and paid Workers plan | **KEEP OFF** | S | This client-heavy, low-latency judged demo has no measured CPU or placement problem; extra platform features add failure modes, not value. |
 | Vercel | **KEEP domain-only** | S | One runtime host is enough; do not introduce a second deployment path. |

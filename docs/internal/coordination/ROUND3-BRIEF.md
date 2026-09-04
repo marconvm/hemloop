@@ -5,8 +5,8 @@ webmcp-hemloop-04 (cmux surface:71). Codex: cmux surface:19 ("webmcp-help"). Dea
 
 ## What changed since your last look (round 2 at 000aedb)
 Everything since a80f9c4 landed without a peer review because the Codex lane was dormant; it is all
-FIXED-pending-peer-re-review. Read docs/coordination/CODEX-COORDINATION.md sections from "Round-2 DISAGREE
-resolved" to "Judge round 2", then docs/coordination/judge-review-2-2026-09-02.md. Headlines:
+FIXED-pending-peer-re-review. Read docs/internal/coordination/CODEX-COORDINATION.md sections from "Round-2 DISAGREE
+resolved" to "Judge round 2", then docs/internal/coordination/judge-review-2-2026-09-02.md. Headlines:
 - Dead code removed (58 ui components, hooks/, 8 deps). vinext <Link> router threw on click; cross-links are plain anchors.
 - WebMCP spec/vendor conformance: plain-object results, closed schemas, readOnlyHint/untrustedContentHint, awaited
   registerTool with rejection handling, get_offer (10th studio tool), next on every rejection, fences <closet_data>/<storefront_data>.
@@ -17,7 +17,7 @@ resolved" to "Judge round 2", then docs/coordination/judge-review-2-2026-09-02.m
   "Add sizes in stock" button), Need/Want pills and grouping, GA-debugger flash + counters, thumbnails, inline
   edit/delete/clear, brands renamed (Northlight Apparel, Ridgeline Outdoor, Denim Supply Co., NORTHLIGHT25),
   labels renamed (Approved offer facts, Agent activity log, Incoming requests, Requests sent, Approve next request).
-- Docs restructured; commerce-agents fit analysis in docs/coordination/commerce-agents-gap-2026-09-02.md.
+- Docs restructured; commerce-agents fit analysis in docs/internal/coordination/commerce-agents-gap-2026-09-02.md.
 
 ## Facts (from scripts/facts.sh, live)
 == live headers (https://hemloop.app) ==
@@ -49,5 +49,5 @@ A. Security replay on the new surface: can an agent (a) send a request at a leve
    any tool, (f) exceed 1.5K output on get_wardrobe with a hostile wardrobe? Give reproductions or say CLEAN per item.
 B. The privacy claims on the landing and README versus the code: any sentence stronger than the code.
 C. Verdicts: keep / CHANGE / DEFER per item, one-line reason, S/M/L; your top 5 you would do before 13:00 PT and the
-   list you would NOT touch. Write your report to docs/coordination/CODEX-ROUND3.md (Codex) or return it (Claude subagent).
+   list you would NOT touch. Write your report to docs/internal/coordination/CODEX-ROUND3.md (Codex) or return it (Claude subagent).
    Only items BOTH reviewers agree on will land; disagreements go to Marco.

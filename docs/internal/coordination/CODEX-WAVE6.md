@@ -8,7 +8,7 @@ live on hemloop.app.
 ## Rule zero
 
 ```sh
-cd /Users/marco/projects/proofframe-webmcp-codex-room
+cd ~/projects/proofframe-webmcp-codex-room
 git fetch origin
 git checkout -b codex/wave6 origin/main
 npm install
@@ -41,7 +41,7 @@ viewport, roughly 390 to 430 px wide, with the chat beside it. The room was veri
 ## Part B: replay of wave 5 (findings first, then fixes in your lane only)
 
 The same discipline as your round 3 review: replay against the code with hostile fixtures, write
-what you find to `docs/coordination/judge-review-3-2026-09-03.md` (verdict, evidence, size), and fix
+what you find to `docs/internal/coordination/judge-review-3-2026-09-03.md` (verdict, evidence, size), and fix
 only what is inside your lane. Anything in `lib/*` or `components/loop-room-page.tsx` you report
 with the exact line and the fix you would make; Claude applies it.
 
