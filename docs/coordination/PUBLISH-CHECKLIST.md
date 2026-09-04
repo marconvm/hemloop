@@ -15,3 +15,15 @@ changes what the scan sees. Nothing flips visibility except Marco, by hand, afte
 Decisions Marco still owns: whether `docs/coordination/*` stays in the public history at all (it is
 in every commit since 2026-09-01; stripping it means a history rewrite, which the scan will price),
 and whether the kids' stock photos stay (faces of children in a demo).
+
+## Marco's decisions (2026-09-04)
+
+1. Go public: yes, deadline is close. Step 6 runs after items 2 to 5 land.
+2. `docs/coordination/*`: hide it if cheap; a history rewrite is not cheap, so it moves into
+   `docs/internal/coordination/` (kept out of `public/docs`), and the scan report says whether any
+   file in it needs stripping from history.
+3. Kids' photos: no faces; flat-lay product shots only (Cursor).
+4. Demo hosts in the runbook: ChatGPT's desktop-app built-in browser or Chrome with the WebMCP
+   flag; the iOS in-app browser shows the page with tools in preview (Cursor, README + USER-GUIDE).
+5. From the Claude review, executed ahead of reconciliation because Marco asked: the Copy prompt
+   button gets a Copied state and a fallback (Cursor, `cursor/copy-button`).
