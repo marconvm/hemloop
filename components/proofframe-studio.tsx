@@ -9,15 +9,14 @@ import {
   Play,
   Radio,
   ShieldCheck,
-  Sparkles,
   UnlockKeyhole,
   WandSparkles,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CompositionScene } from '@/components/composition/scene';
+import { RuntimeStatus, type RuntimeToolView } from '@/components/loop-room';
 import { MerchantDemandPanel } from '@/components/merchant-demand-panel';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
@@ -115,6 +114,15 @@ const COMPOSITION_TOOLS = new Set([
   'validate_claims',
   'export_composition',
 ]);
+
+/** Acts no WebMCP tool can perform — shown as absent in the runtime manifest. */
+const HUMAN_ONLY = [
+  'approve_next_request',
+  'approve_offer',
+  'mark_bought',
+  'lock_facts',
+  'set_sharing_level',
+];
 
 const SENSITIVITY_LABEL: Record<string, string> = {
   code: 'code-sensitive',
@@ -331,6 +339,7 @@ export function ProofFrameStudio() {
   const [playing, setPlaying] = useState(false);
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>('checking');
   const [registeredCount, setRegisteredCount] = useState(0);
+  const [manifest, setManifest] = useState<RuntimeToolView[]>([]);
   const [signals, setSignals] = useState<DemandSignal[]>([]);
   const [outcomes, setOutcomes] = useState<SignalOutcome[]>([]);
   const [offers, setOffers] = useState<PersonalOffer[]>([]);
@@ -777,10 +786,19 @@ export function ProofFrameStudio() {
 
   useEffect(() => {
     let active = true;
-    const tools = instrumentTools(buildTools(callbacks), handleToolCall);
+    const built = buildTools(callbacks);
+    const tools = instrumentTools(built, handleToolCall);
     registerAll(getModelContext(), tools)
       .then((result) => {
         if (!active) return;
+        setManifest(
+          built.map((t) => ({
+            name: t.name,
+            title: t.title,
+            description: t.description,
+            readOnly: Boolean(t.annotations?.readOnlyHint),
+          })),
+        );
         // Count confirmed registrations, not the list we tried to register.
         setRegisteredCount(
           result.registered.length > 0 ? result.registered.length : tools.length,
@@ -800,6 +818,15 @@ export function ProofFrameStudio() {
         if (!active) return;
         console.error('WebMCP registration failed', error);
         setWebMcpStatus('error');
+        setManifest(
+          built.map((t) => ({
+            name: t.name,
+            title: t.title,
+            description: t.description,
+            readOnly: Boolean(t.annotations?.readOnlyHint),
+          })),
+        );
+        setRegisteredCount(tools.length);
       });
     return () => {
       active = false;
@@ -970,15 +997,6 @@ export function ProofFrameStudio() {
     }
   };
 
-  const statusLabel =
-    webMcpStatus === 'active'
-      ? `${registeredCount} WebMCP tools live`
-      : webMcpStatus === 'error'
-        ? 'WebMCP registration error'
-        : webMcpStatus === 'checking'
-          ? 'Checking WebMCP…'
-          : `${registeredCount} tools · preview mode`;
-
   const catalogProduct = catalogProductFor(campaign.facts);
   const sellPrice = campaign.facts.salePrice ?? campaign.facts.regularPrice;
   const computedMargin =
@@ -993,14 +1011,19 @@ export function ProofFrameStudio() {
       <SiteHeader
         active="studio"
         status={
-          <Badge
-            variant="outline"
-            className={`webmcp-badge status-${webMcpStatus}`}
-            title="WebMCP lets a browser agent call tools this page registers directly. No server, no account, no OAuth."
-          >
-            <Sparkles data-icon="inline-start" />
-            {statusLabel}
-          </Badge>
+          <RuntimeStatus
+            absent={HUMAN_ONLY}
+            live={webMcpStatus === 'active'}
+            toolCount={registeredCount || manifest.length}
+            tools={manifest}
+            label={
+              webMcpStatus === 'checking'
+                ? 'Checking WebMCP…'
+                : webMcpStatus === 'error'
+                  ? 'WebMCP error'
+                  : undefined
+            }
+          />
         }
       />
 
