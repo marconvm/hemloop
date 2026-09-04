@@ -850,3 +850,8 @@ Landed:
 Also repaired conflict markers that had been left in this log.
 
 Gates: 159 · tsc · lint · build.
+
+### Codex dual review Wave 6 filed (2026-09-04)
+
+Independent three-axis verdicts and hostile/output replays are in
+`DUAL-REVIEW-WAVE6-CODEX.md`; no review finding was implemented on this branch.
