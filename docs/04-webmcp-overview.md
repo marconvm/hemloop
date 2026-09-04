@@ -12,6 +12,10 @@ do not exist, not because it was asked nicely.
 
 ## The 21 tools
 
+All 21 register together on the Loop Room (`/`). `/closet` registers the nine Closet tools;
+`/studio` registers the twelve Studio tools. The table below is the canonical tool list (moved
+here from the retired landing page).
+
 | Surface | Tool | Kind | What it does | Structural guarantee |
 |---|---|---|---|---|
 | Closet | `get_wardrobe` | read | Returns the garment rows on the page | `readOnlyHint`, `untrustedContentHint`, never returns a shopper id |
@@ -27,7 +31,7 @@ do not exist, not because it was asked nicely.
 | Studio | `get_demand` | read | Consented demand grouped by category and size, with request ids and, per group, whether the locked offer can answer it | `readOnlyHint`, `untrustedContentHint`; the verdict uses the same predicates the matcher refuses on |
 | Studio | `validate_claims` | read | Dry run of the claim validator | Never mutates |
 | Studio | `export_composition` | read | Hands finished HTML to the page for download | Refuses while any violation stands |
-| Studio | `get_offer` | read | The locked offer as structured data; pass `requestId` for one approved personal offer | `readOnlyHint`, reads only human-locked facts |
+| Studio | `get_offer` | read | Returns the locked offer as structured data for a shopping agent: product, prices, code, dates, disclaimer, purchase link; pass `requestId` to read one approved personal offer instead | `readOnlyHint`; returns the facts with whether a human has locked them, so an agent can tell a locked offer from a draft |
 | Studio | `set_brief` | write | Sets the creative brief | Brief is never rendered copy, so it cannot become a claim |
 | Studio | `add_scene` / `update_scene` | write | Writes rendered copy | Claim-validated before the state changes, rejected atomically |
 | Studio | `reorder_scenes` | write | Reorders the timeline | Permutation-checked |

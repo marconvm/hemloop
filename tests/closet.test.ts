@@ -9,6 +9,8 @@ import {
   makeSignal,
   monthsBetween,
   randomGarments,
+  readWardrobe,
+  writeWardrobe,
   GARMENT_CATEGORIES,
   seedPreferences,
   seedPurchases,
@@ -1401,3 +1403,59 @@ void test('randomGarments: every row carries a catalog photo and brand, and the 
   // Another profile still has room.
   assert.equal(randomGarments(5, full, 'kid', rand, undefined, NOW).length, 5);
 });
+
+void test('readWardrobe: returns seed when empty, returns written wardrobe, drops invalid category, handles corrupt JSON', () => {
+  const restore = installFakeWindow();
+  try {
+    // Empty storage -> returns seed
+    assert.deepEqual(readWardrobe(), seedWardrobe());
+
+    // writeWardrobe + readWardrobe roundtrip
+    const custom: Wardrobe = {
+      garments: [
+        {
+          id: 'custom-1',
+          category: 'hoodie',
+          brand: 'Northlight',
+          size: 'M',
+          colour: 'black',
+          for: 'self',
+        },
+      ],
+    };
+    writeWardrobe(custom);
+    assert.deepEqual(readWardrobe(), custom);
+
+    // Drops rows whose category is not a GarmentCategory
+    const mixed = {
+      garments: [
+        { id: 'ok-1', category: 'hoodie', brand: 'Northlight' },
+        { id: 'bad-1', category: 'hoverboard', brand: 'Future' },
+        { id: 'ok-2', category: 'denim', brand: 'Denim Supply' },
+      ],
+    };
+    window.localStorage.setItem('hemloop.wardrobe', JSON.stringify(mixed));
+    const cleaned = readWardrobe();
+    assert.equal(cleaned.garments.length, 2);
+    assert.deepEqual(cleaned.garments.map((g) => g.id), ['ok-1', 'ok-2']);
+
+    // Corrupt JSON -> returns seed
+    window.localStorage.setItem('hemloop.wardrobe', 'not valid json {{{');
+    assert.deepEqual(readWardrobe(), seedWardrobe());
+  } finally {
+    restore();
+  }
+});
+
+void test('randomGarments with a fixed rand is deterministic (same ids and rows twice)', () => {
+  const makeRand = () => {
+    let s = 12345;
+    return () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  };
+  const wardrobe = seedWardrobe();
+  const draw1 = randomGarments(5, wardrobe, 'self', makeRand(), undefined, NOW);
+  const draw2 = randomGarments(5, wardrobe, 'self', makeRand(), undefined, NOW);
+  assert.deepEqual(draw1, draw2);
+  assert.equal(draw1.length, 5);
+});
+

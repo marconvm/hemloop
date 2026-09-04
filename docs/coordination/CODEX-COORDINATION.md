@@ -555,3 +555,23 @@ Marco's call: Antigravity / Gemini 3.8 Flash was far slower than expected and ne
 Correction (Claude, later the same evening): Gemini had drafted the three tests before it was dropped.
 Pushed as `origin/gemini/docs` @ `9084260`, unverified, for Cursor to cherry-pick onto `cursor/docs`.
 The `../hemloop-gemini` worktree is removed. Cursor is carrying the whole docs lane on `cursor/docs`.
+
+### Cursor docs: Gemini lane + aria-current fix (2026-09-03)
+
+Branch: `cursor/docs` (worktree `../hemloop-cursor`). Took over `GEMINI-WAVE5.md` after
+`origin/gemini/docs` @ `9084260` (tests only, unverified).
+
+Landed:
+1. Docs → Loop Room + four-route sitemap: `USER-GUIDE`, `02-the-loop`, `05-quick-start`,
+   `DEMO-SCRIPT`, root `README` (21 tools on `/`, tabs, `/merchant` → `/studio?tab=demand`).
+   `public/docs/*` mirror byte-identical for every file that exists in both.
+2. Cherry-picked Gemini's three tests (verified): `readWardrobe`/`writeWardrobe`,
+   `randomGarments` determinism, tool descriptions ≤320 chars.
+3. Deleted `components/landing.tsx`; tool table already lived in `docs/04-webmcp-overview.md`
+   (noted + `get_offer` row aligned with landing). `grep` in app/components: no imports.
+4. `/docs/` header: only Docs carries `aria-current="page"` (was grepping as four matches because
+   CSS attribute selectors + footer also contained the string). CSS now styles `.is-active` only;
+   footer matches Codex `SiteFooter` (no aria-current); boot script strips stray aria-current from
+   Loop/Closet/Studio.
+
+Gates: 144/144, tsc, lint, build. No deploy.

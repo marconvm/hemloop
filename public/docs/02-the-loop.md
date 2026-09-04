@@ -2,61 +2,62 @@
 
 Hemloop's claim is not two dashboards. It is that **one request has a complete lifecycle**, and that
 every time it completes, both sides come out sharper without either side accumulating a profile of
-the other.
+the other. The home page is the **Loop Room** (`/`): seven stations in one shared space. The full
+shopper and merchant surfaces live at `/closet` and `/studio`.
 
 ## One request, end to end
 
 ```
-        SHOPPER (private, /closet)                    MERCHANT (locked, /studio)
-        ──────────────────────────                    ──────────────────────────
+        SHOPPER (private)                                 MERCHANT (locked)
+        ─────────────────                                 ────────────────
 
-   0. a purchase lands in the closet
-      (import_receipt, or Bought)                      cost price · margin floor
-   wardrobe · sizes · purchase dates                   max discount · offer facts
-   preferences · buying pattern                                  │
-              │                                                  │
-              │ 1. find_gaps                                     │
-              ▼                                                  │
-     "no hoodie · size M"                                        │
-     "sneakers due, 21 months"                                   │
-              │                                                  │
-              │ 2. report_demand_gap   ┌──────────────┐          │
-              │    REFUSED ────────────│ HUMAN GATE   │          │
-              │                        │ Approve next │          │
-              │    one press ─────────▶│   request    │          │
-              │                        └──────────────┘          │
-              ▼                                                  ▼
-        ┌───────────────────────────────────────────────────────────┐
-        │  category · size · need-or-want · consent level            │
-        │  NO name · NO account · NO hash · NO wardrobe rows         │
-        └───────────────────────────────────────────────────────────┘
-              │                                                  │
-              │                              3. get_demand ──────┤
-              │                                 grouped, scored  │
-              │                                 against stock    │
-              │                              4. propose_offer ───┤
-              │                                 inside the       │
-              │                                 margin floor     │
-              │                        ┌──────────────┐│         │
-              │                        │ HUMAN GATE   ││         │
-              │                        │   Approve    │◀┘        │
-              │                        └──────────────┘          │
-              │  5. get_offers  ◀──────────────┘                 │
-              ▼     addressed to the request id, never to a person│
-        ┌──────────────┐                                         │
-        │ HUMAN GATE   │                                         │
-        │   Bought     │                                         │
-        └──────────────┘                                         │
-              │ 6. purchase records the OFFER ID that won it     │
-              ▼                                                  ▼
-      pattern sharpens locally                    demand picture sharpens
-              │                                                  │
-              └───────────────▶ next loop is better ◀────────────┘
+   0. New item — a purchase lands in the closet
+      (import_receipt, or Bought)                          cost price · margin floor
+   wardrobe · sizes · purchase dates                       max discount · offer facts
+   preferences · buying pattern                                      │
+              │                                                      │
+              │ 1. Local demand — find_gaps                          │
+              ▼                                                      │
+     "no hoodie · size M"                                            │
+     "sneakers due, 21 months"                                       │
+              │                                                      │
+              │ 2. Approved request                                  │
+              │    report_demand_gap  ┌──────────────┐               │
+              │    REFUSED ───────────│ HUMAN GATE   │               │
+              │                       │ Approve next │               │
+              │    one press ────────▶│   request    │               │
+              │    then "Yes, send it"└──────────────┘               │
+              ▼                                                      ▼
+        ┌───────────────────────────────────────────────────────────────┐
+        │  category · size · need-or-want · consent level                │
+        │  NO name · NO account · NO hash · NO wardrobe rows             │
+        └───────────────────────────────────────────────────────────────┘
+              │                                                      │
+              │                              3. Matched offer ───────┤
+              │                                 get_demand           │
+              │                                 propose_offer        │
+              │                        ┌──────────────┐│             │
+              │                        │ HUMAN GATE   ││             │
+              │                        │ Approve offer│◀┘            │
+              │                        └──────────────┘              │
+              │  4. Bought — get_offers ◀────────────┘               │
+              ▼                                                      │
+        ┌──────────────┐                                             │
+        │ HUMAN GATE   │                                             │
+        │   Bought     │                                             │
+        └──────────────┘                                             │
+              │ 5. Learned — purchase records the OFFER ID           │
+              ▼                                                      ▼
+      pattern sharpens locally                      demand picture sharpens
+              │                                                      │
+              │ 6. Again — a rival receipt, cycle N+1                │
+              └───────────────▶ next loop is better ◀────────────────┘
                         and neither side learned who the other is
 ```
 
-The rail across the top of both surfaces shows exactly where one request is: **Gap · Approved
-request · Matched offer · Bought · Learned**.
+The rail across the Loop Room (and under the header on `/closet` and `/studio`) shows where one
+request is: **New item · Local demand · Approved request · Matched offer · Bought · Learned ·
+Again**.
 
 ![The shopper's closet with the rail under the header](img/closet-real-brands.jpg)
 
