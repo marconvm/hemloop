@@ -15,11 +15,22 @@ Your AI tells a store what you need, without telling it who you are. The store a
 
 `/merchant` redirects to `/studio?tab=demand`.
 
-## Run the demo (ChatGPT desktop browser)
+## How to run the demo
+
+**Supported hosts:** [hemloop.app](https://hemloop.app) and
+[hemloop.marcoatwill.workers.dev](https://hemloop.marcoatwill.workers.dev).
+Use either URL the same way.
+
+**Supported browsers:**
+
+1. **ChatGPT’s desktop-app built-in browser** — open one of the hosts above inside ChatGPT; WebMCP tools register automatically.
+2. **Chrome** with `chrome://flags/#enable-webmcp-testing` enabled — flip the flag, press **Relaunch**, then reopen the host. (Chrome 149+ may already carry the origin-trial token for these hosts.)
+
+The header should show tools **live**. Amber **preview** means the runtime is not exposed in that browser. The **iOS in-app browser** shows the page with tools in preview.
 
 No account. State lives in your browser (`localStorage`); an incognito window is a clean install.
 
-1. Open [hemloop.app](https://hemloop.app/) in **ChatGPT’s desktop-app built-in browser**, or in Chrome with the WebMCP flag / origin trial. The header should show tools **live** (amber **preview** means the runtime is not exposed in that browser — on older Chrome enable `chrome://flags/#enable-webmcp-testing`, Relaunch, reopen). The iOS in-app browser shows the page with tools in preview.
+1. Open a supported host in a supported browser (above).
 2. Upload a sample receipt image from `public/receipts/` (`northlight-till-receipt.png` or `harborview-order-email.png`) in the chat so the agent can call `import_receipt`.
 3. Ask: **What should I buy next?** (`find_gaps`).
 4. Ask: **Tell the store I need a hoodie in size M.** It is **refused** (`human-approval-required`). Press **Approve next request**, then reply **Yes, send it**. One press releases one event; a third send is refused again.

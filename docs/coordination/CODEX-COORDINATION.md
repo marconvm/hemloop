@@ -899,3 +899,13 @@ Replaced every `public/products/kids-*.jpg` with Unsplash flat-lay / product sti
 (no faces). Updated `docs/PHOTO-CREDITS.md` + `public/docs/` mirror.
 
 Gates: 159 · tsc · lint · build.
+
+### Cursor demo-hosts: How to run the demo (2026-09-04)
+
+Branch: `cursor/demo-hosts` from `origin/main` (post kids-photos).
+README + USER-GUIDE (+ public/docs mirrors): section **How to run the demo** names both
+supported hosts (`hemloop.app`, `hemloop.marcoatwill.workers.dev`), both supported browsers
+(ChatGPT desktop-app built-in browser; Chrome with `chrome://flags/#enable-webmcp-testing`),
+and that the iOS in-app browser shows the page with tools in preview.
+
+Gates: 159 · tsc · lint · build.
