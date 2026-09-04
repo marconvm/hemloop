@@ -886,3 +886,11 @@ Landed (S11):
 3. 44px target unchanged (`.hlr-say-actions button` min-height)
 
 Gates: 159 · tsc · lint · build.
+
+### Cursor kids-photos: flat-lay kids wardrobe stills (2026-09-04)
+
+Branch: `cursor/kids-photos` from `origin/main`.
+Replaced every `public/products/kids-*.jpg` with Unsplash flat-lay / product stills
+(no faces). Updated `docs/PHOTO-CREDITS.md` + `public/docs/` mirror.
+
+Gates: 159 · tsc · lint · build.

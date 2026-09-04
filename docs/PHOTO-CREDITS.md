@@ -31,13 +31,16 @@ locked offer, its prices and its promo code. That separation is deliberate: the
 studio is the surface that makes promotional claims, and no real brand's name is
 attached to a synthetic claim anywhere in this project.
 
-## Unsplash (6 files)
+## Unsplash (catalog + kids wardrobe)
 
 Downloaded under the [Unsplash License](https://unsplash.com/license) (free to
 use, no permission or attribution required; credited here anyway), re-encoded at
 `w=640&q=72&fm=jpg&fit=crop`. None of these show a real, recognizable retail
-brand logo or wordmark. They cover the fictional Northlight catalog and the two
-categories the real catalogs do not sell.
+brand logo or wordmark as the subject. They cover the fictional Northlight
+catalog and the Kid wardrobe.
+
+**Kids rows (`kids-*.jpg`) are flat-lay / product stills only — no faces.** Marco
+required that for the public demo; lifestyle shots of children were removed.
 
 | File | Unsplash photo | License |
 |---|---|---|
@@ -51,14 +54,14 @@ categories the real catalogs do not sell.
 | `camden-chino.jpg` | https://unsplash.com/photos/910e30c5666a | Unsplash License |
 | `black-tee.jpg` | https://unsplash.com/photos/c5c6f4c7d575 | Unsplash License |
 | `white-sneaker.jpg` | https://unsplash.com/photos/1c920cd92f19 | Unsplash License |
-| `kids-hoodie.jpg` | https://unsplash.com/photos/photo-1519238263530-99bdd11df2ea | Unsplash License |
-| `kids-tee.jpg` | https://unsplash.com/photos/photo-1503919545889-aef636e10ad4 | Unsplash License |
-| `kids-denim.jpg` | https://unsplash.com/photos/photo-1471286174890-9c112ffca5b4 | Unsplash License |
-| `kids-sneakers.jpg` | https://unsplash.com/photos/photo-1519457431-44ccd64a579b | Unsplash License |
-| `kids-jacket.jpg` | https://unsplash.com/photos/photo-1622290291468-a28f7a7dc6a8 | Unsplash License |
-| `kids-cap.jpg` | https://unsplash.com/photos/photo-1596870230751-ebdfce98ec42 | Unsplash License |
-| `kids-crew.jpg` | https://unsplash.com/photos/photo-1621452773781-0f992fd1f5cb | Unsplash License |
-| `kids-chino.jpg` | https://unsplash.com/photos/photo-1503454537195-1dcabb73ffb9 | Unsplash License |
+| `kids-hoodie.jpg` | https://unsplash.com/photos/photo-1620799140188-3b2a02fd9a77 | Unsplash License |
+| `kids-tee.jpg` | https://unsplash.com/photos/photo-1467043237213-65f2da53396f | Unsplash License |
+| `kids-denim.jpg` | https://unsplash.com/photos/photo-1617178388553-a9d022974a5c | Unsplash License |
+| `kids-sneakers.jpg` | https://unsplash.com/photos/photo-1544441893-675973e31985 | Unsplash License |
+| `kids-jacket.jpg` | https://unsplash.com/photos/photo-1551028719-00167b16eac5 | Unsplash License |
+| `kids-cap.jpg` | https://unsplash.com/photos/photo-1556905055-8f358a7a47b2 | Unsplash License |
+| `kids-crew.jpg` | https://unsplash.com/photos/photo-1632469188022-b5db09a70fbc | Unsplash License |
+| `kids-chino.jpg` | https://unsplash.com/photos/photo-1516762689617-e1cffcef479d | Unsplash License |
 
 A unit test asserts that every image path the seed wardrobe or the catalog
 references resolves to a file in `public/`, so a credited file cannot silently
