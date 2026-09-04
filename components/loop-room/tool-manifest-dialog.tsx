@@ -10,11 +10,13 @@ export function ToolManifestContent({
   absent,
   titleId,
   onClose,
+  live = true,
 }: {
   tools: RuntimeToolView[];
   absent: string[];
   titleId: string;
   onClose: () => void;
+  live?: boolean;
 }) {
   return (
     <div className="hlr-dialog-card">
@@ -32,8 +34,9 @@ export function ToolManifestContent({
         </button>
       </header>
       <p className="hlr-dialog-intro">
-        Read from this page&apos;s WebMCP runtime. Human approval controls are
-        deliberately absent.
+        {live
+          ? "Read from this page's WebMCP runtime. Human approval controls are deliberately absent."
+          : 'Preview only: this browser exposed no WebMCP runtime. These are the tools the page would attempt to register.'}
       </p>
       <div className="hlr-manifest-list">
         {tools.length ? (
@@ -99,6 +102,7 @@ export function ToolManifestDialog({
           onClose={() => dialogRef.current?.close()}
           titleId="hlr-tool-dialog-title-hero"
           tools={tools}
+          live={live}
         />
       </dialog>
     </>

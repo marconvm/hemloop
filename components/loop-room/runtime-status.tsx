@@ -30,7 +30,6 @@ export function RuntimeStatus({
         <span className="hlr-live-dot" aria-hidden="true" />
         <strong>
           {label ?? `WebMCP ${live ? 'live' : 'preview'}`}
-          <span aria-hidden="true"> · </span>
         </strong>
         <b>{toolCount} tools</b>
       </button>
@@ -44,6 +43,7 @@ export function RuntimeStatus({
           onClose={() => dialogRef.current?.close()}
           titleId="hlr-tool-dialog-title-header"
           tools={tools}
+          live={live}
         />
       </dialog>
     </>

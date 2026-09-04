@@ -765,11 +765,13 @@ export function ProofFrameStudio() {
     let active = true;
     const built = buildTools(callbacks);
     const tools = instrumentTools(built, handleToolCall);
-    registerAll(getModelContext(), tools)
+    const modelContext = getModelContext();
+    registerAll(modelContext, tools)
       .then((result) => {
         if (!active) return;
+        const registered = new Set(result.registered);
         setManifest(
-          built.map((t) => ({
+          built.filter((t) => !modelContext || registered.has(t.name)).map((t) => ({
             name: t.name,
             title: t.title,
             description: t.description,
