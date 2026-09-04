@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
-  Download,
   LockKeyhole,
   Pause,
   Play,
@@ -28,7 +27,6 @@ import { useSurfaceTab } from '@/components/use-surface-tab';
 import { BRAND } from '@/lib/proofframe/brand';
 
 import '@/app/studio.css';
-import { exportComposition } from '@/lib/proofframe/exporter';
 import {
   demandInsight,
   matchOffer,
@@ -266,6 +264,8 @@ function catalogProductFor(facts: CampaignFacts) {
     title: match?.title ?? f.productName,
     image: match?.image ?? f.productImage,
     sizesInStock: f.sizesInStock,
+    vendor: match?.vendor ?? BRAND.name,
+    productType: match?.productType ?? 'Apparel',
   };
 }
 
@@ -971,18 +971,6 @@ export function ProofFrameStudio() {
     }
   };
 
-  const downloadComposition = () => {
-    if (violations.length > 0) return;
-    saveComposition(exportComposition(campaign));
-    pushActivity({
-      actor: 'MC',
-      title: 'Exported a validated composition',
-      detail:
-        'Standalone HyperFrames HTML is ready for deterministic rendering.',
-      status: 'human',
-    });
-  };
-
   const statusLabel =
     webMcpStatus === 'active'
       ? `${registeredCount} WebMCP tools live`
@@ -991,6 +979,15 @@ export function ProofFrameStudio() {
         : webMcpStatus === 'checking'
           ? 'Checking WebMCP…'
           : `${registeredCount} tools · preview mode`;
+
+  const catalogProduct = catalogProductFor(campaign.facts);
+  const sellPrice = campaign.facts.salePrice ?? campaign.facts.regularPrice;
+  const computedMargin =
+    campaign.facts.costPrice !== undefined && sellPrice > 0
+      ? Math.round(
+          ((sellPrice - campaign.facts.costPrice) / sellPrice) * 1000,
+        ) / 10
+      : null;
 
   return (
     <main className="studio-shell">
@@ -1005,16 +1002,6 @@ export function ProofFrameStudio() {
             <Sparkles data-icon="inline-start" />
             {statusLabel}
           </Badge>
-        }
-        actions={
-          <Button
-            className="export-button"
-            onClick={downloadComposition}
-            disabled={violations.length > 0}
-          >
-            <Download data-icon="inline-start" />
-            Export
-          </Button>
         }
       />
 
@@ -1063,272 +1050,311 @@ export function ProofFrameStudio() {
         className="tab-panel studio-grid offer-grid"
         aria-label={`${BRAND.name} offer and rules`}
       >
-        <aside className="truth-panel panel">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Human control</p>
-              <h2>Approved offer facts</h2>
-            </div>
-            <ShieldCheck aria-hidden="true" />
+        <div className="polaris-offer">
+          <div className="polaris-main">
+            <section className="polaris-card polaris-product-card">
+              <div className="polaris-product-media">
+                {facts.productImage ? (
+                  // oxlint-disable-next-line next/no-img-element -- static demo asset
+                  <img
+                    src={facts.productImage}
+                    alt={facts.productName}
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="polaris-media-placeholder" aria-hidden="true" />
+                )}
+              </div>
+              <div className="polaris-product-meta">
+                <div className="polaris-product-title-row">
+                  <label className="polaris-field polaris-field-grow">
+                    <span className="polaris-label">Title</span>
+                    <input
+                      value={campaign.facts.productName}
+                      disabled={campaign.factsLocked}
+                      onChange={(event) =>
+                        updateFact('productName', event.target.value)
+                      }
+                    />
+                  </label>
+                  <span className="polaris-status-badge">Active</span>
+                </div>
+                <div className="polaris-field-row">
+                  <div className="polaris-field">
+                    <span className="polaris-label">Vendor</span>
+                    <p className="polaris-static">{catalogProduct.vendor}</p>
+                  </div>
+                  <div className="polaris-field">
+                    <span className="polaris-label">Product type</span>
+                    <p className="polaris-static">{catalogProduct.productType}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="polaris-card">
+              <h3 className="polaris-card-title">Pricing</h3>
+              <div className="polaris-field-row polaris-field-row-4">
+                <label className="polaris-field">
+                  <span className="polaris-label">Price</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={campaign.facts.salePrice ?? ''}
+                    disabled={campaign.factsLocked}
+                    aria-label="Price"
+                    placeholder={String(campaign.facts.regularPrice)}
+                    onChange={(event) =>
+                      updateFact(
+                        'salePrice',
+                        event.target.value === ''
+                          ? null
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+                <label className="polaris-field">
+                  <span className="polaris-label">Compare-at price</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={campaign.facts.regularPrice}
+                    disabled={campaign.factsLocked}
+                    aria-label="Compare-at price"
+                    onChange={(event) =>
+                      updateFact('regularPrice', Number(event.target.value))
+                    }
+                  />
+                </label>
+                <label className="polaris-field">
+                  <span className="polaris-label">Cost per item</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={campaign.facts.costPrice ?? ''}
+                    disabled={campaign.factsLocked}
+                    aria-label="Cost per item"
+                    onChange={(event) =>
+                      updateFact(
+                        'costPrice',
+                        event.target.value === ''
+                          ? undefined
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+                <div className="polaris-field">
+                  <span className="polaris-label">Margin</span>
+                  <p className="polaris-static polaris-margin">
+                    {computedMargin === null ? '—' : `${computedMargin}%`}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <section className="polaris-card">
+              <h3 className="polaris-card-title">Inventory</h3>
+              {activeMerchant ? (
+                <div className="polaris-index-scroll">
+                  <table className="polaris-index-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">SKU</th>
+                        <th scope="col">Size</th>
+                        <th scope="col">Available</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeMerchant.inventory.map((row) => (
+                        <tr
+                          key={row.sku}
+                          className={row.qty <= 0 ? 'is-sold-out' : undefined}
+                        >
+                          <td>{row.sku}</td>
+                          <td>{row.size}</td>
+                          <td>{row.qty}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="polaris-muted">No store selected.</p>
+              )}
+              {!campaign.factsLocked && !campaign.facts.sizesInStock && (
+                <button
+                  type="button"
+                  className="tool-table-toggle"
+                  title="Human-only: no WebMCP tool can write offer facts"
+                  onClick={() =>
+                    commit((current) => ({
+                      ...current,
+                      facts: {
+                        ...current.facts,
+                        sizesInStock: ['XS', 'S', 'M', 'L', 'XL'],
+                      },
+                    }))
+                  }
+                >
+                  Add sizes in stock (XS to XL)
+                </button>
+              )}
+            </section>
+
+            <section
+              className="polaris-card"
+              title="Human-only, no WebMCP tool can read or write the offer rules. propose_offer only stays inside them."
+            >
+              <h3 className="polaris-card-title">Discount</h3>
+              <div className="polaris-field-row">
+                <label className="polaris-field">
+                  <span className="polaris-label">Discount code</span>
+                  <input
+                    value={campaign.facts.promoCode ?? ''}
+                    disabled={campaign.factsLocked}
+                    aria-label="Discount code"
+                    onChange={(event) =>
+                      updateFact('promoCode', event.target.value || null)
+                    }
+                  />
+                </label>
+                <label className="polaris-field">
+                  <span className="polaris-label">Percent off</span>
+                  <input
+                    type="number"
+                    value={campaign.facts.discountPercent ?? ''}
+                    disabled={campaign.factsLocked}
+                    aria-label="Discount percent"
+                    onChange={(event) =>
+                      updateFact(
+                        'discountPercent',
+                        event.target.value === ''
+                          ? null
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+              </div>
+              <div className="polaris-field-row">
+                <label className="polaris-field">
+                  <span className="polaris-label">Max discount %</span>
+                  <input
+                    type="number"
+                    value={campaign.facts.maxDiscountPercent ?? ''}
+                    disabled={campaign.factsLocked}
+                    aria-label="Max discount percent"
+                    onChange={(event) =>
+                      updateFact(
+                        'maxDiscountPercent',
+                        event.target.value === ''
+                          ? undefined
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+                <label className="polaris-field">
+                  <span className="polaris-label">Margin floor %</span>
+                  <input
+                    type="number"
+                    value={campaign.facts.marginFloorPercent ?? ''}
+                    disabled={campaign.factsLocked}
+                    aria-label="Margin floor percent"
+                    onChange={(event) =>
+                      updateFact(
+                        'marginFloorPercent',
+                        event.target.value === ''
+                          ? undefined
+                          : Number(event.target.value),
+                      )
+                    }
+                  />
+                </label>
+              </div>
+              <div className="polaris-field-row">
+                <label className="polaris-field">
+                  <span className="polaris-label">Active from</span>
+                  <input
+                    type="date"
+                    value={campaign.facts.startDate}
+                    disabled={campaign.factsLocked}
+                    onChange={(event) =>
+                      updateFact('startDate', event.target.value)
+                    }
+                  />
+                </label>
+                <label className="polaris-field">
+                  <span className="polaris-label">Active until</span>
+                  <input
+                    type="date"
+                    value={campaign.facts.endDate}
+                    disabled={campaign.factsLocked}
+                    onChange={(event) =>
+                      updateFact('endDate', event.target.value)
+                    }
+                  />
+                </label>
+              </div>
+            </section>
           </div>
 
-          <p className="panel-intro">
-            Locked by the merchant. Agents compose inside these numbers.
-          </p>
+          <aside className="polaris-rail" aria-label="Offer lock controls">
+            <div
+              className={`polaris-lock-badge ${campaign.factsLocked ? 'is-locked' : 'is-open'}`}
+            >
+              {campaign.factsLocked ? (
+                <LockKeyhole aria-hidden="true" />
+              ) : (
+                <UnlockKeyhole aria-hidden="true" />
+              )}
+              <span>{campaign.factsLocked ? 'Locked' : 'Editable'}</span>
+            </div>
 
-          {activeMerchant ? (
-            <LockedInventoryTableForMerchant merchant={activeMerchant} />
-          ) : null}
+            <Button
+              variant={campaign.factsLocked ? 'outline' : 'default'}
+              className="brief-button"
+              onClick={toggleTruthLock}
+            >
+              {campaign.factsLocked ? (
+                <UnlockKeyhole data-icon="inline-start" />
+              ) : (
+                <LockKeyhole data-icon="inline-start" />
+              )}
+              {campaign.factsLocked ? 'Unlock offer facts' : 'Lock offer facts'}
+            </Button>
+            <p className="human-only-note">
+              Human-only control · deliberately absent from WebMCP
+            </p>
 
-          {facts.productImage ? (
-            // oxlint-disable-next-line next/no-img-element -- static demo asset, no next/image loader configured
-            <img
-              src={facts.productImage}
-              alt={facts.productName}
-              className="facts-product-photo"
-              loading="lazy"
-            />
-          ) : null}
-
-          <div className="truth-list">
-            <label className="truth-row">
-              <span>Product</span>
-              <input
-                value={campaign.facts.productName}
-                disabled={campaign.factsLocked}
-                onChange={(event) =>
-                  updateFact('productName', event.target.value)
-                }
+            <div className="completeness-meter">
+              <div className="completeness-head">
+                <span>Offer completeness</span>
+                <strong>
+                  {completeness.locked} of {completeness.total} facts locked
+                </strong>
+              </div>
+              <progress
+                className="completeness-bar"
+                aria-label="Offer completeness"
+                value={completeness.locked}
+                max={completeness.total}
               />
-              {campaign.factsLocked ? (
-                <LockKeyhole aria-label="Locked fact" />
-              ) : (
-                <UnlockKeyhole aria-label="Editable fact" />
+              {missingChecks.length > 0 && (
+                <ul className="completeness-missing">
+                  {missingChecks.map((c) => (
+                    <li key={c.key}>
+                      <strong>{c.label}</strong>
+                      <span>Unlocks: {c.unlocks}</span>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </label>
-            <label className="truth-row truth-pair">
-              <span>Regular / sale price</span>
-              <span className="inline-inputs">
-                <input
-                  type="number"
-                  step="0.01"
-                  value={campaign.facts.regularPrice}
-                  disabled={campaign.factsLocked}
-                  aria-label="Regular price"
-                  onChange={(event) =>
-                    updateFact('regularPrice', Number(event.target.value))
-                  }
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  value={campaign.facts.salePrice ?? ''}
-                  disabled={campaign.factsLocked}
-                  aria-label="Sale price"
-                  onChange={(event) =>
-                    updateFact(
-                      'salePrice',
-                      event.target.value === ''
-                        ? null
-                        : Number(event.target.value),
-                    )
-                  }
-                />
-              </span>
-              {campaign.factsLocked ? (
-                <LockKeyhole aria-label="Locked fact" />
-              ) : (
-                <UnlockKeyhole aria-label="Editable fact" />
-              )}
-            </label>
-            <label className="truth-row truth-pair">
-              <span>Discount / promo code</span>
-              <span className="inline-inputs">
-                <input
-                  type="number"
-                  value={campaign.facts.discountPercent ?? ''}
-                  disabled={campaign.factsLocked}
-                  aria-label="Discount percent"
-                  onChange={(event) =>
-                    updateFact(
-                      'discountPercent',
-                      event.target.value === ''
-                        ? null
-                        : Number(event.target.value),
-                    )
-                  }
-                />
-                <input
-                  value={campaign.facts.promoCode ?? ''}
-                  disabled={campaign.factsLocked}
-                  aria-label="Promo code"
-                  onChange={(event) =>
-                    updateFact('promoCode', event.target.value || null)
-                  }
-                />
-              </span>
-              {campaign.factsLocked ? (
-                <LockKeyhole aria-label="Locked fact" />
-              ) : (
-                <UnlockKeyhole aria-label="Editable fact" />
-              )}
-            </label>
-            <label className="truth-row">
-              <span>End date</span>
-              <input
-                type="date"
-                value={campaign.facts.endDate}
-                disabled={campaign.factsLocked}
-                onChange={(event) => updateFact('endDate', event.target.value)}
-              />
-              {campaign.factsLocked ? (
-                <LockKeyhole aria-label="Locked fact" />
-              ) : (
-                <UnlockKeyhole aria-label="Editable fact" />
-              )}
-            </label>
-          </div>
-
-          <div
-            className="offer-rules"
-            title="Human-only, no WebMCP tool can read or write the offer rules. propose_offer only stays inside them."
-          >
-            <p className="offer-rules-head">Offer rules</p>
-            <div className="truth-list">
-              <label className="truth-row">
-                <span>Cost price</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={campaign.facts.costPrice ?? ''}
-                  disabled={campaign.factsLocked}
-                  aria-label="Cost price"
-                  onChange={(event) =>
-                    updateFact(
-                      'costPrice',
-                      event.target.value === '' ? undefined : Number(event.target.value),
-                    )
-                  }
-                />
-                {campaign.factsLocked ? (
-                  <LockKeyhole aria-label="Locked fact" />
-                ) : (
-                  <UnlockKeyhole aria-label="Editable fact" />
-                )}
-              </label>
-              <label className="truth-row">
-                <span>Margin floor %</span>
-                <input
-                  type="number"
-                  value={campaign.facts.marginFloorPercent ?? ''}
-                  disabled={campaign.factsLocked}
-                  aria-label="Margin floor percent"
-                  onChange={(event) =>
-                    updateFact(
-                      'marginFloorPercent',
-                      event.target.value === '' ? undefined : Number(event.target.value),
-                    )
-                  }
-                />
-                {campaign.factsLocked ? (
-                  <LockKeyhole aria-label="Locked fact" />
-                ) : (
-                  <UnlockKeyhole aria-label="Editable fact" />
-                )}
-              </label>
-              <label className="truth-row">
-                <span>Max discount %</span>
-                <input
-                  type="number"
-                  value={campaign.facts.maxDiscountPercent ?? ''}
-                  disabled={campaign.factsLocked}
-                  aria-label="Max discount percent"
-                  onChange={(event) =>
-                    updateFact(
-                      'maxDiscountPercent',
-                      event.target.value === '' ? undefined : Number(event.target.value),
-                    )
-                  }
-                />
-                {campaign.factsLocked ? (
-                  <LockKeyhole aria-label="Locked fact" />
-                ) : (
-                  <UnlockKeyhole aria-label="Editable fact" />
-                )}
-              </label>
             </div>
-          </div>
-
-          <div className="completeness-meter">
-            <div className="completeness-head">
-              <span>Offer completeness</span>
-              <strong>
-                {completeness.locked} of {completeness.total} facts locked
-              </strong>
-            </div>
-            <progress
-              className="completeness-bar"
-              aria-label="Offer completeness"
-              value={completeness.locked}
-              max={completeness.total}
-            />
-            {!campaign.factsLocked && !campaign.facts.sizesInStock && (
-              <button
-                type="button"
-                className="tool-table-toggle"
-                title="Human-only: no WebMCP tool can write offer facts"
-                onClick={() =>
-                  commit((current) => ({
-                    ...current,
-                    facts: { ...current.facts, sizesInStock: ['XS', 'S', 'M', 'L', 'XL'] },
-                  }))
-                }
-              >
-                Add sizes in stock (XS to XL)
-              </button>
-            )}
-            {missingChecks.length > 0 && (
-              <ul className="completeness-missing">
-                {missingChecks.map((c) => (
-                  <li key={c.key}>
-                    <strong>{c.label}</strong>
-                    <span>Unlocks: {c.unlocks}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="asset-card">
-            <div className="asset-art" aria-hidden="true">
-              <span className="textile-swatch swatch-one" />
-              <span className="textile-swatch swatch-two" />
-              <span className="textile-swatch swatch-three" />
-            </div>
-            <div>
-              <span>Approved direction</span>
-              <strong>Warm fleece / cobalt</strong>
-              <small>Abstract · synthetic demo</small>
-            </div>
-            <CheckCircle2 aria-label="Approved" />
-          </div>
-
-          <Button
-            variant={campaign.factsLocked ? 'outline' : 'default'}
-            className="brief-button"
-            onClick={toggleTruthLock}
-          >
-            {campaign.factsLocked ? (
-              <UnlockKeyhole data-icon="inline-start" />
-            ) : (
-              <LockKeyhole data-icon="inline-start" />
-            )}
-            {campaign.factsLocked ? 'Unlock offer facts' : 'Lock offer facts'}
-          </Button>
-          <p className="human-only-note">
-            Human-only control · deliberately absent from WebMCP
-          </p>
-        </aside>
+          </aside>
+        </div>
 
         <aside className="proof-panel panel">
           <div className="panel-heading">
