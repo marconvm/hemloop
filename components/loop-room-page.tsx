@@ -1149,8 +1149,34 @@ export function LoopRoomPage() {
     setActiveProfile(profile);
   }, []);
 
-  const onCopySay = useCallback((prompt: string) => {
-    navigator.clipboard?.writeText(prompt).catch(() => {});
+  const onCopySay = useCallback(async (prompt: string): Promise<boolean> => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(prompt);
+        return true;
+      }
+    } catch {
+      // Secure-context / permission failure — try the legacy path.
+    }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = prompt;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      // Intentional fallback when Clipboard API is missing or denied (S11).
+      // oxlint-disable-next-line typescript/no-deprecated -- document.execCommand('copy') is the last-resort clipboard path
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) return true;
+    } catch {
+      // Both clipboard paths failed — caller selects the blockquote for Cmd+C.
+    }
+    return false;
   }, []);
 
   return (

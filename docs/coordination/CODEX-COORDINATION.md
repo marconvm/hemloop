@@ -867,3 +867,15 @@ Landed:
 4. Margin cell → "Margin at sale price" with `8.2% · floor 30%` (sale margin + floor at a glance).
 
 Gates: 159 · tsc · lint · build.
+
+### Cursor copy-button: Copy prompt feedback + clipboard fallback (2026-09-04)
+
+Branch: `cursor/copy-button` from `origin/main` @ `060ac2e`.
+Allowed edit to `components/loop-room/station-card.tsx` (Codex on review).
+
+Landed (S11):
+1. `onCopySay` → `Promise<boolean>`: `navigator.clipboard.writeText`, then temporary textarea + `document.execCommand('copy')`, else `false`
+2. Station card: success → button "Copied" for ~1.5s; failure → select the blockquote (expand if collapsed) and label "Select and copy" so Cmd+C works
+3. 44px target unchanged (`.hlr-say-actions button` min-height)
+
+Gates: 159 · tsc · lint · build.

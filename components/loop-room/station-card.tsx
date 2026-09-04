@@ -5,7 +5,7 @@ import {
   LoaderCircle,
   Wrench,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import type {
   StationCard as StationCardModel,
@@ -25,12 +25,51 @@ export function StationCard({
   station: StationCardModel;
   processing?: ProcessingView | null;
   lastRan?: { label: string; tools: string[] } | null;
-  onCopySay?: (prompt: string) => void;
+  onCopySay?: (prompt: string) => Promise<boolean>;
   onHumanGate?: (station: StationKey) => void;
 }) {
   const prompt = station.say;
   const hasPromptDetails = Boolean(prompt?.includes('\n'));
   const [promptExpanded, setPromptExpanded] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+    'idle',
+  );
+  const quoteRef = useRef<HTMLQuoteElement>(null);
+  const copyResetRef = useRef<number | null>(null);
+
+  const handleCopy = async () => {
+    if (!prompt) return;
+    if (copyResetRef.current !== null) {
+      window.clearTimeout(copyResetRef.current);
+      copyResetRef.current = null;
+    }
+    const ok = onCopySay ? await onCopySay(prompt) : false;
+    if (ok) {
+      setCopyState('copied');
+      copyResetRef.current = window.setTimeout(() => {
+        setCopyState('idle');
+        copyResetRef.current = null;
+      }, 1500);
+      return;
+    }
+    if (hasPromptDetails) setPromptExpanded(true);
+    const el = quoteRef.current;
+    if (el) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+    setCopyState('failed');
+  };
+
+  const copyLabel =
+    copyState === 'copied'
+      ? 'Copied'
+      : copyState === 'failed'
+        ? 'Select and copy'
+        : `Copy${hasPromptDetails ? ' full prompt' : ' prompt'}`;
 
   return (
     <article className="hlr-station">
@@ -52,6 +91,7 @@ export function StationCard({
         <div className="hlr-say">
           <span>Say this to the agent</span>
           <blockquote
+            ref={quoteRef}
             className={
               hasPromptDetails && !promptExpanded ? 'is-collapsed' : undefined
             }
@@ -72,10 +112,13 @@ export function StationCard({
             <button
               className="hlr-copy-prompt"
               type="button"
-              onClick={() => onCopySay?.(prompt)}
+              aria-live="polite"
+              onClick={() => {
+                void handleCopy();
+              }}
             >
               <Clipboard aria-hidden="true" />
-              Copy{hasPromptDetails ? ' full prompt' : ' prompt'}
+              {copyLabel}
             </button>
           </div>
         </div>

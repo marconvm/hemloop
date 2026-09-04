@@ -22,7 +22,7 @@ export interface LoopRoomProps {
   view: LoopRoomView;
   processing?: ProcessingView | null;
   creative?: LoopCreative | null;
-  onCopySay?: (prompt: string) => void;
+  onCopySay?: (prompt: string) => Promise<boolean>;
   onHumanGate?: (station: StationKey) => void;
   /** The "+" on the closet stack: the page adds five random garments, capped
    * at twenty for the active profile. (Claude added the prop; Codex wires it.) */
