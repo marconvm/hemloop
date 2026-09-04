@@ -12,6 +12,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { ClosetStack } from './closet-stack';
 import { CreativeCard } from './creative-card';
 import { LoopRoomRail } from './loop-room-rail';
+import { MerchantMarket } from './merchant-market';
 import { OutcomePanel } from './outcome-panel';
 import { PacketInTransit } from './packet-in-transit';
 import { StationCard } from './station-card';
@@ -72,7 +73,7 @@ export function LoopRoom({
         <section className="hlr-heading">
           <div className="hlr-hero" key={current.key}>
             <p>
-              A live commerce loop · cycle{' '}
+              A live E-commerce loop · cycle{' '}
               <span className="hlr-cycle-count" key={view.loopNumber}>
                 {view.loopNumber}
               </span>
@@ -83,7 +84,7 @@ export function LoopRoom({
             </h1>
           </div>
           <div className="hlr-heading-status">
-            <span>{view.progress} of 7 stations complete</span>
+            <span>{view.progress} of 7 steps complete</span>
             <ToolManifestDialog
               live={view.runtime.live}
               tools={tools}
@@ -158,7 +159,10 @@ export function LoopRoom({
 
           <aside className="hlr-party hlr-merchant">
             <div className="hlr-party-heading">
-              <h2>Merchant · Demand</h2>
+              <div className="hlr-party-title">
+                <h2>Merchant · Demand</h2>
+                <small>{view.activeMerchant.name}</small>
+              </div>
               <span className="is-truth">
                 <PackageCheck aria-hidden="true" />
                 Truth locked
@@ -171,6 +175,11 @@ export function LoopRoom({
               </span>
               <p>{current.merchantSees}</p>
             </div>
+
+            <MerchantMarket
+              activeMerchant={view.activeMerchant}
+              market={view.market}
+            />
 
             <CreativeCard
               creative={merchantCreative}

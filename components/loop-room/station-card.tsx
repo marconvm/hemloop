@@ -5,6 +5,7 @@ import {
   LoaderCircle,
   Wrench,
 } from 'lucide-react';
+import { useState } from 'react';
 
 import type {
   StationCard as StationCardModel,
@@ -28,6 +29,8 @@ export function StationCard({
   onHumanGate?: (station: StationKey) => void;
 }) {
   const prompt = station.say;
+  const hasPromptDetails = Boolean(prompt?.includes('\n'));
+  const [promptExpanded, setPromptExpanded] = useState(false);
 
   return (
     <article className="hlr-station">
@@ -48,11 +51,33 @@ export function StationCard({
       {prompt ? (
         <div className="hlr-say">
           <span>Say this to the agent</span>
-          <blockquote>“{prompt}”</blockquote>
-          <button type="button" onClick={() => onCopySay?.(prompt)}>
-            <Clipboard aria-hidden="true" />
-            Copy prompt
-          </button>
+          <blockquote
+            className={
+              hasPromptDetails && !promptExpanded ? 'is-collapsed' : undefined
+            }
+          >
+            “{prompt}”
+          </blockquote>
+          <div className="hlr-say-actions">
+            {hasPromptDetails ? (
+              <button
+                aria-expanded={promptExpanded}
+                className="hlr-prompt-toggle"
+                type="button"
+                onClick={() => setPromptExpanded((current) => !current)}
+              >
+                {promptExpanded ? 'Show less' : 'Show all'}
+              </button>
+            ) : null}
+            <button
+              className="hlr-copy-prompt"
+              type="button"
+              onClick={() => onCopySay?.(prompt)}
+            >
+              <Clipboard aria-hidden="true" />
+              Copy{hasPromptDetails ? ' full prompt' : ' prompt'}
+            </button>
+          </div>
         </div>
       ) : null}
 

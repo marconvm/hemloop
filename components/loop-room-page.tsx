@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   LoopRoom,
+  RuntimeStatus,
   type LoopCreative,
   type ProcessingView,
   type RuntimeToolView,
@@ -54,7 +55,11 @@ import {
   type StationCard,
   type StationKey,
 } from '@/lib/proofframe/loop-room';
-import { demandInsight, slug, toDemandSignalLike } from '@/lib/proofframe/offers';
+import {
+  demandInsight,
+  slug,
+  toDemandSignalLike,
+} from '@/lib/proofframe/offers';
 import { SAMPLE_RECEIPTS } from '@/lib/proofframe/receipts';
 import {
   readActiveMerchantId,
@@ -81,7 +86,11 @@ import {
   type PersonalOffer,
   type SignalOutcome,
 } from '@/lib/proofframe/signal-bridge';
-import type { CampaignFacts, CampaignState, Scene } from '@/lib/proofframe/types';
+import type {
+  CampaignFacts,
+  CampaignState,
+  Scene,
+} from '@/lib/proofframe/types';
 import {
   buildTools,
   getModelContext,
@@ -90,7 +99,11 @@ import {
   type SceneInput,
   type ToolContent,
 } from '@/lib/proofframe/webmcp';
-import { buildClosetTools, type ClosetCallbacks, type GarmentInput } from '@/lib/proofframe/webmcp-closet';
+import {
+  buildClosetTools,
+  type ClosetCallbacks,
+  type GarmentInput,
+} from '@/lib/proofframe/webmcp-closet';
 
 /** Which station a tool advances. Anything else lands on the current one. */
 const STATION_OF: Partial<Record<string, StationKey>> = {
@@ -103,7 +116,13 @@ const STATION_OF: Partial<Record<string, StationKey>> = {
 };
 
 /** The acts no tool can perform. Shown in the manifest as absent by design. */
-const HUMAN_ONLY = ['approve_next_request', 'approve_offer', 'mark_bought', 'lock_facts', 'set_sharing_level'];
+const HUMAN_ONLY = [
+  'approve_next_request',
+  'approve_offer',
+  'mark_bought',
+  'lock_facts',
+  'set_sharing_level',
+];
 
 const PROFILES: { key: ShopperProfile; label: string }[] = [
   { key: 'self', label: 'Me' },
@@ -111,12 +130,25 @@ const PROFILES: { key: ShopperProfile; label: string }[] = [
   { key: 'kid', label: 'Kid' },
 ];
 
-const CONSENT_LABEL: Record<0 | 1 | 2 | 3, string> = { 0: 'Private', 1: 'Basics', 2: 'Context', 3: 'Taste' };
+const CONSENT_LABEL: Record<0 | 1 | 2 | 3, string> = {
+  0: 'Private',
+  1: 'Basics',
+  2: 'Context',
+  3: 'Taste',
+};
 
 type Ran = Record<StationKey, string[]>;
 
 function emptyRan(): Ran {
-  return { item: [], gap: [], approved: [], offer: [], bought: [], learned: [], again: [] };
+  return {
+    item: [],
+    gap: [],
+    approved: [],
+    offer: [],
+    bought: [],
+    learned: [],
+    again: [],
+  };
 }
 
 type LastCall = { name: string; ok: boolean; message: string | null };
@@ -138,8 +170,13 @@ function catalogProductFor(facts: CampaignFacts) {
 
 /** A photo for a garment that has none (receipt imports, Bought): the catalog
  * product in the same category, from the same vendor when there is one. */
-function imageForCategory(category: GarmentCategory, vendor?: string): string | undefined {
-  const same = demoCatalog.products.filter((p) => guessCategory(p) === category);
+function imageForCategory(
+  category: GarmentCategory,
+  vendor?: string,
+): string | undefined {
+  const same = demoCatalog.products.filter(
+    (p) => guessCategory(p) === category,
+  );
   return (same.find((p) => p.vendor === vendor) ?? same[0])?.image;
 }
 
@@ -175,7 +212,9 @@ export function LoopRoomPage() {
   const merchants = useMemo(() => seedMerchants(), []);
   const [activeMerchantId, setActiveMerchantId] = useState('northlight');
   const activeMerchantIdRef = useRef(activeMerchantId);
-  const [campaign, setCampaign] = useState<CampaignState>(() => seedCampaign('northlight'));
+  const [campaign, setCampaign] = useState<CampaignState>(() =>
+    seedCampaign('northlight'),
+  );
   const campaignRef = useRef(campaign);
   const campaignHydratedRef = useRef(false);
 
@@ -188,7 +227,10 @@ export function LoopRoomPage() {
   // ----- This session's loop -----
   const [ran, setRan] = useState<Ran>(emptyRan);
   const [lastRan, setLastRan] = useState<LastRan>(null);
-  const [loop, setLoop] = useState<{ number: number; startedAt: string | null }>({ number: 1, startedAt: null });
+  const [loop, setLoop] = useState<{
+    number: number;
+    startedAt: string | null;
+  }>({ number: 1, startedAt: null });
   const [lastCall, setLastCall] = useState<LastCall | null>(null);
   const [processing, setProcessing] = useState<ProcessingView | null>(null);
   const [runtime, setRuntime] = useState({ live: false, toolCount: 0 });
@@ -220,7 +262,11 @@ export function LoopRoomPage() {
       setConsentLevel(level);
       loadBridge();
     });
-    const unsubscribe = [subscribeSignals(loadBridge), subscribeOffers(loadBridge), subscribeOutcomes(loadBridge)];
+    const unsubscribe = [
+      subscribeSignals(loadBridge),
+      subscribeOffers(loadBridge),
+      subscribeOutcomes(loadBridge),
+    ];
     return () => {
       active = false;
       for (const u of unsubscribe) u();
@@ -271,7 +317,10 @@ export function LoopRoomPage() {
 
   const addGarments = useCallback((rows: Garment[]) => {
     if (rows.length === 0) return;
-    const next = { ...wardrobeRef.current, garments: [...wardrobeRef.current.garments, ...rows] };
+    const next = {
+      ...wardrobeRef.current,
+      garments: [...wardrobeRef.current.garments, ...rows],
+    };
     wardrobeRef.current = next;
     setWardrobe(next);
     setNewIds((current) => {
@@ -344,7 +393,10 @@ export function LoopRoomPage() {
         return scene;
       },
       updateScene: (id, patch) =>
-        commit((c) => ({ ...c, scenes: c.scenes.map((s) => (s.id === id ? { ...s, ...patch } : s)) })),
+        commit((c) => ({
+          ...c,
+          scenes: c.scenes.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+        })),
       reorderScenes: (orderedIds) =>
         commit((c) => ({
           ...c,
@@ -356,14 +408,20 @@ export function LoopRoomPage() {
       seekPreview: () => {},
       importProduct: (handle) => {
         if (campaignRef.current.factsLocked) {
-          throw new Error('Offer facts are locked. Ask the merchant to unlock them in the studio before importing a product.');
+          throw new Error(
+            'Offer facts are locked. Ask the merchant to unlock them in the studio before importing a product.',
+          );
         }
-        const facts = makeCatalogImporter(() => campaignRef.current.facts)(handle);
+        const facts = makeCatalogImporter(() => campaignRef.current.facts)(
+          handle,
+        );
         commit((c) => ({ ...c, facts }));
         return facts;
       },
       deliverExport: (html) => {
-        const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+        const url = URL.createObjectURL(
+          new Blob([html], { type: 'text/html' }),
+        );
         const anchor = document.createElement('a');
         anchor.href = url;
         anchor.download = `${BRAND.name.toLowerCase()}-composition.html`;
@@ -386,19 +444,32 @@ export function LoopRoomPage() {
   const onToolResult = useCallback((name: string, result: ToolContent) => {
     const okValue = (result as { ok?: boolean }).ok !== false;
     const message = (result as { message?: unknown }).message;
-    setLastCall({ name, ok: okValue, message: typeof message === 'string' ? message : null });
+    setLastCall({
+      name,
+      ok: okValue,
+      message: typeof message === 'string' ? message : null,
+    });
     if (!okValue) return;
     // A closed loop plus a new receipt is the restart: the next loop starts now.
     if (name === 'import_receipt' && closedRef.current) {
       closedRef.current = false;
-      setLoop((l) => ({ number: l.number + 1, startedAt: new Date().toISOString() }));
-      setRan({ ...emptyRan(), item: ['import_receipt'], again: ['import_receipt'] });
+      setLoop((l) => ({
+        number: l.number + 1,
+        startedAt: new Date().toISOString(),
+      }));
+      setRan({
+        ...emptyRan(),
+        item: ['import_receipt'],
+        again: ['import_receipt'],
+      });
       setLastRan({ station: 'item', tools: ['import_receipt'] });
       return;
     }
     const station = STATION_OF[name] ?? currentRef.current;
     setRan((r) => {
-      const tools = r[station].includes(name) ? r[station] : [...r[station], name];
+      const tools = r[station].includes(name)
+        ? r[station]
+        : [...r[station], name];
       setLastRan({ station, tools });
       return { ...r, [station]: tools };
     });
@@ -409,11 +480,21 @@ export function LoopRoomPage() {
 
   useEffect(() => {
     let active = true;
-    const built = [...buildClosetTools(closetCallbacks), ...buildTools(studioCallbacks)];
+    const built = [
+      ...buildClosetTools(closetCallbacks),
+      ...buildTools(studioCallbacks),
+    ];
     const tools = built.map((t) => ({
       ...t,
-      execute: async (args: Record<string, unknown>, options?: { signal?: AbortSignal }) => {
-        if (active) setProcessing({ tool: t.name, label: 'Real WebMCP call, landing on this page' });
+      execute: async (
+        args: Record<string, unknown>,
+        options?: { signal?: AbortSignal },
+      ) => {
+        if (active)
+          setProcessing({
+            tool: t.name,
+            label: 'Real WebMCP call, landing on this page',
+          });
         try {
           const result = await t.execute(args, options);
           if (active) onToolResult(t.name, result);
@@ -434,10 +515,14 @@ export function LoopRoomPage() {
             readOnly: Boolean(t.annotations?.readOnlyHint),
           })),
         );
-        if (result.rejected.length > 0) console.error('WebMCP registration rejected', result.rejected);
+        if (result.rejected.length > 0)
+          console.error('WebMCP registration rejected', result.rejected);
         setRuntime({
           live: result.registered.length > 0,
-          toolCount: result.registered.length > 0 ? result.registered.length : tools.length,
+          toolCount:
+            result.registered.length > 0
+              ? result.registered.length
+              : tools.length,
         });
       })
       .catch((error) => {
@@ -451,9 +536,18 @@ export function LoopRoomPage() {
   }, [closetCallbacks, studioCallbacks, onToolResult]);
 
   // ----- Derived: this loop's rows -----
-  const since = useCallback((at: string) => loop.startedAt === null || at >= loop.startedAt, [loop.startedAt]);
-  const loopSignals = useMemo(() => signals.filter((s) => since(s.at)), [signals, since]);
-  const sentIds = useMemo(() => new Set(loopSignals.map((s) => s.signalId)), [loopSignals]);
+  const since = useCallback(
+    (at: string) => loop.startedAt === null || at >= loop.startedAt,
+    [loop.startedAt],
+  );
+  const loopSignals = useMemo(
+    () => signals.filter((s) => since(s.at)),
+    [signals, since],
+  );
+  const sentIds = useMemo(
+    () => new Set(loopSignals.map((s) => s.signalId)),
+    [loopSignals],
+  );
   const loopOffers = useMemo(
     () => offers.filter((o) => sentIds.has(o.requestId) && since(o.proposedAt)),
     [offers, sentIds, since],
@@ -462,11 +556,20 @@ export function LoopRoomPage() {
   const proposedOffer = loopOffers.find((o) => o.status === 'proposed') ?? null;
   const latestOffer = approvedOffer ?? proposedOffer;
   const boughtOutcome =
-    outcomes.find((o) => o.outcome === 'bought' && since(o.at) && sentIds.has(o.signalId)) ?? null;
+    outcomes.find(
+      (o) => o.outcome === 'bought' && since(o.at) && sentIds.has(o.signalId),
+    ) ?? null;
   const attributedPurchase =
-    purchases.find((p) => p.offerId != null && loopOffers.some((o) => o.offerId === p.offerId)) ?? null;
-  const latestImport = purchases.find((p) => p.id.startsWith('import-')) ?? null;
-  const profileWardrobe = useMemo(() => garmentsForProfile(wardrobe, activeProfile), [wardrobe, activeProfile]);
+    purchases.find(
+      (p) =>
+        p.offerId != null && loopOffers.some((o) => o.offerId === p.offerId),
+    ) ?? null;
+  const latestImport =
+    purchases.find((p) => p.id.startsWith('import-')) ?? null;
+  const profileWardrobe = useMemo(
+    () => garmentsForProfile(wardrobe, activeProfile),
+    [wardrobe, activeProfile],
+  );
   const gaps = useMemo(() => findGaps(profileWardrobe), [profileWardrobe]);
   const garmentCount = profileWardrobe.garments.length;
   const lastSignal = loopSignals[0] ?? null;
@@ -475,7 +578,9 @@ export function LoopRoomPage() {
     const request = toDemandSignalLike(lastSignal);
     if (!request) return null;
     const ceiling =
-      typeof lastSignal.taste?.priceCeiling === 'number' ? lastSignal.taste.priceCeiling : null;
+      typeof lastSignal.taste?.priceCeiling === 'number'
+        ? lastSignal.taste.priceCeiling
+        : null;
     const live = merchants.map((m) =>
       m.id === activeMerchantId ? { ...m, facts: campaign.facts } : m,
     );
@@ -492,11 +597,14 @@ export function LoopRoomPage() {
     if (first) switchMerchant(first.merchantId);
   }, [market, activeMerchantId, switchMerchant]);
 
-  const activeMerchant = merchants.find((m) => m.id === activeMerchantId) ?? merchants[0];
+  const activeMerchant =
+    merchants.find((m) => m.id === activeMerchantId) ?? merchants[0];
   const groups = useMemo(
     () =>
       demandInsight(
-        loopSignals.map(toDemandSignalLike).filter((r): r is NonNullable<typeof r> => r !== null),
+        loopSignals
+          .map(toDemandSignalLike)
+          .filter((r): r is NonNullable<typeof r> => r !== null),
         campaign.facts,
         catalogProductFor(campaign.facts),
         outcomes.filter((o) => o.outcome === 'bought').map((o) => o.signalId),
@@ -523,7 +631,10 @@ export function LoopRoomPage() {
 
   // Pattern before and after this loop's attributable purchase, for the category it answered.
   const patternCategory: GarmentCategory =
-    attributedPurchase?.category ?? lastSignal?.category ?? latestImport?.category ?? 'hoodie';
+    attributedPurchase?.category ??
+    lastSignal?.category ??
+    latestImport?.category ??
+    'hoodie';
   const patternAfter = patternLabel(buyingPattern(purchases, patternCategory));
   const patternBefore = patternLabel(
     buyingPattern(
@@ -534,11 +645,18 @@ export function LoopRoomPage() {
 
   const gapForRequest = gaps.find((g) => g.due) ?? gaps[0] ?? null;
   const importSample = SAMPLE_RECEIPTS[loop.number > 1 ? 1 : 0];
-  const profileLabel = PROFILES.find((p) => p.key === activeProfile)?.label ?? 'Me';
-  const lastPurchase = [...purchases].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
-  const previewFields = consentFieldsForRequest(consentLevel, { hasSize: true, hasHandle: false, hasOccasion: false });
+  const profileLabel =
+    PROFILES.find((p) => p.key === activeProfile)?.label ?? 'Me';
+  const lastPurchase =
+    [...purchases].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
+  const previewFields = consentFieldsForRequest(consentLevel, {
+    hasSize: true,
+    hasHandle: false,
+    hasOccasion: false,
+  });
   const ownedByCategory = GARMENT_CATEGORIES.map(
-    (c) => `${c} ${profileWardrobe.garments.filter((g) => g.category === c).length}`,
+    (c) =>
+      `${c} ${profileWardrobe.garments.filter((g) => g.category === c).length}`,
   ).join(' · ');
   const request = gapForRequest
     ? `${gapForRequest.category}${gapForRequest.due ? `, size ${gapForRequest.due.size}` : ''}`
@@ -552,21 +670,45 @@ export function LoopRoomPage() {
           ...base,
           label: 'New item',
           eyebrow: 'A purchase, privately',
-          title: loop.number > 1 ? 'A rival receipt lands in the closet' : 'A purchase lands in the closet',
+          title:
+            loop.number > 1
+              ? 'A rival receipt lands in the closet'
+              : 'A purchase lands in the closet',
           say: sayImport(importSample),
           facts: [
-            { label: 'Closet', value: `${garmentCount} garments for ${profileLabel}, private to this page` },
-            { label: 'Purchases logged', value: `${purchases.length} across every store` },
-            ...(lastPurchase ? [{ label: 'Last purchase', value: `${lastPurchase.title} · ${lastPurchase.merchant}` }] : []),
+            {
+              label: 'Closet',
+              value: `${garmentCount} garments for ${profileLabel}, private to this page`,
+            },
+            {
+              label: 'Purchases logged',
+              value: `${purchases.length} across every store`,
+            },
+            ...(lastPurchase
+              ? [
+                  {
+                    label: 'Last purchase',
+                    value: `${lastPurchase.title} · ${lastPurchase.merchant}`,
+                  },
+                ]
+              : []),
           ],
           updated: latestImport
             ? [
-                { label: 'Purchase logged', value: `${latestImport.title} · ${latestImport.merchant} · ${latestImport.size}` },
-                { label: 'Pattern', value: `${latestImport.category}: ${patternLabel(buyingPattern(purchases, latestImport.category))}` },
+                {
+                  label: 'Purchase logged',
+                  value: `${latestImport.title} · ${latestImport.merchant} · ${latestImport.size}`,
+                },
+                {
+                  label: 'Pattern',
+                  value: `${latestImport.category}: ${patternLabel(buyingPattern(purchases, latestImport.category))}`,
+                },
               ]
             : [],
-          shopperSees: 'The receipt parsed here: a purchase row and a garment appeared. Nothing was sent anywhere.',
-          merchantSees: 'Nothing. A purchase is private until the shopper approves a request.',
+          shopperSees:
+            'The receipt parsed here: a purchase row and a garment appeared. Nothing was sent anywhere.',
+          merchantSees:
+            'Nothing. A purchase is private until the shopper approves a request.',
           humanGate: null,
         };
       case 'gap':
@@ -579,36 +721,78 @@ export function LoopRoomPage() {
           facts: [
             { label: 'Owned', value: ownedByCategory },
             ...(gaps.find((g) => g.due)
-              ? [{ label: 'Oldest', value: `${gaps.find((g) => g.due)!.category} bought ${gaps.find((g) => g.due)!.due!.lastBoughtAt}, size ${gaps.find((g) => g.due)!.due!.size}` }]
+              ? [
+                  {
+                    label: 'Oldest',
+                    value: `${gaps.find((g) => g.due)!.category} bought ${gaps.find((g) => g.due)!.due!.lastBoughtAt}, size ${gaps.find((g) => g.due)!.due!.size}`,
+                  },
+                ]
               : []),
           ],
           updated:
             state === 'done'
-              ? gaps.slice(0, 3).map((g) => ({ label: g.due ? `${g.category} · worn out` : `${g.category} · missing`, value: g.reason }))
+              ? gaps.slice(0, 3).map((g) => ({
+                  label: g.due
+                    ? `${g.category} · worn out`
+                    : `${g.category} · missing`,
+                  value: g.reason,
+                }))
               : [],
-          shopperSees: 'Gaps computed from wardrobe rows and purchase dates. The dates never leave.',
-          merchantSees: 'Nothing yet. A gap is a private fact until one request is approved.',
+          shopperSees:
+            'Gaps computed from wardrobe rows and purchase dates. The dates never leave.',
+          merchantSees:
+            'Nothing yet. A gap is a private fact until one request is approved.',
           humanGate: null,
         };
       case 'approved': {
-        const refused = lastCall && lastCall.name === 'report_demand_gap' && !lastCall.ok ? lastCall : null;
+        const refused =
+          lastCall && lastCall.name === 'report_demand_gap' && !lastCall.ok
+            ? lastCall
+            : null;
         return {
           ...base,
           label: 'Approved request',
           eyebrow: 'One human gate',
           title: 'Refused, one human press, then exactly one packet leaves',
-          say: shareArmed ? `Yes, send it. Tell the store I need ${request}` : `Tell the store I need ${request}`,
+          say: shareArmed
+            ? `Yes, send it. Tell the store I need ${request}`
+            : `Tell the store I need ${request}`,
           facts: [
-            { label: 'Sharing level', value: `${consentLevel} · ${CONSENT_LABEL[consentLevel]}` },
-            { label: 'Would travel', value: previewFields.length ? previewFields.join(', ') : 'nothing' },
-            { label: 'Would not', value: 'shopper id, wardrobe rows, purchase log, household profile' },
+            {
+              label: 'Sharing level',
+              value: `${consentLevel} · ${CONSENT_LABEL[consentLevel]}`,
+            },
+            {
+              label: 'Would travel',
+              value: previewFields.length
+                ? previewFields.join(', ')
+                : 'nothing',
+            },
+            {
+              label: 'Would not',
+              value:
+                'shopper id, wardrobe rows, purchase log, household profile',
+            },
           ],
           updated: [
-            ...(refused ? [{ label: 'Refused', value: refused.message ?? 'Human approval required' }] : []),
+            ...(refused
+              ? [
+                  {
+                    label: 'Refused',
+                    value: refused.message ?? 'Human approval required',
+                  },
+                ]
+              : []),
             ...(lastSignal
               ? [
-                  { label: 'Sent', value: `${lastSignal.kind} · ${lastSignal.category} · ${lastSignal.size ?? 'any size'} · sharing level ${lastSignal.consent.level}` },
-                  { label: 'Fields that crossed', value: lastSignal.consent.fields.join(', ') },
+                  {
+                    label: 'Sent',
+                    value: `${lastSignal.kind} · ${lastSignal.category} · ${lastSignal.size ?? 'any size'} · sharing level ${lastSignal.consent.level}`,
+                  },
+                  {
+                    label: 'Fields that crossed',
+                    value: lastSignal.consent.fields.join(', '),
+                  },
                 ]
               : []),
           ],
@@ -625,7 +809,9 @@ export function LoopRoomPage() {
             state === 'done' || consentLevel === 0
               ? null
               : {
-                  label: shareArmed ? 'Approved · now reply "Yes, send it"' : 'Approve next request',
+                  label: shareArmed
+                    ? 'Approved · now reply "Yes, send it"'
+                    : 'Approve next request',
                   hint: `One press releases one event at sharing level ${consentLevel}. No tool can press it.`,
                 },
         };
@@ -635,7 +821,8 @@ export function LoopRoomPage() {
           ...base,
           label: 'Matched offer',
           eyebrow: 'Inside locked rules',
-          title: 'Grouped demand, a proposal inside locked rules, one human approval',
+          title:
+            'Grouped demand, a proposal inside locked rules, one human approval',
           say: 'Which store can fill this, and what can it offer inside its rules?',
           facts: [
             ...(market ?? []).map((row) => ({
@@ -646,11 +833,19 @@ export function LoopRoomPage() {
           ],
           updated: [
             ...(groups.length > 0
-              ? [{ label: 'Demand', value: `${groups.length} group${groups.length === 1 ? '' : 's'} · ${groups[0].category} ${groups[0].size} · ${groups[0].verdict}` }]
+              ? [
+                  {
+                    label: 'Demand',
+                    value: `${groups.length} group${groups.length === 1 ? '' : 's'} · ${groups[0].category} ${groups[0].size} · ${groups[0].verdict}`,
+                  },
+                ]
               : []),
             ...(latestOffer
               ? [
-                  { label: 'Proposal', value: `${money(latestOffer.price, latestOffer.currency)} (${latestOffer.discountPercent}% off) · margin ${latestOffer.marginCheck.resultingMarginPercent}% vs floor ${latestOffer.marginCheck.floorPercent}%` },
+                  {
+                    label: 'Proposal',
+                    value: `${money(latestOffer.price, latestOffer.currency)} (${latestOffer.discountPercent}% off) · margin ${latestOffer.marginCheck.resultingMarginPercent}% vs floor ${latestOffer.marginCheck.floorPercent}%`,
+                  },
                   { label: 'Reasons', value: latestOffer.reasons.join('; ') },
                   { label: 'Status', value: latestOffer.status },
                 ]
@@ -662,7 +857,10 @@ export function LoopRoomPage() {
           merchantSees: `${activeMerchant.name} is answering. Demand scored against locked facts; a proposal checked against the margin floor.`,
           humanGate:
             proposedOffer && !approvedOffer
-              ? { label: 'Approve offer', hint: 'The shopper cannot see a proposal until a merchant approves it.' }
+              ? {
+                  label: 'Approve offer',
+                  hint: 'The shopper cannot see a proposal until a merchant approves it.',
+                }
               : null,
         };
       case 'bought':
@@ -675,19 +873,38 @@ export function LoopRoomPage() {
           facts: approvedOffer
             ? [
                 { label: 'Merchant', value: activeMerchant.name },
-                { label: 'Offer', value: `${approvedOffer.title} · ${approvedOffer.size ?? 'any size'} · ${money(approvedOffer.price, approvedOffer.currency)}` },
-                { label: 'Code', value: approvedOffer.promoCode ?? 'none, price already applied' },
+                {
+                  label: 'Offer',
+                  value: `${approvedOffer.title} · ${approvedOffer.size ?? 'any size'} · ${money(approvedOffer.price, approvedOffer.currency)}`,
+                },
+                {
+                  label: 'Code',
+                  value:
+                    approvedOffer.promoCode ?? 'none, price already applied',
+                },
                 { label: 'Valid to', value: approvedOffer.validTo },
               ]
             : [],
-          updated: boughtOutcome ? [{ label: 'Outcome', value: `bought · ${new Date(boughtOutcome.at).toLocaleTimeString()}` }] : [],
-          shopperSees: approvedOffer ? 'Price, code, validity and a checkout link. Bought or Passed is yours alone.' : 'No offer yet.',
+          updated: boughtOutcome
+            ? [
+                {
+                  label: 'Outcome',
+                  value: `bought · ${new Date(boughtOutcome.at).toLocaleTimeString()}`,
+                },
+              ]
+            : [],
+          shopperSees: approvedOffer
+            ? 'Price, code, validity and a checkout link. Bought or Passed is yours alone.'
+            : 'No offer yet.',
           merchantSees: boughtOutcome
             ? `${activeMerchant.name}: one request came back bought. Still no shopper id.`
             : 'Waiting on the shopper.',
           humanGate:
             approvedOffer && !boughtOutcome
-              ? { label: 'Bought', hint: 'No tool can buy for the shopper. This press logs the purchase in the closet.' }
+              ? {
+                  label: 'Bought',
+                  hint: 'No tool can buy for the shopper. This press logs the purchase in the closet.',
+                }
               : null,
         };
       case 'learned':
@@ -699,15 +916,25 @@ export function LoopRoomPage() {
           say: null,
           facts: [
             { label: 'Merchant', value: activeMerchant.name },
-            { label: 'Pattern before', value: `${patternCategory}: ${patternBefore}` },
+            {
+              label: 'Pattern before',
+              value: `${patternCategory}: ${patternBefore}`,
+            },
           ],
           updated: attributedPurchase
             ? [
-                { label: 'Purchase', value: `${attributedPurchase.title} · offer #${shortOfferId(attributedPurchase.offerId)}` },
-                { label: 'Pattern after', value: `${patternCategory}: ${patternAfter}` },
+                {
+                  label: 'Purchase',
+                  value: `${attributedPurchase.title} · offer #${shortOfferId(attributedPurchase.offerId)}`,
+                },
+                {
+                  label: 'Pattern after',
+                  value: `${patternCategory}: ${patternAfter}`,
+                },
               ]
             : [],
-          shopperSees: 'The purchase carries the offer that won it. The next offer is shaped by a sharper pattern.',
+          shopperSees:
+            'The purchase carries the offer that won it. The next offer is shaped by a sharper pattern.',
           merchantSees: `${activeMerchant.name}: an attributable sale and demand it could not see before.`,
           humanGate: null,
         };
@@ -718,23 +945,34 @@ export function LoopRoomPage() {
           eyebrow: 'The loop runs again',
           title: 'A rival receipt starts the next loop',
           say: sayImport(SAMPLE_RECEIPTS[1]),
-          facts: [{ label: 'Cycle', value: `${loop.number} · ${purchases.length} purchases logged` }],
-          updated: loop.number > 1 ? [{ label: 'Loop', value: `cycle ${loop.number} started` }] : [],
-          shopperSees: 'A rival purchase lands in the same closet. The pattern sharpens; nothing about it leaves.',
+          facts: [
+            {
+              label: 'Cycle',
+              value: `${loop.number} · ${purchases.length} purchases logged`,
+            },
+          ],
+          updated:
+            loop.number > 1
+              ? [{ label: 'Loop', value: `cycle ${loop.number} started` }]
+              : [],
+          shopperSees:
+            'A rival purchase lands in the same closet. The pattern sharpens; nothing about it leaves.',
           merchantSees: 'Nothing, until the next approved request.',
           humanGate: null,
         };
     }
   });
 
-  const closet: ClosetRow[] = [...profileWardrobe.garments].reverse().map((g) => ({
-    id: g.id,
-    category: g.category,
-    brand: g.brand,
-    size: g.size,
-    image: g.image ?? imageForCategory(g.category, g.brand),
-    isNew: newIds.has(g.id),
-  }));
+  const closet: ClosetRow[] = [...profileWardrobe.garments]
+    .reverse()
+    .map((g) => ({
+      id: g.id,
+      category: g.category,
+      brand: g.brand,
+      size: g.size,
+      image: g.image ?? imageForCategory(g.category, g.brand),
+      isNew: newIds.has(g.id),
+    }));
 
   const view: LoopRoomView = {
     stations: stationCards,
@@ -795,10 +1033,15 @@ export function LoopRoomPage() {
             ],
             patternBefore,
             patternAfter,
-            nobodyGained: 'Wardrobe rows, identity, household profile and the purchase log stayed on this page.',
+            nobodyGained:
+              'Wardrobe rows, identity, household profile and the purchase log stayed on this page.',
           }
         : null,
-    runtime: { live: runtime.live, toolCount: runtime.toolCount, absent: HUMAN_ONLY },
+    runtime: {
+      live: runtime.live,
+      toolCount: runtime.toolCount,
+      absent: HUMAN_ONLY,
+    },
   };
 
   const offerScene = campaign.scenes.find((s) => s.kind === 'offer');
@@ -836,10 +1079,15 @@ export function LoopRoomPage() {
       detail: `${money(approvedOffer.price, approvedOffer.currency)}${approvedOffer.promoCode ? ` · code ${approvedOffer.promoCode}` : ''}`,
       href: approvedOffer.purchaseUrl,
     };
-  } else if ((current === 'learned' || current === 'again') && attributedPurchase) {
+  } else if (
+    (current === 'learned' || current === 'again') &&
+    attributedPurchase
+  ) {
     creative = {
       kind: 'product',
-      image: approvedOffer?.image ?? imageForCategory(attributedPurchase.category, attributedPurchase.brand),
+      image:
+        approvedOffer?.image ??
+        imageForCategory(attributedPurchase.category, attributedPurchase.brand),
       kicker: 'Now in the closet',
       title: attributedPurchase.title,
       detail: `${attributedPurchase.merchant} · offer #${shortOfferId(attributedPurchase.offerId)}`,
@@ -854,14 +1102,29 @@ export function LoopRoomPage() {
         return;
       }
       if (station === 'offer' && proposedOffer && !approvedOffer) {
-        upsertOffer({ ...proposedOffer, status: 'approved', approvedAt: new Date().toISOString() });
+        upsertOffer({
+          ...proposedOffer,
+          status: 'approved',
+          approvedAt: new Date().toISOString(),
+        });
         return;
       }
       if (station === 'bought' && approvedOffer && !boughtOutcome) {
         const at = new Date().toISOString();
-        if (!recordOutcome({ signalId: approvedOffer.requestId, outcome: 'bought', at })) return;
+        if (
+          !recordOutcome({
+            signalId: approvedOffer.requestId,
+            outcome: 'bought',
+            at,
+          })
+        )
+          return;
         seqRef.current += 1;
-        const purchase = purchaseFromOffer(approvedOffer, `offer-${Date.now().toString(36)}-${seqRef.current}`, at);
+        const purchase = purchaseFromOffer(
+          approvedOffer,
+          `offer-${Date.now().toString(36)}-${seqRef.current}`,
+          at,
+        );
         addPurchases([purchase]);
         insertGarment({
           category: purchase.category,
@@ -876,7 +1139,9 @@ export function LoopRoomPage() {
   );
 
   const onAddGarments = useCallback(() => {
-    addGarments(randomGarments(5, wardrobeRef.current, activeProfileRef.current));
+    addGarments(
+      randomGarments(5, wardrobeRef.current, activeProfileRef.current),
+    );
   }, [addGarments]);
 
   const onSelectProfile = useCallback((profile: ShopperProfile) => {
@@ -892,7 +1157,14 @@ export function LoopRoomPage() {
     <>
       <SiteHeader
         active="loop"
-        status={runtime.live ? `${runtime.toolCount} WebMCP tools live` : `${runtime.toolCount} tools · preview mode`}
+        status={
+          <RuntimeStatus
+            absent={view.runtime.absent}
+            live={runtime.live}
+            toolCount={runtime.toolCount}
+            tools={manifest}
+          />
+        }
       />
       <LoopRoom
         view={view}
@@ -901,7 +1173,9 @@ export function LoopRoomPage() {
         creative={creative}
         onCopySay={onCopySay}
         onHumanGate={onHumanGate}
-        onAddGarments={garmentCount < MAX_CLOSET_ROWS ? onAddGarments : undefined}
+        onAddGarments={
+          garmentCount < MAX_CLOSET_ROWS ? onAddGarments : undefined
+        }
         onSelectProfile={onSelectProfile}
       />
     </>
