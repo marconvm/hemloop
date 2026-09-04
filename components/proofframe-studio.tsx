@@ -1028,11 +1028,11 @@ export function ProofFrameStudio() {
       >
         <div className="demand-tab-chrome">
           <label className="merchant-switcher">
-            <span>You are:</span>
+            <span>Store:</span>
             <select
               value={activeMerchantId}
               onChange={(event) => switchMerchant(event.target.value)}
-              aria-label="Active merchant"
+              aria-label="Active store"
             >
               {merchants.map((m) => (
                 <option key={m.id} value={m.id}>

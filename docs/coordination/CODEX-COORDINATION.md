@@ -751,3 +751,7 @@ Verified getBoundingClientRect at 1000 / 1200 / 1456:
 - 1456: wardrobe ~890px (3×276 cards), gaps ~524px, no dead third column
 
 Gates: tests · tsc · lint · build. Deploy immediately.
+
+Also on this branch: /studio Demand `Store:` label was flush at left=0 (clipped to
+`re:` on live at 1456). `demand-tab-chrome` now shares the merchant-body width;
+offer-grid uses `minmax(0,…)`. Label reads `Store:`.
