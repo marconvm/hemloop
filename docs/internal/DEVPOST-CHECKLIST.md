@@ -7,7 +7,7 @@ already reviewed.
 |---|---|
 | Project name | Hemloop |
 | Tagline | "Your AI tells a store what you need, without telling it who you are." (lib/proofframe/brand.ts tagline is the short form) |
-| Description | docs/WRITEUP.md, sections in order: What it does, Why WebMCP fits, How this compares, How we built it, Challenges, What's next |
+| Description | docs/internal/WRITEUP.md, sections in order: What it does, Why WebMCP fits, How this compares, How we built it, Challenges, What's next |
 | Built with | WebMCP (document.modelContext), TypeScript, React 19, vinext, Vite, Cloudflare Workers, Shopify (catalog connector), HyperFrames (composition format), ElevenLabs (voiceover) |
 | Try it out | https://hemloop.app (closet: /closet, studio: /studio, docs: /docs/) |
 | Video | the 2:50 take from video/CUE-SHEET.md, uploaded unlisted; hard cap 3:00, audio mandatory |

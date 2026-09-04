@@ -92,7 +92,7 @@ For PF2-6, cap `size`/`handle`, make `appendSignal` return success/failure, vali
 - `/docs` cannot select arbitrary paths from the hash, and the current marked.js SRI check passes.
 - No committed credential was found. The generated Worker config has no secrets or service bindings, includes `nodejs_compat`, enables observability, and uses a compatibility date less than six months old. Latest Workers types checked were `5.20260901.1`; the one-day project pin difference did not affect this review.
 - The one-origin localStorage bridge is data-minimized under its intended write path. Corrupt same-origin storage can cause availability/type issues but does not create a new wardrobe-exfiltration field.
-- `robots.txt` deny-all and `noindex,nofollow` are present on the app and docs. These are discovery hints, not access control; direct judge/browser access remains possible. The promised post-challenge removal checkbox was not present in `docs/TEST-PLAN.md` during this pass, so add it when triaging without conflicting with the post-submission freeze.
+- `robots.txt` deny-all and `noindex,nofollow` are present on the app and docs. These are discovery hints, not access control; direct judge/browser access remains possible.
 
 ### Verification record
 
