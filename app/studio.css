@@ -777,9 +777,73 @@
 }
 
 .verdict-size-not-in-stock,
-.verdict-category-mismatch {
+.verdict-category-mismatch,
+.verdict-margin-floor,
+.verdict-over-ceiling {
   background: #fff3d9;
   color: #705321;
+}
+
+/* ── Demand tab: merchant switcher + market scan ── */
+
+.demand-tab-chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.merchant-switcher {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.merchant-switcher select {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  color: var(--forest);
+}
+
+.market-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 6px;
+}
+
+.market-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f3f1ea;
+  font-size: 12px;
+}
+
+.market-merchant {
+  font-weight: 700;
+  min-width: 10rem;
+}
+
+.market-price {
+  font-variant-numeric: tabular-nums;
+  color: var(--forest);
+  font-weight: 700;
 }
 
 /* ── Request feed ── */

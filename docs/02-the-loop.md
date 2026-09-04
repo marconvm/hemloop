@@ -82,6 +82,20 @@ Again**.
 
 ![The merchant's proposal, with its margin check, waiting for a human to approve](img/studio-proposal-approve.jpg)
 
+## Only the right store answers
+
+A request is scored against every merchant's locked rules at once. The market scan returns a
+verdict per store: `can-offer`, `size-not-in-stock`, `category-mismatch`, `margin-floor`, or
+`over-ceiling`. Only a `can-offer` merchant may propose. The Loop Room shows the whole market so
+the point is visible; the studio is one merchant's desk with a switcher for which store you are.
+
+Five sample merchants make the refusals concrete on a hoodie · M request. At Basics (no price
+ceiling) Northlight and Overland can answer; Harborview cannot clear its margin floor, Ridgeline
+is out of M, Denim Supply is the wrong category. At Taste, with the shopper's ceiling of 60,
+only Northlight remains — Overland's capped price sits above the ceiling and its rule cannot go
+deeper. The sharing dial changes who can answer. Market rows carry verdict and price only; no
+merchant ever sees another's cost or floor.
+
 ## Run it three times: the compounding
 
 **Loop one.** Maya's pattern is thin, so the offer is generic: the merchant's standard 25%.

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readCampaign, seedCampaign, writeCampaign } from '../lib/proofframe/seed';
+import { readCampaign, seedCampaign, writeCampaign, readActiveMerchantId, writeActiveMerchantId } from '../lib/proofframe/seed';
+import { marketScan, seedMerchants } from '../lib/proofframe/merchants';
 import { validateCampaign, validateScene, validateText } from '../lib/proofframe/validator';
 import { exportComposition } from '../lib/proofframe/exporter';
 import {
@@ -282,12 +283,11 @@ void test('get_offer reads the current locked facts as agent-actionable offer da
   assert.equal(result.validTo, facts.endDate);
   assert.equal(result.disclaimer, facts.disclaimer);
   assert.equal(result.locked, true);
-  // The seed ships without sizes in stock on purpose: the studio opens at 8 of 9 so the
-  // completeness meter has one "Unlocks" line to show, and the human adds the sizes on camera.
-  assert.deepEqual(result.sizesInStock, []);
+  // Multi-merchant seed locks sizes on facts so marketScan can refuse without a catalog import.
+  assert.deepEqual(result.sizesInStock, ['S', 'M', 'L', 'XL']);
   assert.equal(result.completeness?.total, 9);
-  assert.equal(result.completeness?.locked, 8);
-  assert.deepEqual(result.completeness?.missing, ['sizesInStock']);
+  assert.equal(result.completeness?.locked, 9);
+  assert.deepEqual(result.completeness?.missing, []);
   assert.ok(JSON.stringify(result).length <= 1500);
 });
 
@@ -327,17 +327,17 @@ void test('completeness counts on the seed and after removing purchaseUrl', () =
   const seed = seedCampaign();
   const onSeed = computeCompleteness(seed.facts);
   assert.equal(onSeed.total, 9);
-  assert.equal(onSeed.locked, 8);
-  assert.deepEqual(onSeed.missing, ['sizesInStock']);
+  assert.equal(onSeed.locked, 9);
+  assert.deepEqual(onSeed.missing, []);
 
-  const full = computeCompleteness({ ...seed.facts, sizesInStock: ['XS', 'S', 'M', 'L', 'XL'] });
-  assert.equal(full.locked, 9);
-  assert.deepEqual(full.missing, []);
+  const withoutSizes = computeCompleteness({ ...seed.facts, sizesInStock: undefined });
+  assert.equal(withoutSizes.locked, 8);
+  assert.deepEqual(withoutSizes.missing, ['sizesInStock']);
 
   const withoutUrl = { ...seed.facts, purchaseUrl: undefined };
   const partial = computeCompleteness(withoutUrl);
-  assert.equal(partial.locked, 7);
-  assert.deepEqual(partial.missing.sort(), ['purchaseUrl', 'sizesInStock']);
+  assert.equal(partial.locked, 8);
+  assert.deepEqual(partial.missing, ['purchaseUrl']);
 });
 
 void test('add_scene with violating copy is rejected and applies nothing', async () => {
@@ -880,7 +880,7 @@ void test('demandInsight on no requests is an empty list, not a fabricated row',
 
 void test("matchOffer checks the stock the offer will claim, not only the facts' own list", () => {
   const { facts } = seedCampaign();
-  assert.equal(facts.sizesInStock, undefined, 'the seed locks no sizes of its own');
+  assert.ok(facts.sizesInStock?.includes('XL'), 'seed locks sizes including XL');
   // Regression: with sizes coming only from the imported product, a size that
   // product does not carry must be refused, not offered and then contradicted.
   const refused = matchOffer({
@@ -889,6 +889,12 @@ void test("matchOffer checks the stock the offer will claim, not only the facts'
     catalogProduct: HOODIE,
   });
   assert.deepEqual(refused, { ok: false, reason: 'size not in stock' });
+  const catalogWins = matchOffer({
+    request: { signalId: 'r', category: 'hoodie', size: 'XL' },
+    facts,
+    catalogProduct: { ...HOODIE, sizesInStock: ['S', 'M', 'L'] },
+  });
+  assert.deepEqual(catalogWins, { ok: false, reason: 'size not in stock' });
   const matched = matchOffer({
     request: { signalId: 'r', category: 'hoodie', size: 'L' },
     facts,
@@ -1282,6 +1288,13 @@ function installFakeWindow(): () => void {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => void store.set(k, v),
       removeItem: (k: string) => void store.delete(k),
+      clear: () => {
+        store.clear();
+      },
+      key: (i: number) => [...store.keys()][i] ?? null,
+      get length() {
+        return store.size;
+      },
     },
     dispatchEvent: () => true,
     addEventListener: () => undefined,
@@ -1292,15 +1305,15 @@ function installFakeWindow(): () => void {
   };
 }
 
-void test('readCampaign/writeCampaign: one campaign for every page; seed on empty/corrupt; factsLocked persists', () => {
+void test('readCampaign/writeCampaign: per-merchant storage, active id, legacy hemloop.campaign migration', () => {
   const restore = installFakeWindow();
   try {
-    const empty = readCampaign();
-    assert.equal(empty.facts.productName, seedCampaign().facts.productName);
+    const empty = readCampaign('northlight');
+    assert.equal(empty.facts.productName, seedCampaign('northlight').facts.productName);
     assert.equal(empty.factsLocked, true);
 
     const unlocked: CampaignState = {
-      ...seedCampaign(),
+      ...seedCampaign('northlight'),
       brief: 'Shared brief from studio',
       factsLocked: false,
       scenes: [
@@ -1313,31 +1326,112 @@ void test('readCampaign/writeCampaign: one campaign for every page; seed on empt
         },
       ],
     };
-    writeCampaign(unlocked);
-    const roundTrip = readCampaign();
+    writeCampaign('northlight', unlocked);
+    const roundTrip = readCampaign('northlight');
     assert.equal(roundTrip.brief, 'Shared brief from studio');
     assert.equal(roundTrip.factsLocked, false);
     assert.equal(roundTrip.scenes.length, 1);
     assert.equal(roundTrip.scenes[0].heading, 'Edited on studio');
 
+    // Harborview stays on its own seed until written.
+    assert.equal(readCampaign('harborview').facts.productName, 'Harbor Fleece Hoodie');
+    writeCampaign('harborview', {
+      ...seedCampaign('harborview'),
+      brief: 'Harbor desk brief',
+    });
+    assert.equal(readCampaign('harborview').brief, 'Harbor desk brief');
+    assert.equal(readCampaign('northlight').brief, 'Shared brief from studio');
+
+    writeActiveMerchantId('harborview');
+    assert.equal(readActiveMerchantId(), 'harborview');
+    writeCampaign({ ...seedCampaign('harborview'), brief: 'Via active id' });
+    assert.equal(readCampaign('harborview').brief, 'Via active id');
+
+    // Legacy single-key migrates into campaigns.northlight once, then is removed.
+    window.localStorage.clear();
+    const legacy: CampaignState = {
+      ...seedCampaign('northlight'),
+      brief: 'Migrated from hemloop.campaign',
+      factsLocked: false,
+    };
+    window.localStorage.setItem('hemloop.campaign', JSON.stringify(legacy));
+    const migrated = readCampaign('northlight');
+    assert.equal(migrated.brief, 'Migrated from hemloop.campaign');
+    assert.equal(window.localStorage.getItem('hemloop.campaign'), null);
+    assert.ok(window.localStorage.getItem('hemloop.campaigns'));
+
+    // Corrupt legacy is dropped; empty map falls back to seed.
+    window.localStorage.clear();
     window.localStorage.setItem('hemloop.campaign', '{not-json');
-    assert.equal(readCampaign().factsLocked, seedCampaign().factsLocked);
+    assert.equal(readCampaign('northlight').factsLocked, seedCampaign('northlight').factsLocked);
+    assert.equal(window.localStorage.getItem('hemloop.campaign'), null);
 
     window.localStorage.setItem(
-      'hemloop.campaign',
-      JSON.stringify({ brief: 'x', factsLocked: true, facts: { productName: 1 }, scenes: [] }),
-    );
-    assert.equal(readCampaign().brief, seedCampaign().brief);
-
-    window.localStorage.setItem(
-      'hemloop.campaign',
+      'hemloop.campaigns',
       JSON.stringify({
-        ...seedCampaign(),
-        scenes: [{ id: 'bad', kind: 'spaceship', heading: 'x', body: 'y', durationSec: 1 }],
+        northlight: {
+          ...seedCampaign('northlight'),
+          scenes: [{ id: 'bad', kind: 'spaceship', heading: 'x', body: 'y', durationSec: 1 }],
+        },
       }),
     );
-    assert.equal(readCampaign().scenes[0].kind, 'hero');
+    assert.equal(readCampaign('northlight').scenes[0].kind, 'hero');
   } finally {
     restore();
   }
+});
+
+void test('marketScan: five verdicts at Basics (no ceiling) for hoodie · M', () => {
+  const request = {
+    signalId: 'req-market-l1',
+    category: 'hoodie' as const,
+    size: 'M',
+    kind: 'gap' as const,
+    level: 'need' as const,
+  };
+  const rows = marketScan(request, seedMerchants(), null);
+  assert.deepEqual(
+    rows.map((r) => r.merchantId),
+    ['northlight', 'overland', 'harborview', 'ridgeline', 'denim-supply'],
+    'can-offer first in seed order, then the rest in seed order',
+  );
+  const byId = Object.fromEntries(rows.map((r) => [r.merchantId, r]));
+  assert.equal(byId.northlight.verdict, 'can-offer');
+  assert.equal(byId.northlight.price, 44.93);
+  assert.equal(byId.overland.verdict, 'can-offer');
+  assert.equal(byId.overland.price, 80.1);
+  assert.equal(byId.harborview.verdict, 'margin-floor');
+  assert.equal(byId.harborview.price, null);
+  assert.match(byId.harborview.reason, /26\.53%.*30%/);
+  assert.equal(byId.ridgeline.verdict, 'size-not-in-stock');
+  assert.equal(byId['denim-supply'].verdict, 'category-mismatch');
+  // Market rows never carry another merchant's cost or floor fields.
+  for (const row of rows) {
+    assert.equal('costPrice' in row, false);
+    assert.equal('marginFloorPercent' in row, false);
+  }
+});
+
+void test('marketScan: Taste ceiling 60 leaves only Northlight can-offer; Overland over-ceiling', () => {
+  const request = {
+    signalId: 'req-market-l3',
+    category: 'hoodie' as const,
+    size: 'M',
+    kind: 'want' as const,
+    level: 'want' as const,
+  };
+  const rows = marketScan(request, seedMerchants(), 60);
+  assert.deepEqual(
+    rows.map((r) => r.merchantId),
+    ['northlight', 'harborview', 'ridgeline', 'denim-supply', 'overland'],
+  );
+  const byId = Object.fromEntries(rows.map((r) => [r.merchantId, r]));
+  assert.equal(byId.northlight.verdict, 'can-offer');
+  assert.equal(byId.northlight.price, 44.93);
+  assert.equal(byId.harborview.verdict, 'margin-floor');
+  assert.equal(byId.ridgeline.verdict, 'size-not-in-stock');
+  assert.equal(byId['denim-supply'].verdict, 'category-mismatch');
+  assert.equal(byId.overland.verdict, 'over-ceiling');
+  assert.equal(byId.overland.price, null);
+  assert.match(byId.overland.reason, /80\.10/);
 });

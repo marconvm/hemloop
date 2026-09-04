@@ -597,3 +597,25 @@ getBoundingClientRect / overflow (`scrollWidth <= innerWidth`) at four widths:
 | 1440 | no (1440) | no (1440) | wrap OK | 46, in-view | 44, in-view | 50, in-view | 44, in-view |
 
 Gates: 144/144, tsc, lint, build. No deploy.
+
+### Cursor merchants: multi-merchant market scan (2026-09-03)
+
+Branch: `cursor/merchants` (worktree `../hemloop-cursor`). Cut from `origin/main` @ `6920425`
+(MERCHANTS-BRIEF + MarketRow contract). Did not touch `components/loop-room/*` (Codex renders
+`view.market`).
+
+Landed:
+1. `lib/proofframe/merchants.ts` — `seedMerchants()` (five) + pure `marketScan` (matchOffer +
+   margin-floor + over-ceiling; can-offer first, then seed order). Real L1 prices: Northlight
+   44.93, Overland 80.10; Taste ceiling 60 → only Northlight.
+2. Per-merchant storage: `hemloop.campaigns` + `hemloop.merchant`; migrate legacy
+   `hemloop.campaign` → `campaigns.northlight`. `seedPreferences.priceCeiling` = 60.
+3. `loop-room-page.tsx`: fill `view.market` / `view.activeMerchant`; auto-switch to first
+   can-offer; offer-station say/facts name the market.
+4. Studio Demand: merchant switcher + per-request market rows (verdict + price only).
+5. Tests: five verdicts at L1 and L3, ordering, storage roundtrip + migration; completeness
+   expects seed sizes locked. Tool count still 21.
+6. Docs: "Only the right store answers" in `02-the-loop.md`; market line in `USER-GUIDE.md`;
+   `public/docs/` mirror byte-identical.
+
+Gates: 146/146, tsc, lint, build. No deploy.

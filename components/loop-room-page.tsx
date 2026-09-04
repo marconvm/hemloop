@@ -56,7 +56,15 @@ import {
 } from '@/lib/proofframe/loop-room';
 import { demandInsight, slug, toDemandSignalLike } from '@/lib/proofframe/offers';
 import { SAMPLE_RECEIPTS } from '@/lib/proofframe/receipts';
-import { readCampaign, seedCampaign, writeCampaign } from '@/lib/proofframe/seed';
+import {
+  readActiveMerchantId,
+  readCampaign,
+  seedCampaign,
+  writeActiveMerchantId,
+  writeCampaign,
+} from '@/lib/proofframe/seed';
+import { marketScan, seedMerchants } from '@/lib/proofframe/merchants';
+import type { MarketRow } from '@/lib/proofframe/loop-room';
 import { demoCatalog, makeCatalogImporter } from '@/lib/proofframe/shopify';
 import {
   appendSignal,
@@ -162,11 +170,12 @@ export function LoopRoomPage() {
   // Garment ids added during this session, so the stack can flag them new.
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
 
-  // ----- Merchant side: locked campaign -----
-  // One campaign for every page (Loop Room and /studio): read the stored one
-  // once mounted, write on every change after that. The seed only lands in a
-  // browser that has nothing stored; factsLocked travels with it.
-  const [campaign, setCampaign] = useState<CampaignState>(seedCampaign);
+  // ----- Merchant side: per-merchant campaign -----
+  // Active merchant's campaign is what the 12 studio tools read/write.
+  const merchants = useMemo(() => seedMerchants(), []);
+  const [activeMerchantId, setActiveMerchantId] = useState('northlight');
+  const activeMerchantIdRef = useRef(activeMerchantId);
+  const [campaign, setCampaign] = useState<CampaignState>(() => seedCampaign('northlight'));
   const campaignRef = useRef(campaign);
   const campaignHydratedRef = useRef(false);
 
@@ -228,7 +237,10 @@ export function LoopRoomPage() {
     let active = true;
     queueMicrotask(() => {
       if (!active) return;
-      const stored = readCampaign();
+      const merchantId = readActiveMerchantId();
+      activeMerchantIdRef.current = merchantId;
+      setActiveMerchantId(merchantId);
+      const stored = readCampaign(merchantId);
       campaignRef.current = stored;
       setCampaign(stored);
       campaignHydratedRef.current = true;
@@ -238,8 +250,24 @@ export function LoopRoomPage() {
     };
   }, []);
   useEffect(() => {
-    if (campaignHydratedRef.current) writeCampaign(campaign);
-  }, [campaign]);
+    if (campaignHydratedRef.current) writeCampaign(activeMerchantId, campaign);
+  }, [campaign, activeMerchantId]);
+  useEffect(() => {
+    activeMerchantIdRef.current = activeMerchantId;
+  }, [activeMerchantId]);
+
+  const switchMerchant = useCallback((merchantId: string) => {
+    if (merchantId === activeMerchantIdRef.current) return;
+    if (campaignHydratedRef.current) {
+      writeCampaign(activeMerchantIdRef.current, campaignRef.current);
+    }
+    activeMerchantIdRef.current = merchantId;
+    setActiveMerchantId(merchantId);
+    writeActiveMerchantId(merchantId);
+    const next = readCampaign(merchantId);
+    campaignRef.current = next;
+    setCampaign(next);
+  }, []);
 
   const addGarments = useCallback((rows: Garment[]) => {
     if (rows.length === 0) return;
@@ -442,6 +470,29 @@ export function LoopRoomPage() {
   const gaps = useMemo(() => findGaps(profileWardrobe), [profileWardrobe]);
   const garmentCount = profileWardrobe.garments.length;
   const lastSignal = loopSignals[0] ?? null;
+  const market: MarketRow[] | null = useMemo(() => {
+    if (!lastSignal) return null;
+    const request = toDemandSignalLike(lastSignal);
+    if (!request) return null;
+    const ceiling =
+      typeof lastSignal.taste?.priceCeiling === 'number' ? lastSignal.taste.priceCeiling : null;
+    const live = merchants.map((m) =>
+      m.id === activeMerchantId ? { ...m, facts: campaign.facts } : m,
+    );
+    return marketScan(request, live, ceiling);
+  }, [lastSignal, merchants, activeMerchantId, campaign.facts]);
+
+  // When a request lands, the right store answers: switch to the first can-offer
+  // if the active merchant cannot.
+  useEffect(() => {
+    if (!market || !campaignHydratedRef.current) return;
+    const activeRow = market.find((r) => r.merchantId === activeMerchantId);
+    if (activeRow?.verdict === 'can-offer') return;
+    const first = market.find((r) => r.verdict === 'can-offer');
+    if (first) switchMerchant(first.merchantId);
+  }, [market, activeMerchantId, switchMerchant]);
+
+  const activeMerchant = merchants.find((m) => m.id === activeMerchantId) ?? merchants[0];
   const groups = useMemo(
     () =>
       demandInsight(
@@ -484,7 +535,6 @@ export function LoopRoomPage() {
   const gapForRequest = gaps.find((g) => g.due) ?? gaps[0] ?? null;
   const importSample = SAMPLE_RECEIPTS[loop.number > 1 ? 1 : 0];
   const profileLabel = PROFILES.find((p) => p.key === activeProfile)?.label ?? 'Me';
-  const facts = campaign.facts;
   const lastPurchase = [...purchases].sort((a, b) => b.at.localeCompare(a.at))[0] ?? null;
   const previewFields = consentFieldsForRequest(consentLevel, { hasSize: true, hasHandle: false, hasOccasion: false });
   const ownedByCategory = GARMENT_CATEGORIES.map(
@@ -586,11 +636,13 @@ export function LoopRoomPage() {
           label: 'Matched offer',
           eyebrow: 'Inside locked rules',
           title: 'Grouped demand, a proposal inside locked rules, one human approval',
-          say: 'What demand came in, and what can we fill? Then propose an offer inside our rules for the newest request.',
+          say: 'Which store can fill this, and what can it offer inside its rules?',
           facts: [
-            { label: 'Locked offer', value: `${facts.productName} · ${money(facts.regularPrice, facts.currency)}${facts.discountPercent ? ` · ${facts.discountPercent}% off` : ''}` },
-            { label: 'Rules', value: `margin floor ${facts.marginFloorPercent ?? '?'}% · max discount ${facts.maxDiscountPercent ?? '?'}%` },
-            { label: 'Sizes in stock', value: facts.sizesInStock?.join(', ') ?? 'not locked yet' },
+            ...(market ?? []).map((row) => ({
+              label: row.name,
+              value: `${row.verdict}${row.price != null ? ` · ${money(row.price, row.currency)}` : ''} · ${row.reason}`,
+            })),
+            { label: 'Answering', value: activeMerchant.name },
           ],
           updated: [
             ...(groups.length > 0
@@ -607,7 +659,7 @@ export function LoopRoomPage() {
           shopperSees: approvedOffer
             ? 'An offer addressed to the request id, never to a person.'
             : 'Nothing yet. A proposal stays on the merchant side until a human approves it.',
-          merchantSees: 'Demand grouped by category and size, scored against the locked facts; a proposal checked against the margin floor.',
+          merchantSees: `${activeMerchant.name} is answering. Demand scored against locked facts; a proposal checked against the margin floor.`,
           humanGate:
             proposedOffer && !approvedOffer
               ? { label: 'Approve offer', hint: 'The shopper cannot see a proposal until a merchant approves it.' }
@@ -622,6 +674,7 @@ export function LoopRoomPage() {
           say: 'Any offers for me?',
           facts: approvedOffer
             ? [
+                { label: 'Merchant', value: activeMerchant.name },
                 { label: 'Offer', value: `${approvedOffer.title} · ${approvedOffer.size ?? 'any size'} · ${money(approvedOffer.price, approvedOffer.currency)}` },
                 { label: 'Code', value: approvedOffer.promoCode ?? 'none, price already applied' },
                 { label: 'Valid to', value: approvedOffer.validTo },
@@ -629,7 +682,9 @@ export function LoopRoomPage() {
             : [],
           updated: boughtOutcome ? [{ label: 'Outcome', value: `bought · ${new Date(boughtOutcome.at).toLocaleTimeString()}` }] : [],
           shopperSees: approvedOffer ? 'Price, code, validity and a checkout link. Bought or Passed is yours alone.' : 'No offer yet.',
-          merchantSees: boughtOutcome ? 'One request came back bought. Still no shopper id.' : 'Waiting on the shopper.',
+          merchantSees: boughtOutcome
+            ? `${activeMerchant.name}: one request came back bought. Still no shopper id.`
+            : 'Waiting on the shopper.',
           humanGate:
             approvedOffer && !boughtOutcome
               ? { label: 'Bought', hint: 'No tool can buy for the shopper. This press logs the purchase in the closet.' }
@@ -642,7 +697,10 @@ export function LoopRoomPage() {
           eyebrow: 'Both sides gained',
           title: 'Both sides gained. Nobody gained a profile.',
           say: null,
-          facts: [{ label: 'Pattern before', value: `${patternCategory}: ${patternBefore}` }],
+          facts: [
+            { label: 'Merchant', value: activeMerchant.name },
+            { label: 'Pattern before', value: `${patternCategory}: ${patternBefore}` },
+          ],
           updated: attributedPurchase
             ? [
                 { label: 'Purchase', value: `${attributedPurchase.title} · offer #${shortOfferId(attributedPurchase.offerId)}` },
@@ -650,7 +708,7 @@ export function LoopRoomPage() {
               ]
             : [],
           shopperSees: 'The purchase carries the offer that won it. The next offer is shaped by a sharper pattern.',
-          merchantSees: 'An attributable sale and demand it could not see before.',
+          merchantSees: `${activeMerchant.name}: an attributable sale and demand it could not see before.`,
           humanGate: null,
         };
       case 'again':
@@ -684,10 +742,9 @@ export function LoopRoomPage() {
     closet,
     profiles: { active: activeProfile, options: PROFILES },
     lastRan,
-    // Multi-merchant lands on cursor/merchants (MERCHANTS-BRIEF.md): until then
-    // there is one merchant and no market scan.
-    market: null,
-    activeMerchant: { id: 'northlight', name: 'Northlight Apparel' },
+    // Multi-merchant market scan; Codex renders view.market in the room.
+    market,
+    activeMerchant: { id: activeMerchant.id, name: activeMerchant.name },
     progress: stationCards.filter((s) => s.state === 'done').length,
     loopNumber: loop.number,
     packet: lastSignal

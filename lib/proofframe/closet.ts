@@ -565,7 +565,7 @@ export function seedPreferences(): Preferences {
     fitPreference: 'regular',
     colourFamily: 'neutrals',
     avoidMaterials: ['wool'],
-    priceCeiling: 120,
+    priceCeiling: 60,
     likedBrands: ['Bluenotes', 'Aeropostale'],
   };
 }
