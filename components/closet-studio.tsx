@@ -377,6 +377,8 @@ export function ClosetStudio() {
       addGarment,
       consumeShareApproval,
       emitSignal,
+      getSignal: (signalId) =>
+        readSignals().find((signal) => signal.signalId === signalId) ?? null,
       getActiveProfile: () => activeProfileRef.current,
       getConsentLevel: () => consentLevelRef.current,
       getPreferences: () => preferencesRef.current,

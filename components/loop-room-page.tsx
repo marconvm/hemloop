@@ -371,6 +371,7 @@ export function LoopRoomPage() {
         return true;
       },
       emitSignal: appendSignal,
+      getSignal: (signalId) => readSignals().find((signal) => signal.signalId === signalId) ?? null,
       getActiveProfile: () => activeProfileRef.current,
       getConsentLevel: () => consentRef.current,
       getPreferences: () => preferencesRef.current,
