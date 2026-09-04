@@ -1,6 +1,6 @@
 # Hemloop Technical Guide
 
-For developers. Product rationale lives in [PRD.md](./PRD.md); end-user flow in [USER-GUIDE.md](./USER-GUIDE.md).
+For developers. End-user flow in [USER-GUIDE.md](./USER-GUIDE.md). Product narrative lives in the five reading-order sections under [docs/](./).
 
 ## Architecture
 

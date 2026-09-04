@@ -816,7 +816,6 @@ Landed:
 
 Gates: 157 · tsc · lint · build.
 
-<<<<<<< HEAD
 ### Cursor studio-polaris fold-in: Demand spacing rhythm (2026-09-04)
 
 Same branch @ `e03810d`. Styles in `studio.css` / `closet.css` only.
@@ -824,18 +823,30 @@ Same branch @ `e03810d`. Styles in `studio.css` / `closet.css` only.
 Rhythm: tabs → 16px → Store → 24px → Locked stock card; shared `--surface-col` left edge.
 Offer / Composition / Closet: tabs → 16px → content, same left.
 Verified rects @ 1000 and 1440: gaps 16/24, lefts equal (20 @ 1000, 130 @ 1440).
-=======
-### Cursor runtime-status: closet + studio headers + tab spacing (2026-09-04)
 
-Branch: `cursor/runtime-status` from `origin/main` @ `abc1808`.
+### Cursor runtime-status: closet + studio headers (2026-09-04)
+
+Branch: `cursor/runtime-status` from `origin/main` (post `e03810d` spacing merge).
 Did not edit `components/loop-room/*` source (import `RuntimeStatus` only).
 
 Landed:
 1. `/closet` and `/studio` SiteHeader status → Codex `RuntimeStatus` (live/toolCount/tools/absent); Badge removed
 2. Each page maps its own registered tools to `{ name, title, description, readOnly }`; same `HUMAN_ONLY` absent list as Loop Room
-3. Tab-strip spacing fold-in (was not in `9390628`): tabs → 16px → Store → 24px → card; shared `--surface-col` left edge on Demand / Offer / Composition / Closet
 
-Confirm: Demand still renders `LockedInventoryTableForMerchant` via `merchant-demand-panel`; Polaris Offer uses its own SKU/Size/Available index table by design (not the locked-facts table).
+Confirm: Demand still renders `LockedInventoryTableForMerchant` via `merchant-demand-panel`; Polaris Offer uses its own SKU/Size/Available index table by design. Spacing already live via `e03810d`.
 
 Gates: 157 · tsc · lint · build.
->>>>>>> 5b13cd3 (Wire RuntimeStatus into closet and studio headers; fold in tab spacing.)
+
+### Cursor publish-prep: README + docs/internal + Devpost fields (2026-09-04)
+
+Branch: `cursor/publish-prep` from `origin/main`.
+Left `docs/coordination/` in place (Marco + history scan).
+
+Landed:
+1. Root `README.md` rewritten for a public reader (three sentences, four routes, ChatGPT desktop demo path, 21-tool table, local/deploy, licence, credits; no coordination notes, no stale test counts)
+2. Process files moved to `docs/internal/` and removed from `public/docs/`; docs site index links only public guides; `tests/docs-mirror.test.ts` enforces the mirror allowlist
+3. `docs/internal/DEVPOST-SUBMISSION.md` restructured to Devpost fields (name, tagline, about sections, built with, links, video placeholder)
+
+Also repaired conflict markers that had been left in this log.
+
+Gates: 159 · tsc · lint · build.
