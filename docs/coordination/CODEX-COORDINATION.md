@@ -791,3 +791,15 @@ Gates: 155 · tsc · lint · build.
 follows in `DUAL-REVIEW-WAVE6-RECONCILED.md`. Nothing from the review is executed until both are in.
 Already overtaken by main since the review: S14/S15 (Codex's P0s and the manifest copy) landed in
 `9f58c54`; S13 (`readPurchases` unvalidated) remains open.
+### Cursor closet-sizes: sizes header + Partner seed migration (2026-09-04)
+
+Branch: `cursor/closet-sizes` from `cursor/storage-hardening` @ `c250051`.
+Did not touch `components/loop-room/*`. Styles in `app/closet.css` only.
+
+Landed:
+1. Sizes on file table header row: Brand · Category · Size; brand/category left, size right
+2. `hemloop.wardrobe.seed` version (`WARDROBE_SEED_VERSION = 2`); older stores merge missing seed ids without overwriting user rows
+3. Partner seed refreshed to 7 rows (hoodie×2, tee×2, denim, jacket, accessory) → ~2 essential gaps; Self's three gaps untouched
+4. Migration + partner-gap tests
+
+Gates: 157 · tsc · lint · build.
