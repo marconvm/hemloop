@@ -1185,12 +1185,241 @@
 .studio-shell .offer-grid {
   /* minmax(0,…) — a 280px floor on the facts column forced mid-width overflow
    * and clipped the Demand chrome / Store label off the left edge. */
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   min-width: 0;
 }
+
+/* ── Polaris-style offer product page (no @shopify/polaris) ── */
+
+.studio-shell .polaris-offer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
+  gap: 16px;
+  align-items: start;
+  min-width: 0;
+}
+
+.studio-shell .polaris-main {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.studio-shell .polaris-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+}
+
+.studio-shell .polaris-card-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.studio-shell .polaris-product-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.studio-shell .polaris-product-media {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f1f3f0;
+  border: 1px solid var(--line);
+}
+
+.studio-shell .polaris-product-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-shell .polaris-media-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e8ece6, #f6f7f4);
+}
+
+.studio-shell .polaris-product-meta {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.studio-shell .polaris-product-title-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.studio-shell .polaris-field-grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.studio-shell .polaris-status-badge {
+  flex: 0 0 auto;
+  margin-top: 18px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: #0d6b4c;
+  background: #e3f1ea;
+  border: 1px solid color-mix(in srgb, #0d6b4c 18%, transparent);
+}
+
+.studio-shell .polaris-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+.studio-shell .polaris-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--ink);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.studio-shell .polaris-field input:disabled {
+  background: #f4f6f3;
+  color: var(--ink);
+  opacity: 0.9;
+}
+
+.studio-shell .polaris-static {
+  margin: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.studio-shell .polaris-margin {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.studio-shell .polaris-muted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.studio-shell .polaris-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.studio-shell .polaris-field-row-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.studio-shell .polaris-index-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.studio-shell .polaris-index-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.studio-shell .polaris-index-table th,
+.studio-shell .polaris-index-table td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.studio-shell .polaris-index-table th {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.studio-shell .polaris-index-table td:last-child,
+.studio-shell .polaris-index-table th:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.studio-shell .polaris-index-table tr.is-sold-out td {
+  color: var(--muted);
+}
+
+.studio-shell .polaris-rail {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  position: sticky;
+  top: 12px;
+  min-width: 0;
+}
+
+.studio-shell .polaris-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 650;
+  background: var(--white);
+  color: var(--ink);
+}
+
+.studio-shell .polaris-lock-badge.is-locked {
+  border-color: color-mix(in srgb, var(--moss) 40%, var(--line));
+  background: #eef8d7;
+  color: var(--forest);
+}
+
+.studio-shell .polaris-lock-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+.studio-shell .polaris-rail .completeness-meter {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.studio-shell .polaris-rail .brief-button {
+  width: 100%;
+}
+
 .studio-shell .composition-grid {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -1226,6 +1455,10 @@
 
   .studio-shell .studio-grid,
   .studio-shell .offer-grid,
+  .studio-shell .polaris-offer,
+  .studio-shell .polaris-product-card,
+  .studio-shell .polaris-field-row,
+  .studio-shell .polaris-field-row-4,
   .studio-shell .composition-grid,
   .studio-shell .demand-tab-body,
   .studio-shell .demand-tab-chrome,
@@ -1235,6 +1468,15 @@
     max-width: 100%;
     box-sizing: border-box;
     padding-inline: 10px;
+  }
+
+  .studio-shell .polaris-offer,
+  .studio-shell .polaris-product-card {
+    padding-inline: 0;
+  }
+
+  .studio-shell .polaris-rail {
+    position: static;
   }
 
   .studio-shell .demand-tab-body,
@@ -1284,6 +1526,7 @@
   .studio-shell .panel,
   .studio-shell .truth-panel,
   .studio-shell .proof-panel,
+  .studio-shell .polaris-offer,
   .studio-shell .canvas-panel {
     min-width: 0;
     max-width: 100%;

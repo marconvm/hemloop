@@ -796,3 +796,15 @@ Landed:
 4. Migration + partner-gap tests
 
 Gates: 157 · tsc · lint · build.
+
+### Cursor studio-polaris: Offer product page + remove Export button (2026-09-04)
+
+Branch: `cursor/studio-polaris` from `cursor/closet-sizes` @ `bd78603`.
+Did not touch Composition tab JSX or `components/loop-room/*`. Styles in `app/studio.css` only.
+
+Landed:
+1. Offer and rules product column: Polaris-style Product / Pricing / Inventory / Discount cards + right rail (Locked badge, lock/unlock, completeness)
+2. Inventory index table: SKU · Size · Available from active merchant
+3. Removed human Export button from `/studio` SiteHeader actions; `export_composition` + `deliverExport` unchanged (12 tools)
+
+Gates: 157 · tsc · lint · build.
