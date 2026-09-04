@@ -816,6 +816,7 @@ Landed:
 
 Gates: 157 · tsc · lint · build.
 
+<<<<<<< HEAD
 ### Cursor studio-polaris fold-in: Demand spacing rhythm (2026-09-04)
 
 Same branch @ `e03810d`. Styles in `studio.css` / `closet.css` only.
@@ -823,3 +824,18 @@ Same branch @ `e03810d`. Styles in `studio.css` / `closet.css` only.
 Rhythm: tabs → 16px → Store → 24px → Locked stock card; shared `--surface-col` left edge.
 Offer / Composition / Closet: tabs → 16px → content, same left.
 Verified rects @ 1000 and 1440: gaps 16/24, lefts equal (20 @ 1000, 130 @ 1440).
+=======
+### Cursor runtime-status: closet + studio headers + tab spacing (2026-09-04)
+
+Branch: `cursor/runtime-status` from `origin/main` @ `abc1808`.
+Did not edit `components/loop-room/*` source (import `RuntimeStatus` only).
+
+Landed:
+1. `/closet` and `/studio` SiteHeader status → Codex `RuntimeStatus` (live/toolCount/tools/absent); Badge removed
+2. Each page maps its own registered tools to `{ name, title, description, readOnly }`; same `HUMAN_ONLY` absent list as Loop Room
+3. Tab-strip spacing fold-in (was not in `9390628`): tabs → 16px → Store → 24px → card; shared `--surface-col` left edge on Demand / Offer / Composition / Closet
+
+Confirm: Demand still renders `LockedInventoryTableForMerchant` via `merchant-demand-panel`; Polaris Offer uses its own SKU/Size/Available index table by design (not the locked-facts table).
+
+Gates: 157 · tsc · lint · build.
+>>>>>>> 5b13cd3 (Wire RuntimeStatus into closet and studio headers; fold in tab spacing.)

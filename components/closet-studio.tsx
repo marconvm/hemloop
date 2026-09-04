@@ -8,7 +8,6 @@ import {
   Shirt,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   Tag,
   ThumbsDown,
   ThumbsUp,
@@ -17,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Badge } from '@/components/ui/badge';
+import { RuntimeStatus, type RuntimeToolView } from '@/components/loop-room';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { SurfaceTabs } from '@/components/surface-tabs';
@@ -164,6 +163,15 @@ const PROFILE_LABEL: Record<ShopperProfile, string> = {
 
 const PROFILES: ShopperProfile[] = ['self', 'partner', 'kid'];
 
+/** Acts no WebMCP tool can perform — shown as absent in the runtime manifest. */
+const HUMAN_ONLY = [
+  'approve_next_request',
+  'approve_offer',
+  'mark_bought',
+  'lock_facts',
+  'set_sharing_level',
+];
+
 const FIT_PREFERENCES: Preferences['fitPreference'][] = [
   'slim',
   'regular',
@@ -206,6 +214,7 @@ export function ClosetStudio() {
   const [signals, setSignals] = useState<DemandSignal[]>([]);
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>('checking');
   const [toolCount, setToolCount] = useState(0);
+  const [manifest, setManifest] = useState<RuntimeToolView[]>([]);
   const [toolCallCount, setToolCallCount] = useState(0);
   const [sentCount, setSentCount] = useState(0);
   const [blockedCount, setBlockedCount] = useState(0);
@@ -390,10 +399,19 @@ export function ClosetStudio() {
 
   useEffect(() => {
     let active = true;
-    const tools = instrumentTools(buildClosetTools(callbacks), handleToolCall);
+    const built = buildClosetTools(callbacks);
+    const tools = instrumentTools(built, handleToolCall);
     registerAll(getModelContext(), tools)
       .then((result) => {
         if (!active) return;
+        setManifest(
+          built.map((t) => ({
+            name: t.name,
+            title: t.title,
+            description: t.description,
+            readOnly: Boolean(t.annotations?.readOnlyHint),
+          })),
+        );
         setToolCount(
           result.registered.length > 0 ? result.registered.length : tools.length,
         );
@@ -412,6 +430,15 @@ export function ClosetStudio() {
         if (!active) return;
         console.error('WebMCP registration failed', error);
         setWebMcpStatus('error');
+        setManifest(
+          built.map((t) => ({
+            name: t.name,
+            title: t.title,
+            description: t.description,
+            readOnly: Boolean(t.annotations?.readOnlyHint),
+          })),
+        );
+        setToolCount(tools.length);
       });
     return () => {
       active = false;
@@ -688,15 +715,6 @@ export function ClosetStudio() {
       pattern: top ? buyingPattern(purchases, top.category) : null,
     });
   }, [gaps, sizes, consentLevel, activeProfile, preferences, purchases]);
-  const statusLabel =
-    webMcpStatus === 'active'
-      ? `${toolCount} WebMCP tools live`
-      : webMcpStatus === 'error'
-        ? 'WebMCP registration rejected'
-        : webMcpStatus === 'checking'
-        ? 'Checking WebMCP…'
-        : `${toolCount} tools · preview mode`;
-
   const startEdit = (g: Garment) => {
     setEditingId(g.id);
     setEditSize(g.size);
@@ -768,14 +786,19 @@ export function ClosetStudio() {
       <SiteHeader
         active="closet"
         status={
-          <Badge
-            variant="outline"
-            className={`webmcp-badge status-${webMcpStatus}`}
-            title="WebMCP lets a browser agent call tools this page registers directly. No server, no account, no OAuth."
-          >
-            <Sparkles data-icon="inline-start" />
-            {statusLabel}
-          </Badge>
+          <RuntimeStatus
+            absent={HUMAN_ONLY}
+            live={webMcpStatus === 'active'}
+            toolCount={toolCount || manifest.length}
+            tools={manifest}
+            label={
+              webMcpStatus === 'checking'
+                ? 'Checking WebMCP…'
+                : webMcpStatus === 'error'
+                  ? 'WebMCP error'
+                  : undefined
+            }
+          />
         }
       />
 
