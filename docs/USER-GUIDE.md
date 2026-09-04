@@ -4,16 +4,16 @@ For the person walking the demo. The technical companion is [TECH-GUIDE.md](./TE
 
 ## What Hemloop is
 
-Four routes are the whole product (see the sitemap): **Loop** (`/`), **Closet** (`/closet`),
+Four routes are the whole product (see the sitemap): **Hemloop** (`/`), **Closet** (`/closet`),
 **Studio** (`/studio`), **Docs** (`/docs/`). `/merchant` redirects to `/studio?tab=demand` so old
 links keep working; it is not in the header.
 
-The home page is the **Loop Room**: both sides of one request in one shared space. Twenty-one
+The home page is **Hemloop**: both sides of one request in one shared space. Twenty-one
 WebMCP tools (9 closet + 12 studio) register together on `/`. The Closet and Studio pages are the
-full shopper and merchant surfaces, with tabs; open them from the header or from the Loop Room's
+full shopper and merchant surfaces, with tabs; open them from the header or from Hemloop's
 party boxes.
 
-## The Loop Room (`/`)
+## Hemloop (`/`)
 
 Seven stations on the rail. Each card shows what to say to the agent (when it is an agent step),
 which tools ran, what is true now, what updated, and what each side can see. Three coral human
@@ -36,7 +36,7 @@ gates sit on the page; no tool can press them.
 2. **Approve offer** — flips a staged proposal to `approved` so the shopper can see it.
 3. **Bought** — records the outcome, logs the purchase with the offer id, adds the garment.
 
-### Closet stack on the Loop Room
+### Closet stack on Hemloop
 
 The room opens at **ten garments for Me**. A **+** control adds five random catalog garments, up to
 twenty rows for that profile. Switch Me / Partner / Kid to scope the stack.
@@ -71,7 +71,7 @@ Approve button is disabled and `report_demand_gap` returns `sharing-disabled`.
 Merchant surface. Tabs: **Demand** (grouped requests, a merchant switcher, and the market scan
 verdict per store for each incoming request; this is what `/merchant` used to be), **Offer and
 rules** (locked facts, completeness, offer rules, proposals), **Composition** (brief, scenes,
-preview, placement, export). Twelve WebMCP tools. Campaign state is shared with the Loop Room in
+preview, placement, export). Twelve WebMCP tools. Campaign state is shared with Hemloop in
 this browser per merchant (`hemloop.campaigns` + `hemloop.merchant`), including whether facts are
 locked. A request is scanned against every merchant's rules; only a `can-offer` store answers.
 Market rows show verdict and price only — never another merchant's cost or floor.

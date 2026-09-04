@@ -2,7 +2,7 @@
 
 Hemloop's claim is not two dashboards. It is that **one request has a complete lifecycle**, and that
 every time it completes, both sides come out sharper without either side accumulating a profile of
-the other. The home page is the **Loop Room** (`/`): seven stations in one shared space. The full
+the other. The home page is **Hemloop** (`/`): seven stations in one shared space. The full
 shopper and merchant surfaces live at `/closet` and `/studio`.
 
 ## One request, end to end
@@ -55,7 +55,7 @@ shopper and merchant surfaces live at `/closet` and `/studio`.
                         and neither side learned who the other is
 ```
 
-The rail across the Loop Room (and under the header on `/closet` and `/studio`) shows where one
+The rail across Hemloop (and under the header on `/closet` and `/studio`) shows where one
 request is: **New item · Local demand · Approved request · Matched offer · Bought · Learned ·
 Again**.
 
@@ -86,7 +86,7 @@ Again**.
 
 A request is scored against every merchant's locked rules at once. The market scan returns a
 verdict per store: `can-offer`, `size-not-in-stock`, `category-mismatch`, `margin-floor`, or
-`over-ceiling`. Only a `can-offer` merchant may propose. The Loop Room shows the whole market so
+`over-ceiling`. Only a `can-offer` merchant may propose. Hemloop shows the whole market so
 the point is visible; the studio is one merchant's desk with a switcher for which store you are.
 
 Five sample merchants make the refusals concrete on a hoodie · M request. At Basics (no price

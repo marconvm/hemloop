@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readCampaign, seedCampaign, writeCampaign, readActiveMerchantId, writeActiveMerchantId } from '../lib/proofframe/seed';
-import { marketScan, seedMerchants } from '../lib/proofframe/merchants';
+import { marketScan, seedMerchants, sizesInStockFromInventory } from '../lib/proofframe/merchants';
 import { validateCampaign, validateScene, validateText } from '../lib/proofframe/validator';
 import { exportComposition } from '../lib/proofframe/exporter';
 import {
@@ -1379,6 +1379,34 @@ void test('readCampaign/writeCampaign: per-merchant storage, active id, legacy h
   } finally {
     restore();
   }
+});
+
+void test('sizesInStockFromInventory: qty > 0 only, first-seen size order', () => {
+  assert.deepEqual(
+    sizesInStockFromInventory([
+      { sku: 'A-S', size: 'S', qty: 2 },
+      { sku: 'A-M', size: 'M', qty: 0 },
+      { sku: 'B-M', size: 'M', qty: 4 },
+      { sku: 'A-L', size: 'L', qty: 1 },
+    ]),
+    ['S', 'M', 'L'],
+  );
+  const ridgeline = seedMerchants().find((m) => m.id === 'ridgeline')!;
+  assert.deepEqual(ridgeline.facts.sizesInStock, ['S', 'L', 'XL']);
+  assert.equal(
+    ridgeline.inventory.find((r) => r.size === 'M')?.qty,
+    0,
+    'Ridgeline M stays at 0 so size-not-in-stock remains true',
+  );
+  for (const m of seedMerchants()) {
+    assert.deepEqual(
+      m.facts.sizesInStock,
+      sizesInStockFromInventory(m.inventory),
+      `${m.id} sizesInStock must equal inventory qty > 0`,
+    );
+  }
+  const northlight = seedMerchants().find((m) => m.id === 'northlight')!;
+  assert.ok(northlight.inventory.some((r) => r.sku === 'NL-HD-MOSS-M'));
 });
 
 void test('marketScan: five verdicts at Basics (no ceiling) for hoodie · M', () => {

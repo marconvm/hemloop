@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { LockedInventoryTableForMerchant } from '@/components/locked-inventory-table';
 import type { DemandSignal } from '@/lib/proofframe/closet';
 import {
   demandInsight,
@@ -221,25 +222,26 @@ export function MerchantDemandPanel({
   }, [signals, offers, boughtIds, facts.currency]);
 
   const empty = signals.length === 0;
+  const activeMerchant =
+    merchants.find((m) => m.id === activeMerchantId) ?? merchants[0];
 
   return (
     <div className="merchant-body demand-tab-body">
-      <p className="demand-product-line">
-        Locked facts · {facts.productName}
-        {facts.sizesInStock?.length ? ` · sizes ${facts.sizesInStock.join(', ')}` : ''}
-      </p>
+      {activeMerchant ? (
+        <LockedInventoryTableForMerchant merchant={activeMerchant} />
+      ) : null}
 
       <section className="stat-strip" aria-label="Demand summary">
         <article className="stat-card">
-          <p className="stat-label">Requests received</p>
+          <p className="stat-label">Requests</p>
           <p className="stat-value">{stats.requests}</p>
         </article>
         <article className="stat-card">
-          <p className="stat-label">Replace-flagged</p>
+          <p className="stat-label">Replace</p>
           <p className="stat-value">{stats.replaceFlagged}</p>
         </article>
         <article className="stat-card">
-          <p className="stat-label">Offers proposed / approved</p>
+          <p className="stat-label">Proposed / approved</p>
           <p className="stat-value">
             {stats.proposed}
             <span className="stat-split">/</span>
@@ -251,19 +253,18 @@ export function MerchantDemandPanel({
           <p className="stat-value">{stats.bought}</p>
         </article>
         <article className="stat-card stat-revenue">
-          <p className="stat-label">Attributable revenue</p>
+          <p className="stat-label">Revenue</p>
           <p className="stat-value">{money(stats.revenue, stats.currency)}</p>
         </article>
       </section>
 
       {empty ? (
         <section className="empty-state" aria-live="polite">
-          <p className="eyebrow">Waiting on the loop</p>
+          <p className="eyebrow">Waiting on Hemloop</p>
           <h2>No requests yet</h2>
           <p>
-            Requests arrive when a shopper approves one on their closet. Nothing
-            about who they are travels with the packet — only the demand they
-            chose to share.
+            They arrive when a shopper presses Approve on Closet, then replies
+            Yes, send it. No shopper identity travels — only the demand.
           </p>
         </section>
       ) : (
