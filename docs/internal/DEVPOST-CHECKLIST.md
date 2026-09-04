@@ -17,12 +17,12 @@ already reviewed.
 
 ## Before pressing Submit
 
-- [ ] Repo is public (task 5) and a fresh-clone scan is clean
-- [ ] Live smoke: `for p in / /closet /studio /docs/; do curl -s -o /dev/null -w "%{http_code}\n" https://hemloop.app$p; done` all 200
+- [x] Repo is public (02:15 EDT 2026-09-04) and a fresh clone passes 166/166; scan verdict GO in PUBLIC-SCAN.md
+- [x] Live smoke (02:00 EDT, all 200): `for p in / /closet /studio /docs/; do curl -s -o /dev/null -w "%{http_code}\n" https://hemloop.app$p; done` all 200
 - [ ] Badges read 9 and 11 WebMCP tools live in ChatGPT desktop (GPT-5.6 Sol or Terra) and in Chrome 149+ without a flag
-- [ ] One real ChatGPT desktop pass of C1 to C3 on live (task 10)
+- [ ] One real ChatGPT desktop pass of C1 to C3 on live: Marco's recording is this pass (Codex could not select the in-app browser)
 - [ ] Video under 3:00, plays with sound, link is unlisted not private
-- [ ] WRITEUP.md has no em dash, no stale tool count (9 closet, 12 studio, 21 total), test count matches `npm test`
+- [x] WRITEUP.md and DEVPOST-SUBMISSION.md have no em dash, no stale tool count (9 closet, 12 studio, 21 total), test count matches `npm test`
 - [ ] Judge can reach docs from the landing CTA "Read the docs"
 
 ## After 01:00 PDT
