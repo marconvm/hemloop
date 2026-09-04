@@ -1025,3 +1025,18 @@ next?"; "Tell the store"; human Approve; "Yes, send it"; "Which store can fill t
 Approve offer; "Any offers for me?"; human Bought; import the rival receipt for cycle two. Time
 each prompt from submit until final assistant/tool result and record any extra tool calls,
 clarification, reordering, or attempted human-gate crossing.
+
+### Cursor devpost-gallery: five framed stills for Devpost (2026-09-04)
+
+Branch: `cursor/devpost-gallery` from `origin/main` (post VO v5 + Devpost copy).
+
+Landed:
+1. Five light-theme captures from `https://hemloop.app` @1440, framed 1800×1200 JPG
+   (paper/ink/lime, video-card look) under `docs/internal/devpost/gallery/`
+2. 01 hero (request in flight + hook caption); 02 human gate (refusal + Approve next
+   request); 03 market scan five verdicts; 04 outcome panel; 05 studio Approve offer
+3. `DEVPOST-SUBMISSION.md` Gallery list under Gallery / logo asset
+
+No app / public / video changes. Not merged.
+
+Stretch: `docs/internal/devpost/teaser-portrait.mp4` (~20 s portrait; 02 still + cards-portrait + 04 still).
