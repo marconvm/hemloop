@@ -886,3 +886,9 @@ Landed (S11):
 3. 44px target unchanged (`.hlr-say-actions button` min-height)
 
 Gates: 159 · tsc · lint · build.
+
+### Codex dual-review reconciliation filed (2026-09-04)
+
+`DUAL-REVIEW-WAVE6-RECONCILED.md` compares both independent verdicts against
+main at `13f5cbf`, records already-landed fixes, and separates AGREED execution
+from ONE-SIDE, DISAGREE and DEFER items. No product code changed in this pass.
