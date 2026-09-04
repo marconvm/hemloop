@@ -391,6 +391,82 @@
   color: var(--ink);
 }
 
+.studio-shell .receipt-cards {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.studio-shell .receipt-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+.studio-shell .receipt-card-preview {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f1ea;
+  min-height: 140px;
+}
+
+.studio-shell .receipt-thumb {
+  display: block;
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.studio-shell .eml-preview {
+  display: grid;
+  gap: 0;
+}
+
+.studio-shell .eml-headers {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  background: #ebe7dc;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.studio-shell .eml-headers span {
+  display: inline-block;
+  min-width: 3.4rem;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.studio-shell .eml-body-thumb {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  object-position: top;
+}
+
+.studio-shell .receipt-card-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.studio-shell .receipt-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .studio-shell .import-sample-button,
 .studio-shell .import-submit-button {
   border-radius: 999px;
@@ -398,6 +474,26 @@
   background: var(--white);
   color: var(--ink);
   font-weight: 700;
+  min-height: 44px;
+  padding: 8px 14px;
+}
+
+.studio-shell .receipt-download-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  color: var(--forest);
+  background: #f7f4ec;
+}
+
+.studio-shell .receipt-download-icon:hover,
+.studio-shell .receipt-download-icon:focus-visible {
+  border-color: var(--moss);
+  outline: none;
 }
 
 .studio-shell .import-submit-button {
@@ -410,26 +506,6 @@
 .studio-shell .import-submit-button:disabled {
   opacity: 0.45;
   box-shadow: none;
-}
-
-.studio-shell .receipt-downloads {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  margin-top: 4px;
-}
-
-.studio-shell .receipt-download {
-  color: var(--moss);
-  font-size: 12px;
-  font-weight: 650;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.studio-shell .receipt-download:hover,
-.studio-shell .receipt-download:focus-visible {
-  color: var(--ink);
 }
 
 /* SiteHeader chrome: keep badges/pills readable inside the shared meta slot */

@@ -26,7 +26,7 @@ import {
 } from '../lib/proofframe/webmcp-closet';
 import { fence, type ToolContent } from '../lib/proofframe/webmcp';
 import { parseReceipt, SAMPLE_RECEIPTS } from '../lib/proofframe/receipts';
-import { demoCatalog } from '../lib/proofframe/shopify';
+import { demoCatalog, kidsCatalog } from '../lib/proofframe/shopify';
 import {
   purchaseFromOffer,
   toOffer,
@@ -191,14 +191,23 @@ void test('garmentsForProfile: self keeps exactly the three seed gaps (hoodie, t
   );
 });
 
-void test('garmentsForProfile: kid and partner rows are seeded and disjoint from self', () => {
+void test('garmentsForProfile: kid and partner open with full closets, disjoint from self', () => {
   const wardrobe = seedWardrobe();
   const kid = garmentsForProfile(wardrobe, 'kid');
   const partner = garmentsForProfile(wardrobe, 'partner');
-  assert.equal(kid.garments.length, 2);
-  assert.equal(partner.garments.length, 1);
+  const self = garmentsForProfile(wardrobe, 'self');
+  assert.equal(self.garments.length, 10);
+  assert.ok(kid.garments.length >= 6 && kid.garments.length <= 8, `kid opens 6–8, got ${kid.garments.length}`);
+  assert.ok(
+    partner.garments.length >= 6 && partner.garments.length <= 8,
+    `partner opens 6–8, got ${partner.garments.length}`,
+  );
   assert.ok(kid.garments.every((g) => g.for === 'kid'));
   assert.ok(partner.garments.every((g) => g.for === 'partner'));
+  assert.ok(
+    kid.garments.every((g) => !g.image || g.image.includes('/products/kids-')),
+    'kid rows use kids merchandise photos',
+  );
 });
 
 // ---------- Consent field derivation (pure) ----------
@@ -311,11 +320,11 @@ void test('get_wardrobe scopes to the kid profile and filters by category', asyn
   const { cb } = makeStore({ activeProfile: 'kid' });
   const tool = buildClosetTools(cb).find((t) => t.name === 'get_wardrobe')!;
   const result = payload(await tool.execute({})) as { count: number; garments: string };
-  assert.equal(result.count, 2);
+  assert.equal(result.count, 7);
   const rows = result.garments.replace(/<\/?closet_data>/g, '').split('\n');
   assert.ok(rows.every((r) => r.endsWith('| kid')));
   const tees = payload(await tool.execute({ category: 'tee' })) as { count: number };
-  assert.equal(tees.count, 1);
+  assert.equal(tees.count, 2);
 });
 
 void test('get_preferences returns fenced strings, plain numbers/enums, under 1.5K chars', async () => {
@@ -1367,6 +1376,7 @@ void test('every seeded image path resolves to a file in public/', async () => {
   const paths = new Set<string>();
   for (const g of seedWardrobe().garments) if (g.image) paths.add(g.image);
   for (const p of demoCatalog.products) if (p.image) paths.add(p.image);
+  for (const p of kidsCatalog.products) if (p.image) paths.add(p.image);
   assert.ok(paths.size > 0, 'the seed should reference some images');
   for (const p of paths) {
     assert.ok(p.startsWith('/'), `${p} should be a root-relative path`);
@@ -1402,6 +1412,19 @@ void test('randomGarments: every row carries a catalog photo and brand, and the 
   assert.deepEqual(randomGarments(5, full, 'self', rand, undefined, NOW), []);
   // Another profile still has room.
   assert.equal(randomGarments(5, full, 'kid', rand, undefined, NOW).length, 5);
+});
+
+void test('randomGarments for kid draws only from the kids catalog pool', () => {
+  let seed = 11;
+  const rand = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  const wardrobe = seedWardrobe();
+  const five = randomGarments(5, wardrobe, 'kid', rand, undefined, NOW);
+  assert.equal(five.length, 5);
+  for (const g of five) {
+    assert.equal(g.for, 'kid');
+    assert.ok(g.image?.includes('/products/kids-'), `${g.id} uses a kids photo, got ${g.image}`);
+    assert.ok(['4', '6', '8', '10', '12', '1Y', '2Y', '3Y', '4Y', 'OS'].includes(g.size), `kids size ${g.size}`);
+  }
 });
 
 void test('readWardrobe: returns seed when empty, returns written wardrobe, drops invalid category, handles corrupt JSON', () => {

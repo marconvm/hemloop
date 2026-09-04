@@ -51,6 +51,14 @@ categories the real catalogs do not sell.
 | `camden-chino.jpg` | https://unsplash.com/photos/910e30c5666a | Unsplash License |
 | `black-tee.jpg` | https://unsplash.com/photos/c5c6f4c7d575 | Unsplash License |
 | `white-sneaker.jpg` | https://unsplash.com/photos/1c920cd92f19 | Unsplash License |
+| `kids-hoodie.jpg` | https://unsplash.com/photos/photo-1519238263530-99bdd11df2ea | Unsplash License |
+| `kids-tee.jpg` | https://unsplash.com/photos/photo-1503919545889-aef636e10ad4 | Unsplash License |
+| `kids-denim.jpg` | https://unsplash.com/photos/photo-1471286174890-9c112ffca5b4 | Unsplash License |
+| `kids-sneakers.jpg` | https://unsplash.com/photos/photo-1519457431-44ccd64a579b | Unsplash License |
+| `kids-jacket.jpg` | https://unsplash.com/photos/photo-1622290291468-a28f7a7dc6a8 | Unsplash License |
+| `kids-cap.jpg` | https://unsplash.com/photos/photo-1596870230751-ebdfce98ec42 | Unsplash License |
+| `kids-crew.jpg` | https://unsplash.com/photos/photo-1621452773781-0f992fd1f5cb | Unsplash License |
+| `kids-chino.jpg` | https://unsplash.com/photos/photo-1503454537195-1dcabb73ffb9 | Unsplash License |
 
 A unit test asserts that every image path the seed wardrobe or the catalog
 references resolves to a file in `public/`, so a credited file cannot silently

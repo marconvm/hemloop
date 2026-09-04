@@ -1,0 +1,167 @@
+{
+  "source": "synthetic kids apparel catalog (Shopify-shaped)",
+  "kind": "catalog-snapshot",
+  "generatedAt": "2026-09-04",
+  "products": [
+    {
+      "handle": "trailhead-kids-hoodie",
+      "title": "Trailhead Kids Fleece Hoodie",
+      "description": "Soft brushed fleece hoodie for school mornings. Kangaroo pocket and a lined hood.",
+      "currency": "CAD",
+      "price": 34.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Hoodie",
+      "tags": ["hoodie", "kids", "fleece"],
+      "image": "/products/kids-hoodie.jpg",
+      "options": [
+        { "name": "Size", "values": ["4", "6", "8", "10", "12"] },
+        { "name": "Colour", "values": ["Moss", "Navy", "Red"] }
+      ],
+      "variants": [
+        { "sku": "LT-KH-MOSS-8", "title": "Moss / 8", "size": "8", "colour": "Moss", "price": 34.0, "compareAtPrice": null, "inventoryQuantity": 12 }
+      ],
+      "metafields": { "material": "Cotton fleece", "fit": "Regular", "care": "Machine wash cold", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-tee",
+      "title": "Trailhead Kids Graphic Tee",
+      "description": "Everyday cotton tee with a soft hand feel for play and school.",
+      "currency": "CAD",
+      "price": 16.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "T-Shirt",
+      "tags": ["tee", "kids", "cotton"],
+      "image": "/products/kids-tee.jpg",
+      "options": [
+        { "name": "Size", "values": ["4", "6", "8", "10", "12"] },
+        { "name": "Colour", "values": ["White", "Sage", "Ink"] }
+      ],
+      "variants": [
+        { "sku": "LT-KT-WHITE-8", "title": "White / 8", "size": "8", "colour": "White", "price": 16.0, "compareAtPrice": null, "inventoryQuantity": 20 }
+      ],
+      "metafields": { "material": "Cotton jersey", "fit": "Regular", "care": "Machine wash cold", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-denim",
+      "title": "Trailhead Kids Straight Jean",
+      "description": "Soft denim jean with an adjustable waist for growing kids.",
+      "currency": "CAD",
+      "price": 38.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Jeans",
+      "tags": ["denim", "jean", "kids"],
+      "image": "/products/kids-denim.jpg",
+      "options": [
+        { "name": "Size", "values": ["4", "6", "8", "10", "12"] },
+        { "name": "Colour", "values": ["Indigo", "Light"] }
+      ],
+      "variants": [
+        { "sku": "LT-KD-INDIGO-8", "title": "Indigo / 8", "size": "8", "colour": "Indigo", "price": 38.0, "compareAtPrice": null, "inventoryQuantity": 10 }
+      ],
+      "metafields": { "material": "Cotton denim", "fit": "Straight", "care": "Machine wash cold", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-sneakers",
+      "title": "Trailhead Kids Court Sneaker",
+      "description": "Lightweight sneakers for recess and weekends.",
+      "currency": "CAD",
+      "price": 42.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Footwear",
+      "tags": ["footwear", "sneaker", "kids"],
+      "image": "/products/kids-sneakers.jpg",
+      "options": [
+        { "name": "Size", "values": ["1Y", "2Y", "3Y", "4Y"] },
+        { "name": "Colour", "values": ["White", "Navy"] }
+      ],
+      "variants": [
+        { "sku": "LT-KS-WHITE-2Y", "title": "White / 2Y", "size": "2Y", "colour": "White", "price": 42.0, "compareAtPrice": null, "inventoryQuantity": 14 }
+      ],
+      "metafields": { "material": "Canvas upper, rubber sole", "fit": "Regular", "care": "Wipe clean", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-jacket",
+      "title": "Trailhead Kids Shell Jacket",
+      "description": "Light shell for windy playground days.",
+      "currency": "CAD",
+      "price": 48.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Jacket",
+      "tags": ["jacket", "shell", "kids"],
+      "image": "/products/kids-jacket.jpg",
+      "options": [
+        { "name": "Size", "values": ["4", "6", "8", "10", "12"] },
+        { "name": "Colour", "values": ["Olive", "Navy"] }
+      ],
+      "variants": [
+        { "sku": "LT-KJ-OLIVE-8", "title": "Olive / 8", "size": "8", "colour": "Olive", "price": 48.0, "compareAtPrice": null, "inventoryQuantity": 8 }
+      ],
+      "metafields": { "material": "Nylon shell", "fit": "Regular", "care": "Machine wash cold", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-cap",
+      "title": "Trailhead Kids Field Cap",
+      "description": "Soft cotton cap for sunny days.",
+      "currency": "CAD",
+      "price": 18.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Accessory",
+      "tags": ["cap", "hat", "accessory", "kids"],
+      "image": "/products/kids-cap.jpg",
+      "options": [
+        { "name": "Size", "values": ["OS"] },
+        { "name": "Colour", "values": ["Olive", "Navy"] }
+      ],
+      "variants": [
+        { "sku": "LT-KC-OLIVE-OS", "title": "Olive / OS", "size": "OS", "colour": "Olive", "price": 18.0, "compareAtPrice": null, "inventoryQuantity": 22 }
+      ],
+      "metafields": { "material": "Cotton twill", "fit": "One size", "care": "Spot clean", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-crew",
+      "title": "Trailhead Kids Crew Sweatshirt",
+      "description": "Midweight crew for cooler mornings.",
+      "currency": "CAD",
+      "price": 28.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Sweatshirt",
+      "tags": ["hoodie", "sweat", "fleece", "kids"],
+      "image": "/products/kids-crew.jpg",
+      "options": [
+        { "name": "Size", "values": ["4", "6", "8", "10", "12"] },
+        { "name": "Colour", "values": ["Bone", "Grey"] }
+      ],
+      "variants": [
+        { "sku": "LT-KCR-BONE-8", "title": "Bone / 8", "size": "8", "colour": "Bone", "price": 28.0, "compareAtPrice": null, "inventoryQuantity": 11 }
+      ],
+      "metafields": { "material": "Cotton fleece", "fit": "Regular", "care": "Machine wash cold", "origin": "Made for kids" }
+    },
+    {
+      "handle": "trailhead-kids-chino",
+      "title": "Trailhead Kids Everyday Chino",
+      "description": "Soft chino pant with an elastic waist for school days.",
+      "currency": "CAD",
+      "price": 32.0,
+      "compareAtPrice": null,
+      "vendor": "Little Trailhead",
+      "productType": "Pants",
+      "tags": ["chino", "pant", "denim", "kids"],
+      "image": "/products/kids-chino.jpg",
+      "options": [
+        { "name": "Size", "values": ["4", "6", "8", "10", "12"] },
+        { "name": "Colour", "values": ["Khaki", "Navy"] }
+      ],
+      "variants": [
+        { "sku": "LT-KCH-KHAKI-8", "title": "Khaki / 8", "size": "8", "colour": "Khaki", "price": 32.0, "compareAtPrice": null, "inventoryQuantity": 9 }
+      ],
+      "metafields": { "material": "Cotton twill", "fit": "Regular", "care": "Machine wash cold", "origin": "Made for kids" }
+    }
+  ]
+}

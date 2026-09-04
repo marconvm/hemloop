@@ -631,3 +631,19 @@ Landed:
 3. marketScan test for the XS case; one line in `02-the-loop.md` (+ `public/docs/` mirror).
 
 Gates: 147/147, tsc, lint, build. No deploy.
+
+### Cursor batch4: E-commerce wording, receipt cards, family closets (2026-09-03)
+
+Branch: `cursor/batch4` (worktree `../hemloop-cursor`), from `origin/main` @ `25db337`.
+Item 1 (header RuntimeStatus) is Codex; this lane did 2–4. Did not touch `components/loop-room/*`.
+
+Landed:
+2. User-facing "commerce" → "E-commerce" in `BRAND.sub`, docs 01/PRD/WRITEUP (+ mirrors). Left
+   commerce-agents and the Anthropic article quote alone. TECH-GUIDE/TEST-PLAN/GAP had no other hits.
+3. Closet import: two sample cards (receipt thumb + .eml from/subject/date preview), Use this sample,
+   download icon; textarea kept; parser untouched.
+4. Partner and Kid seed at 7 each; kids photos `public/products/kids-*.jpg` + PHOTO-CREDITS;
+   `catalog-kids.json` + `kidsCatalog`; `randomGarments` for kid draws kids sizes/photos only.
+   Self gaps unchanged. Tests for profile counts + kid pool.
+
+Gates: 147/147, tsc, lint, build. No deploy.
