@@ -73,7 +73,7 @@ export function LoopRoom({
         <section className="hlr-heading">
           <div className="hlr-hero" key={current.key}>
             <p>
-              A live commerce loop · cycle{' '}
+              A live E-commerce loop · cycle{' '}
               <span className="hlr-cycle-count" key={view.loopNumber}>
                 {view.loopNumber}
               </span>
@@ -84,7 +84,7 @@ export function LoopRoom({
             </h1>
           </div>
           <div className="hlr-heading-status">
-            <span>{view.progress} of 7 stations complete</span>
+            <span>{view.progress} of 7 steps complete</span>
             <ToolManifestDialog
               live={view.runtime.live}
               tools={tools}

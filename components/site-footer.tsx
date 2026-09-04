@@ -1,7 +1,7 @@
 import { BRAND } from '@/lib/proofframe/brand';
 
 const LINKS = [
-  { label: 'Loop', href: '/' },
+  { label: 'Hemloop', href: '/' },
   { label: 'Closet', href: '/closet' },
   { label: 'Studio', href: '/studio' },
   { label: 'Docs', href: '/docs/' },
@@ -10,7 +10,7 @@ const LINKS = [
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <a className="site-brand" href="/" aria-label={`${BRAND.name} loop room`}>
+      <a className="site-brand" href="/" aria-label={`${BRAND.name} home`}>
         <span className="site-brand-mark" aria-hidden="true">
           <span />
         </span>
@@ -24,8 +24,14 @@ export function SiteFooter() {
         ))}
       </nav>
       <p>
-        <span aria-hidden="true" />
-        Demo data, real brands
+        © 2026 Marco Cheung ·{' '}
+        <a
+          href="https://github.com/marconvm/hemloop"
+          rel="noopener"
+          target="_blank"
+        >
+          Source on GitHub
+        </a>
       </p>
     </footer>
   );

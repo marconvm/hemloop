@@ -5,6 +5,68 @@ import { useRef } from 'react';
 
 import type { RuntimeToolView } from './types';
 
+export function ToolManifestContent({
+  tools,
+  absent,
+  titleId,
+  onClose,
+}: {
+  tools: RuntimeToolView[];
+  absent: string[];
+  titleId: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="hlr-dialog-card">
+      <header>
+        <div>
+          <p>Runtime contract</p>
+          <h2 id={titleId}>What the agent can actually do</h2>
+        </div>
+        <button
+          type="button"
+          aria-label="Close tool manifest"
+          onClick={onClose}
+        >
+          <X />
+        </button>
+      </header>
+      <p className="hlr-dialog-intro">
+        Read from this page&apos;s WebMCP runtime. Human approval controls are
+        deliberately absent.
+      </p>
+      <div className="hlr-manifest-list">
+        {tools.length ? (
+          tools.map((tool) => (
+            <article key={tool.name}>
+              <span className={tool.readOnly ? 'is-read' : 'is-write'}>
+                {tool.readOnly ? 'Read' : 'Act'}
+              </span>
+              <div>
+                <code>{tool.name}</code>
+                <p>{tool.description}</p>
+              </div>
+            </article>
+          ))
+        ) : (
+          <p className="hlr-manifest-empty">
+            No runtime tools were reported by this browser.
+          </p>
+        )}
+      </div>
+      <div className="hlr-absent-tools">
+        <LockKeyhole aria-hidden="true" />
+        <span>
+          <b>Human-only by design</b>
+          {absent.length
+            ? absent.map((name) => <code key={name}>{name}</code>)
+            : 'No approval tools exposed.'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function ToolManifestDialog({
   live,
   tools,
@@ -28,57 +90,16 @@ export function ToolManifestDialog({
         <b>{tools.length} tools</b>
       </button>
       <dialog
-        aria-labelledby="hlr-tool-dialog-title"
+        aria-labelledby="hlr-tool-dialog-title-hero"
         className="hlr-tool-dialog"
         ref={dialogRef}
       >
-        <div className="hlr-dialog-card">
-          <header>
-            <div>
-              <p>Runtime contract</p>
-              <h2 id="hlr-tool-dialog-title">What the agent can actually do</h2>
-            </div>
-            <button
-              type="button"
-              aria-label="Close tool manifest"
-              onClick={() => dialogRef.current?.close()}
-            >
-              <X />
-            </button>
-          </header>
-          <p className="hlr-dialog-intro">
-            Read from this page&apos;s WebMCP runtime. Human approval controls
-            are deliberately absent.
-          </p>
-          <div className="hlr-manifest-list">
-            {tools.length ? (
-              tools.map((tool) => (
-                <article key={tool.name}>
-                  <span className={tool.readOnly ? 'is-read' : 'is-write'}>
-                    {tool.readOnly ? 'Read' : 'Act'}
-                  </span>
-                  <div>
-                    <code>{tool.name}</code>
-                    <p>{tool.description}</p>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <p className="hlr-manifest-empty">
-                No runtime tools were reported by this browser.
-              </p>
-            )}
-          </div>
-          <div className="hlr-absent-tools">
-            <LockKeyhole aria-hidden="true" />
-            <span>
-              <b>Human-only by design</b>
-              {absent.length
-                ? absent.map((name) => <code key={name}>{name}</code>)
-                : 'No approval tools exposed.'}
-            </span>
-          </div>
-        </div>
+        <ToolManifestContent
+          absent={absent}
+          onClose={() => dialogRef.current?.close()}
+          titleId="hlr-tool-dialog-title-hero"
+          tools={tools}
+        />
       </dialog>
     </>
   );

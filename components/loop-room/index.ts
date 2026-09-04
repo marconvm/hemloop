@@ -6,6 +6,7 @@ export { LoopRoom, type LoopRoomProps } from './loop-room';
 export { LoopRoomRail } from './loop-room-rail';
 export { OutcomePanel } from './outcome-panel';
 export { PacketInTransit } from './packet-in-transit';
+export { RuntimeStatus } from './runtime-status';
 export { StationCard } from './station-card';
 export { ToolManifestDialog } from './tool-manifest-dialog';
 export type { LoopCreative, ProcessingView, RuntimeToolView } from './types';

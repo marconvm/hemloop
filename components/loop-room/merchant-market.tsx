@@ -86,6 +86,12 @@ export function MerchantMarket({
   const others = market.filter(
     (row) => row.merchantId !== answering?.merchantId,
   );
+  const otherCanOffer = others.filter(
+    (row) => row.verdict === 'can-offer',
+  ).length;
+  const otherSummary = otherCanOffer
+    ? `${others.length} others · ${otherCanOffer} could offer`
+    : `${others.length} others could not`;
 
   return (
     <section className="hlr-market" aria-label="Merchant market">
@@ -101,7 +107,7 @@ export function MerchantMarket({
         ) : null}
         {others.length ? (
           <details>
-            <summary>{others.length} others could not</summary>
+            <summary>{otherSummary}</summary>
             <MarketResults activeMerchantId={activeMerchant.id} rows={others} />
           </details>
         ) : null}
