@@ -768,3 +768,18 @@ B. Header first link Loop → Hemloop; "Waiting on Hemloop"; closet/docs/README 
 C. Studio density: shorter empty/stat copy, body-size ink, numbers first on stat strip.
 
 Gates: 149 · tsc · lint · build.
+
+### Cursor storage-hardening: campaign/wardrobe bounds + manifest copy (2026-09-04)
+
+Branch: `cursor/storage-hardening` from `origin/main` @ `532e369`.
+Judge review 3 P0s + P1 + hostile regressions. Did not touch `components/loop-room/*`.
+
+Landed:
+1. `lib/proofframe/storage-policy.ts` — shared https URL + `/products/…` image + date/percent bounds
+2. Strict `parseCampaign` / `parseFacts` / scenes / format preset / CSS colours; fail → seed
+3. `toGarment()` rebuild in `readWardrobe` (same-origin images only, profile enum, row cap 60)
+4. `toOffer` purchaseUrl https-only; image same-origin product path
+5. Manifest: `get_campaign_state` / `import_product` copy no longer call unlocked facts human-locked
+6. Hostile storage tests (campaign + wardrobe) + manifest copy assertions
+
+Gates: 155 · tsc · lint · build.
